@@ -676,11 +676,12 @@ body.dark-mode .weekly-stat-container {
 
 .weekly-highlight {
     font-size: 18px;
-    color: #174ea6;
+    color: #3b7adf;
 }
 
 body.dark-mode .weekly-highlight {
-    color: #aecbfa;
+    color: #e0ebfd;
+    
 }
 
 .action-btns-container {
@@ -1104,4 +1105,14 @@ body.dark-mode .chk-label:has(input:checked), .dark-mode .chk-label:has(input:ch
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
+}
+
+/* 크 모드일 때 썸네일 이미지 밝기를 80%로 낮추기 */
+body.dark-mode .card-thumbnail {
+    filter: brightness(0.8);
+}
+
+/* 라이트/다크 모드를 전환할 때 팍! 바뀌지 않고 스르륵 부드럽게 바뀌게 해줍니다 */
+.card-thumbnail {
+    transition: filter 0.3s ease-in-out;
 }
