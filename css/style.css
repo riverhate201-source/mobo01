@@ -233,7 +233,7 @@ body.dark-mode .day-btn.active {
 .my-wallet-container {
     max-width: 450px;
     margin: 0 auto 30px auto;
-    padding: 18px;
+    padding: 35px 18px 18px 18px !important;
     background: #fff;
     border-radius: 20px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
@@ -860,7 +860,7 @@ body.dark-mode .coinback-label {
     scroll-snap-align: center;
     box-sizing: border-box;
     margin-bottom: 0 !important;
-    padding-bottom: 35px !important;
+    padding-bottom: 45px !important;
     /* 🌟 하얀 박스 밑을 살짝 늘려서 도트 점 공간 확보! */
 }
 
@@ -1033,25 +1033,75 @@ body.dark-mode .highlight-result-mrblue {
     margin-top: 16px !important;
 }
 
-/* 🌟 체크박스 & 라벨 디자인 업그레이드 */
+
+
+.move-btn {
+    background-color: #ffdbb8 !important;
+    color: #ff9d5b !important; /* rgb(255, 157, 91)을 예쁘게 코드로 바꿨습니다 */
+}
+
+/* 다크 모드 - 눈이 편안하고 고급스러운 다크 오렌지 컬러! */
+.dark-mode .move-btn {
+    background-color: #4a2e1b !important; 
+    color: #ffb880 !important;
+}
+
+/* 🌟 요일 체크박스 - 일반 입력창(Input) 스타일로 동기화 */
 .chk-label {
-    font-size: 15px !important; /* 글씨 조금 더 크게 */
-    font-weight: 500;
+    font-size: 14px !important;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px; /* 글씨와 체크박스 사이 간격 */
-    background: #ffffff; /* 깔끔한 흰색 배경 */
-    padding: 6px 12px; /* 누르기 편하게 안쪽 여백 넉넉히 */
-    border-radius: 20px; /* 둥글둥글 귀엽게 */
-    border: 1px solid #ddd; /* 테두리 살짝 */
-    transition: all 0.2s;
+    gap: 6px;
+    
+    /* 1. 다른 입력창과 똑같은 배경 & 테두리 */
+    background: #ffffff !important; 
+    border: 1px solid #ccc !important;
+    color: #333 !important;
+    
+    /* 2. 다른 입력창과 높이 맞추기 (패딩 조절) */
+    padding: 10px 12px; 
+    border-radius: 8px; /* 입력창 모서리 둥글기와 맞춤 */
+    
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+    
+    /* 슬림하게 한 줄로 흐르는 디자인 */
+    flex: 0 1 auto;
 }
 
-/* 체크박스 본체 크기 키우기 */
+/* 체크박스 본체 */
 .chk-label input[type="checkbox"] {
-    width: 18px !important;
-    height: 18px !important;
-    cursor: pointer;
-    accent-color: #1967d2; /* 체크했을 때 색상 (리디 블루 느낌) */
+    width: 15px !important;
+    height: 15px !important;
+    margin: 0;
+    accent-color: #1967d2; /* 체크했을 때만 포인트 색상 */
+}
+
+/* "색상 대비" 제거 - 체크해도 배경색 안 바뀜 */
+.chk-label:has(input:checked) {
+    background: #ffffff !important; /* 라이트모드에선 계속 흰색 */
+    border-color: #1967d2 !important; /* 테두리만 살짝 포인트 */
+    color: #333 !important; /* 글씨색 유지 */
+}
+
+/* 3. 다크 모드 - 다른 입력창의 다크모드 스타일과 동기화 */
+body.dark-mode .chk-label, .dark-mode .chk-label {
+    background: #2c2c2c !important; /* 일반 다크 입력창 배경색 */
+    border-color: #555 !important;
+    color: #e8eaed !important;
+}
+
+/* 다크모드 체크 시 */
+body.dark-mode .chk-label:has(input:checked), .dark-mode .chk-label:has(input:checked) {
+    background: #2c2c2c !important; /* 배경색 그대로 유지 */
+    border-color: #8ab4f8 !important; /* 테두리만 강조 */
+    color: #e8eaed !important;
+}
+
+/* 요일 묶음 상자 배경도 투명하게 처리해서 이질감 제거 */
+#day-selection-area > div {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
 }
