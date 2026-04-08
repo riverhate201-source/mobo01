@@ -857,6 +857,12 @@
             }
         }
 
+        // 🌟 정산 모달창의 'X' 버튼을 눌렀을 때 창을 닫아주는 함수!
+function closeDeductionModal() {
+    document.getElementById('deduction-modal').style.display = 'none';
+    isTodayDeduction = false; // 정산 모드 초기화
+}
+
         function finishDeduction() {
             document.getElementById('deduction-modal').style.display = 'none';
             let dateToSave = getWebtoonDate();
