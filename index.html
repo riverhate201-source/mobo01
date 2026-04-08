@@ -751,7 +751,7 @@
             // 켠 플랫폼 중에 오늘 볼 작품이 하나도 없으면 알림
             const hasWorks = platformOrder.some(plt => pendingDeductions[plt].length > 0);
             if (!hasWorks) {
-                alert("오늘은 정산할 연재 작품이 없습니다! 편안히 쉬세요! ☕"); isTodayDeduction = false; return;
+                alert("오늘은 정산할 연재 작품이 없습니다! 편안히 쉬세요!"); isTodayDeduction = false; return;
             }
             showDeductionModal();
         }
