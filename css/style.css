@@ -1032,3 +1032,26 @@ body.dark-mode .highlight-result-mrblue {
     /* 상자 한가운데로 예쁘게 정렬! */
     margin-top: 16px !important;
 }
+
+/* 🌟 체크박스 & 라벨 디자인 업그레이드 */
+.chk-label {
+    font-size: 15px !important; /* 글씨 조금 더 크게 */
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px; /* 글씨와 체크박스 사이 간격 */
+    background: #ffffff; /* 깔끔한 흰색 배경 */
+    padding: 6px 12px; /* 누르기 편하게 안쪽 여백 넉넉히 */
+    border-radius: 20px; /* 둥글둥글 귀엽게 */
+    border: 1px solid #ddd; /* 테두리 살짝 */
+    transition: all 0.2s;
+}
+
+/* 체크박스 본체 크기 키우기 */
+.chk-label input[type="checkbox"] {
+    width: 18px !important;
+    height: 18px !important;
+    cursor: pointer;
+    accent-color: #1967d2; /* 체크했을 때 색상 (리디 블루 느낌) */
+}

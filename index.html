@@ -261,25 +261,31 @@
             <h3 id="modal-title-label">작품 추가</h3>
             <input type="text" id="input-title" placeholder="작품 제목">
             <input type="text" id="input-url" placeholder="작품 바로가기 링크 (선택)" style="margin-top: 2px;">
+            <input type="text" id="input-time" placeholder="업로드 시간 (예: 오전 7시 / 웹소설의 경우에만! )" style="flex: 1;">
 
-            <div style="display: flex; gap: 10px;">
-                <select id="input-day" class="modal-select" style="flex: 1;">
-                    <option value="월요일">월</option>
-                    <option value="화요일">화</option>
-                    <option value="수요일">수</option>
-                    <option value="목요일">목</option>
-                    <option value="금요일">금</option>
-                    <option value="토요일">토</option>
-                    <option value="일요일">일</option>
-                    <option value="10일 연재">10일 지정석</option>
-                </select>
-                <select id="input-status" class="modal-select" style="flex: 2;">
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                
+                <div id="input-time" style="width: 100%;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px; background: #f8f9fa; padding: 6px; border-radius: 8px; border: 1px solid #ccc;">
+                        <label style="font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 2px;"><input type="checkbox" name="day-chk" value="월요일" style="width: 14px; height: 14px; margin:0;">월</label>
+                        <label style="font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 2px;"><input type="checkbox" name="day-chk" value="화요일" style="width: 14px; height: 14px; margin:0;">화</label>
+                        <label style="font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 2px;"><input type="checkbox" name="day-chk" value="수요일" style="width: 14px; height: 14px; margin:0;">수</label>
+                        <label style="font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 2px;"><input type="checkbox" name="day-chk" value="목요일" style="width: 14px; height: 14px; margin:0;">목</label>
+                        <label style="font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 2px;"><input type="checkbox" name="day-chk" value="금요일" style="width: 14px; height: 14px; margin:0;">금</label>
+                        <label style="font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 2px;"><input type="checkbox" name="day-chk" value="토요일" style="width: 14px; height: 14px; margin:0;">토</label>
+                        <label style="font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 2px;"><input type="checkbox" name="day-chk" value="일요일" style="width: 14px; height: 14px; margin:0;">일</label>
+                        <label style="font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 2px;"><input type="checkbox" name="day-chk" value="10일 연재" style="width: 14px; height: 14px; margin:0;">10일 지정석</label>
+                    </div>
+                </div>
+
+                <select id="input-status" class="modal-select" style="width: 100%; margin-top: 4px; margin-bottom: 0;">
                     <option value="연재중">연재 중</option>
                     <option value="휴재">휴재 (코인 안빠짐)</option>
                     <option value="완결">완결 (코인 안빠짐)</option>
                 </select>
+                
             </div>
-            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+            <div style="display: flex; gap: 10px; margin-top: 12px; margin-bottom: 12px;">
                 <select id="input-cycle-type" class="modal-select" style="flex: 2; margin-bottom: 0;"
                     onchange="toggleWeekInput()">
                     <option value="">연재 주기 선택 (없음)</option>
@@ -1098,37 +1104,41 @@
         function handleDrop(e) { e.stopPropagation(); this.style.transform = 'scale(1)'; this.style.boxShadow = 'none'; const targetIdx = parseInt(this.dataset.idx); const targetPlt = this.dataset.plt; const targetDay = this.dataset.day; if (draggedPlt === targetPlt && draggedDay === targetDay && draggedIdx !== targetIdx) { const arr = state[draggedPlt][draggedDay]; const draggedItem = arr.splice(draggedIdx, 1)[0]; arr.splice(targetIdx, 0, draggedItem); saveData(); } }
         function handleDragEnd(e) { this.style.opacity = '1'; renderAll(); }
 
-        function incrementProgress(plt, day, idx) { let work = state[plt][day][idx]; let prog = work.progress; let newProg = prog.replace(/(\d+)(?!.*\d)/, match => parseInt(match) + 1); if (prog === newProg) newProg = prog + " +1"; work.progress = newProg; saveData(); let badge = document.getElementById(`prog-${plt}-${day}-${idx}`); if (badge) { const activeColor = plt === 'lezhin' ? '#ff7675' : plt === 'bomtoon' ? '#ff78cb' : plt === 'ridi' ? '#5dade2' : '#66a3ff'; badge.style.transform = "scale(1.2)"; badge.style.backgroundColor = activeColor; setTimeout(() => { badge.style.transform = "scale(1)"; badge.style.backgroundColor = "rgba(0, 0, 0, 0.6)"; }, 250); } }
+        function incrementProgress(plt, day, idx) { 
+            let work = state[plt][day][idx]; 
+            let prog = work.progress; let newProg = prog.replace(/(\d+)(?!.*\d)/, match => parseInt(match) + 1); if (prog === newProg) newProg = prog + " +1"; 
+            
+            // 🌟 [동기화] 같은 ID 찾아서 싹 다 바꿔주기!
+            if (work.id) {
+                Object.keys(state[plt]).forEach(d => {
+                    state[plt][d].forEach(w => { if (w.id === work.id) w.progress = newProg; });
+                });
+            } else {
+                work.progress = newProg; // 옛날 데이터 방어막
+            }
+
+            saveData(); 
+            let badge = document.getElementById(`prog-${plt}-${day}-${idx}`); if (badge) { const activeColor = plt === 'lezhin' ? '#ff7675' : plt === 'bomtoon' ? '#ff78cb' : plt === 'ridi' ? '#5dade2' : '#66a3ff'; badge.style.transform = "scale(1.2)"; badge.style.backgroundColor = activeColor; setTimeout(() => { badge.style.transform = "scale(1)"; badge.style.backgroundColor = "rgba(0, 0, 0, 0.6)"; }, 250); } 
+        }
 
         function incrementCycle(plt, day, idx) {
-            let work = state[plt][day][idx];
-            let cyc = work.cycle;
-            if (!cyc) return;
-
-            // 'n주차'라는 글자가 들어있는 모든 경우 처리
+            let work = state[plt][day][idx]; let cyc = work.cycle; if (!cyc) return;
+            let newCyc = cyc;
             if (/(\d+)주차/.test(cyc)) {
-                let maxCycle = 5; // 기본적으로 매월 주차는 5주차까지 보고 리셋
-
-                // 1. 만약 'N연 M휴' 형태라면 주기를 계산해서 리셋
-                let cycleParts = cyc.match(/(\d+)연\s*(\d+)휴/);
-                if (cycleParts) {
-                    let runOn = parseInt(cycleParts[1]);
-                    let restOn = parseInt(cycleParts[2]);
-                    maxCycle = runOn + restOn;
-                }
-
-                // 2. 주차 숫자 올리기 및 리셋 실행
-                work.cycle = cyc.replace(/(\d+)주차/, (m, p1) => {
-                    let nextWeek = parseInt(p1) + 1;
-
-                    if (nextWeek > maxCycle) {
-                        return "1주차"; // 최대 주차를 넘기면 1주차로 리셋!
-                    } else {
-                        return nextWeek + "주차";
-                    }
-                });
-                saveData();
+                let maxCycle = 5; let cycleParts = cyc.match(/(\d+)연\s*(\d+)휴/);
+                if (cycleParts) { let runOn = parseInt(cycleParts[1]); let restOn = parseInt(cycleParts[2]); maxCycle = runOn + restOn; }
+                newCyc = cyc.replace(/(\d+)주차/, (m, p1) => { let nextWeek = parseInt(p1) + 1; return nextWeek > maxCycle ? "1주차" : nextWeek + "주차"; });
             }
+
+            // [동기화] 같은 ID 찾아서 싹 다 바꿔주기!
+            if (work.id) {
+                Object.keys(state[plt]).forEach(d => {
+                    state[plt][d].forEach(w => { if (w.id === work.id) w.cycle = newCyc; });
+                });
+            } else {
+                work.cycle = newCyc;
+            }
+            saveData();
         }
 
         function refreshBalance() {
@@ -1230,61 +1240,49 @@
 
         function removeSelectedImage() { tempImg = ""; document.getElementById('image-input').value = ""; document.getElementById('image-status-text').textContent = "📷 사진이 삭제되었습니다."; document.getElementById('image-status-text').style.color = "#e60012"; document.getElementById('remove-img-btn').style.display = 'none'; }
 
-        // 1. 작품 상세 수정 창 열기 (단위 자동 변경 적용!)
+        // 작품 수정 창 열기 (저장된 시간 불러오기 + 여러 요일 체크박스 동기화!)
         function editFromAction() {
             closeActionModal(); editMode = true; currentPlatform = actionPlt;
             const work = state[actionPlt][actionOrigDay][actionIdx];
             document.getElementById('modal-title-label').textContent = "작품 수정";
-            document.getElementById('input-title').value = work.title;
-            document.getElementById('input-url').value = work.url || '';
+            document.getElementById('input-title').value = work.title; document.getElementById('input-url').value = work.url || '';
+            
             let savedCyc = work.cycle || ""; let cType = ""; let cWeek = "";
-
             if (savedCyc) {
-                if (savedCyc.includes("10일 연재") || savedCyc.includes("격주 연재")) {
-                    cType = savedCyc.includes("10일 연재") ? "10일 연재" : "격주 연재";
-                    let match = savedCyc.match(/\((.*?)\)/);
-                    if (match) cWeek = match[1];
-                } else if (savedCyc.includes("매월")) {
-                    cType = "매월 특정주 휴재";
-                    let match = savedCyc.match(/매월\s*(\d+)주차\s*휴재/);
-                    if (match) cWeek = match[1];
-                } else {
-                    let match = savedCyc.match(/^(.*?)(?:\s+(\d+)주차)?$/);
-                    if (match) { cType = match[1].trim(); cWeek = match[2] || ""; }
-                }
+                if (savedCyc.includes("10일 연재") || savedCyc.includes("격주 연재")) { cType = savedCyc.includes("10일 연재") ? "10일 연재" : "격주 연재"; let match = savedCyc.match(/\((.*?)\)/); if (match) cWeek = match[1]; } 
+                else if (savedCyc.includes("매월")) { cType = "매월 특정주 휴재"; let match = savedCyc.match(/매월\s*(\d+)주차\s*휴재/); if (match) cWeek = match[1]; } 
+                else { let match = savedCyc.match(/^(.*?)(?:\s+(\d+)주차)?$/); if (match) { cType = match[1].trim(); cWeek = match[2] || ""; } }
             }
-
-            const typeSelect = document.getElementById('input-cycle-type');
-            const typeExists = Array.from(typeSelect.options).some(o => o.value === cType);
-            typeSelect.value = typeExists ? cType : "";
-
-            document.getElementById('input-cycle-week').value = cWeek;
-            toggleWeekInput();
-
-            // 플랫폼에 맞춰서 입력칸 배경 글씨(Placeholder) 바꾸기!
+            const typeSelect = document.getElementById('input-cycle-type'); const typeExists = Array.from(typeSelect.options).some(o => o.value === cType);
+            typeSelect.value = typeExists ? cType : ""; document.getElementById('input-cycle-week').value = cWeek; toggleWeekInput();
+            
             const coinInput = document.getElementById('input-coin');
-            if (actionPlt === 'ridi') {
-                coinInput.placeholder = "예: 600 (캐시)";
-            } else if (actionPlt === 'mrblue') {
-                coinInput.placeholder = "예: 500 (머니)";
-            } else {
-                coinInput.placeholder = "예: 3 (코인)";
-            }
-
-            document.getElementById('input-coin').value = work.coin;
-            document.getElementById('input-progress').value = work.progress;
-            document.getElementById('input-day').value = actionOrigDay;
+            if (actionPlt === 'ridi') coinInput.placeholder = "예: 600 (캐시)"; else if (actionPlt === 'mrblue') coinInput.placeholder = "예: 500 (머니)"; else coinInput.placeholder = "예: 3 (코인)";
+            
+            document.getElementById('input-coin').value = work.coin; document.getElementById('input-progress').value = work.progress;
+            
+            // [신규 추가] 저장해둔 시간(알람 뱃지) 불러오기!
+            document.getElementById('input-time').value = work.time || '';
             document.getElementById('input-status').value = work.status || '연재중';
 
-            tempImg = work.img || ""; document.getElementById('image-input').value = "";
-            document.getElementById('image-status-text').textContent = tempImg ? "기존 사진 유지 📷" : "📷 사진은 선택 사항입니다.";
-            document.getElementById('image-status-text').style.color = tempImg ? "#2ecc71" : "#888";
-            document.getElementById('remove-img-btn').style.display = tempImg ? 'block' : 'none';
-            document.getElementById('custom-modal').style.display = 'flex';
+            // [핵심 변경] 옛날 'input-day' 대신, 같은 ID를 가진 작품이 어느 요일들에 있는지 싹 뒤져서 체크박스에 V 표시 해주기!
+            let activeDays = [];
+            if (work.id) {
+                Object.keys(state[actionPlt]).forEach(d => {
+                    if (state[actionPlt][d].some(w => w.id === work.id)) activeDays.push(d);
+                });
+            } else {
+                activeDays.push(actionOrigDay); // 옛날에 저장해둔 ID 없는 데이터 방어막
+            }
+            document.querySelectorAll('input[name="day-chk"]').forEach(chk => {
+                chk.checked = activeDays.includes(chk.value);
+            });
+
+            tempImg = work.img || ""; document.getElementById('image-input').value = ""; document.getElementById('image-status-text').textContent = tempImg ? "기존 사진 유지 📷" : "📷 사진은 선택 사항입니다."; document.getElementById('image-status-text').style.color = tempImg ? "#2ecc71" : "#888"; document.getElementById('remove-img-btn').style.display = tempImg ? 'block' : 'none'; document.getElementById('custom-modal').style.display = 'flex';
         }
 
 
-        // 새 작품 추가 창 열기 (단위 자동 변경 적용!)
+        // 새 작품 추가 창 열기 (단위 자동 변경 적용! + 알람 뱃지 + 요일 다중 선택)
         function openAddModal(platform) {
             editMode = false; currentPlatform = platform; tempImg = "";
             document.getElementById('modal-title-label').textContent = "작품 추가";
@@ -1308,7 +1306,16 @@
             }
 
             document.getElementById('input-progress').value = '1화';
-            document.getElementById('input-day').value = (viewDay === '휴재' || viewDay === '완결') ? days[getWebtoonDate().getDay()] : viewDay;
+            
+            // [신규 추가] 알람 뱃지용 시간 입력칸도 창 열 때마다 깨끗하게 비워주기!
+            document.getElementById('input-time').value = '';
+
+            // [핵심 변경] 옛날 'input-day' 대신, 체크박스들(day-chk)을 싹 비우고 오늘 요일만 체크해줍니다!
+            const todayStr = (viewDay === '휴재' || viewDay === '완결') ? days[getWebtoonDate().getDay()] : viewDay;
+            document.querySelectorAll('input[name="day-chk"]').forEach(chk => {
+                chk.checked = (chk.value === todayStr);
+            });
+
             document.getElementById('input-status').value = (viewDay === '휴재' || viewDay === '완결') ? viewDay : '연재중';
             document.getElementById('image-input').value = "";
             document.getElementById('image-status-text').textContent = "📷 사진은 선택 사항입니다.";
@@ -1322,50 +1329,39 @@
         function closeAddModal() { document.getElementById('custom-modal').style.display = 'none'; }
 
         function saveWorkFinal() {
-            const title = document.getElementById('input-title').value;
-            const url = document.getElementById('input-url').value;
-            const cType = document.getElementById('input-cycle-type').value;
-            const cWeek = document.getElementById('input-cycle-week').value;
-            let cycleStr = "";
-
-            // 기존 함수 중간에 있는 이 덩어리를 이걸로 교체!
+            const title = document.getElementById('input-title').value; const url = document.getElementById('input-url').value; const cType = document.getElementById('input-cycle-type').value; const cWeek = document.getElementById('input-cycle-week').value; let cycleStr = "";
             if (cType) {
-                if (cType === "10일 연재" || cType === "격주 연재") {
-                    cycleStr = cWeek ? `${cType} (${cWeek})` : cType;
-                } else if (cType === "매월 특정주 휴재") {
-
-                    cycleStr = cWeek ? `매월 ${cWeek}주차 휴재` : "매월 특정주 휴재";
-                } else if (cWeek) {
-                    cycleStr = `${cType} ${cWeek}주차`;
-                } else {
-                    cycleStr = cType;
-                }
+                if (cType === "10일 연재" || cType === "격주 연재") cycleStr = cWeek ? `${cType} (${cWeek})` : cType;
+                else if (cType === "매월 특정주 휴재") cycleStr = cWeek ? `매월 ${cWeek}주차 휴재` : "매월 특정주 휴재";
+                else if (cWeek) cycleStr = `${cType} ${cWeek}주차`; else cycleStr = cType;
             }
-
-            const coin = parseInt(document.getElementById('input-coin').value) || 0;
-            const progress = document.getElementById('input-progress').value || "1화";
-            let targetDay = document.getElementById('input-day').value;
-            const targetStatus = document.getElementById('input-status').value;
-
-            if (cycleStr.includes("10일 연재")) {
-                targetDay = "10일 연재";
-            }
-
+            const coin = parseInt(document.getElementById('input-coin').value) || 0; const progress = document.getElementById('input-progress').value || "1화"; const time = document.getElementById('input-time').value.trim(); const targetStatus = document.getElementById('input-status').value;
             if (!title) return alert("제목을 입력해주세요!");
 
-            const workData = { title, url: url, cycle: cycleStr, coin, progress, status: targetStatus, img: tempImg };
+            // 체크된 요일들 싹 다 가져오기
+            const selectedDays = Array.from(document.querySelectorAll('input[name="day-chk"]:checked')).map(el => el.value);
+            if (selectedDays.length === 0) return alert("연재 요일을 최소 하나는 선택해주세요!");
 
-            if (editMode && actionOrigDay === targetDay) {
-
-                state[currentPlatform][targetDay][actionIdx] = workData;
+            // 고유 ID 발급하기!
+            let workId = "";
+            if (editMode) {
+                workId = state[currentPlatform][actionOrigDay][actionIdx].id || Date.now().toString();
+                // 수정 모드면 기존에 있던 모든 요일 방에서 이 작품을 싹 지움!
+                Object.keys(state[currentPlatform]).forEach(d => {
+                    state[currentPlatform][d] = state[currentPlatform][d].filter(w => w.id !== workId);
+                });
             } else {
-
-                if (editMode) state[currentPlatform][actionOrigDay].splice(actionIdx, 1);
-                state[currentPlatform][targetDay].push(workData);
+                workId = Date.now().toString(); // 새 작품은 무조건 새 ID!
             }
 
-            saveData();
-            closeAddModal();
+            const workData = { id: workId, title, url: url, cycle: cycleStr, coin, progress, status: targetStatus, img: tempImg, time: time };
+
+            // 선택된 모든 요일 방에 똑같은 ID를 가진 복제인간 밀어넣기!
+            selectedDays.forEach(day => {
+                state[currentPlatform][day].push({ ...workData });
+            });
+
+            saveData(); closeAddModal();
         }
 
 
@@ -1506,7 +1502,21 @@
 
         function initScroll() { document.querySelectorAll('.scroll-wrapper').forEach(wrapper => { const list = wrapper.querySelector('.webtoon-list'); wrapper.querySelector('.left-btn').onclick = () => list.scrollBy({ left: -160, behavior: 'smooth' }); wrapper.querySelector('.right-btn').onclick = () => list.scrollBy({ left: 160, behavior: 'smooth' }); }); }
         function closeAttendWarning() { document.getElementById('attend-warning-modal').style.display = 'none'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
-        function deleteFromAction() { if (confirm("이 작품을 영구 삭제할까요?")) { state[actionPlt][actionOrigDay].splice(actionIdx, 1); saveData(); closeActionModal(); } }
+        
+        function deleteFromAction() { 
+            if (confirm("이 작품을 영구 삭제할까요? (다른 요일에 있는 같은 작품도 모두 삭제됩니다!)")) { 
+                let work = state[actionPlt][actionOrigDay][actionIdx];
+                // [동기화 삭제]
+                if (work.id) {
+                    Object.keys(state[actionPlt]).forEach(d => {
+                        state[actionPlt][d] = state[actionPlt][d].filter(w => w.id !== work.id);
+                    });
+                } else {
+                    state[actionPlt][actionOrigDay].splice(actionIdx, 1);
+                }
+                saveData(); closeActionModal(); 
+            } 
+        }
     
 
         if ('serviceWorker' in navigator) {
@@ -1629,7 +1639,7 @@
             checkAttendance(plt);
         }
 
-        // 🌟 지갑 스와이프 시 점 움직이는 함수
+        // 지갑 스와이프 시 점 움직이는 함수
         function updateWalletDots() {
             const slider = document.getElementById('wallet-slider');
             const dots = document.querySelectorAll('.wallet-pagination .dot');
@@ -1645,50 +1655,46 @@
             });
         }
 
-        // 🌟 신규 추가: 숫자 세탁기 (천 단위 쉼표 찍어주는 마법!)
+        // 신규 추가: 숫자 세탁기 (천 단위 쉼표 찍어주는 마법!)
         function formatNum(num) {
             return Number(num).toLocaleString();
         }
 
         // 상세 메뉴(점 세 개)에서 작동하는 플랫폼 이동
         function moveFromAction() {
-            // 1. 어디로 이사갈지 물어보기
             const moveChoice = prompt("어느 플랫폼으로 이동할까요?\n\n[1] 레진코믹스\n[2] 봄툰\n[3] 리디\n[4] 미스터블루\n\n해당하는 '숫자'만 입력해 주세요!");
-
-            if (!moveChoice) return; // 취소 버튼 누르면 얌전히 종료
-
+            if (!moveChoice) return;
             let targetPlat = '';
-            if (moveChoice === '1') targetPlat = 'lezhin';
-            else if (moveChoice === '2') targetPlat = 'bomtoon';
-            else if (moveChoice === '3') targetPlat = 'ridi';
-            else if (moveChoice === '4') targetPlat = 'mrblue';
-            else {
-                alert("❌ 1~4 사이의 숫자만 입력해 주세요!");
-                return;
+            if (moveChoice === '1') targetPlat = 'lezhin'; else if (moveChoice === '2') targetPlat = 'bomtoon'; else if (moveChoice === '3') targetPlat = 'ridi'; else if (moveChoice === '4') targetPlat = 'mrblue';
+            else return alert("❌ 1~4 사이의 숫자만 입력해 주세요!");
+            if (actionPlt === targetPlat) return alert("이미 해당 플랫폼에 있는 작품입니다!");
+            if (!confirm("선택하신 플랫폼으로 작품을 이동시킬까요? (모든 요일 데이터가 함께 이동합니다!)")) return;
+            
+            let work = state[actionPlt][actionOrigDay][actionIdx];
+            
+            // [동기화 이동] 
+            if (work.id) {
+                let daysToMove = [];
+                // 옛날 집에서 싹 다 빼오기
+                Object.keys(state[actionPlt]).forEach(d => {
+                    let idx = state[actionPlt][d].findIndex(w => w.id === work.id);
+                    if (idx !== -1) {
+                        daysToMove.push(d);
+                        state[actionPlt][d].splice(idx, 1); 
+                    }
+                });
+                // 새 집으로 싹 다 넣어주기
+                daysToMove.forEach(d => {
+                    if (!state[targetPlat][d]) state[targetPlat][d] = [];
+                    state[targetPlat][d].push({ ...work });
+                });
+            } else {
+                const workToMove = state[actionPlt][actionOrigDay].splice(actionIdx, 1)[0];
+                if (!state[targetPlat][actionOrigDay]) state[targetPlat][actionOrigDay] = [];
+                state[targetPlat][actionOrigDay].push(workToMove);
             }
 
-            if (actionPlt === targetPlat) {
-                alert("이미 해당 플랫폼에 있는 작품입니다!");
-                return;
-            }
-
-            // 2. 진짜 이사할지 한 번 더 확인!
-            if (!confirm("선택하신 플랫폼으로 작품을 이동시킬까요? (기존 설정은 그대로 유지됩니다!)")) return;
-
-            // 3. 기존 플랫폼에서 작품 데이터 통째로 뽁! 뽑아내기
-            const workToMove = state[actionPlt][actionOrigDay].splice(actionIdx, 1)[0];
-
-            // 4. 새 플랫폼에 안전하게 밀어넣기
-            if (!state[targetPlat][actionOrigDay]) {
-                state[targetPlat][actionOrigDay] = [];
-            }
-            state[targetPlat][actionOrigDay].push(workToMove);
-
-
-            saveData();
-            closeActionModal(); // 점 세 개 팝업창 닫기
-
-            alert("플랫폼 이동이 완료되었습니다! 새 탭에서 확인해 보세요!");
+            saveData(); closeActionModal(); alert("플랫폼 이동이 완료되었습니다! 새 탭에서 확인해 보세요!");
         }
     </script>
 </body>
