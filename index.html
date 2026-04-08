@@ -85,7 +85,7 @@
         <div class="modal-content" style="max-width: 400px; position: relative;">
             <button onclick="closeDeductionModal()"
                 style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
-            <h3 style="margin-top: 0; text-align: center; color: #1967d2;">모든 코인 정산</h3>
+            <h3 style="margin-top: 0; text-align: center; color: #1967d2;">모든 작품 정산</h3>
             <p id="deduction-msg" style="font-size: 14px; text-align: center; color: #555; margin-bottom: 15px;"></p>
 
             <div id="deduction-list"
@@ -146,7 +146,7 @@
                         십오야 이벤트!</div>
 
                     <span class="coin-amount" onclick="updateCoin('ridi')" style="cursor:pointer;"><span
-                            id="ridi-wallet-val">0</span> 캐시</span>
+                            id="ridi-wallet-val">0</span>원</span>
                     <button class="attend-btn" onclick="window.open('https://ridibooks.com/event', '_blank')">리디 이벤트
                         보기</button>
                 </div>
@@ -161,7 +161,7 @@
                         메가 블루데이!</div>
 
                     <span class="coin-amount" onclick="updateCoin('mrblue')" style="cursor:pointer;"><span
-                            id="mrblue-wallet-val">0</span> 원</span>
+                            id="mrblue-wallet-val">0</span>원</span>
                     <button id="mrblue-attend-btn" class="attend-btn"
                         onclick="window.open('https://m.mrblue.com/event/list.asp', '_blank')">미블 이벤트 보기</button>
                 </div>
@@ -249,9 +249,10 @@
     </div>
 
     <div class="weekly-stat-container" style="margin: 20px auto 40px auto;">
-        이번 주 누적 소비 코인: <span class="weekly-highlight"><span id="weekly-spent-val">0</span> C</span>
+        이번 주 누적 소비: <span class="weekly-highlight" id="weekly-spent-val" style="margin-left: 8px;">0</span>
     </div>
-    <footer style="text-align: center; color: #aaa; font-size: 13px; font-weight: bold; margin-bottom: 20px;">&copy;
+
+    <footer style=" text-align: center; color: #aaa; font-size: 13px; font-weight: bold; margin-bottom: 20px;">&copy;
         2026 우니 @s_euni_
     </footer>
 
@@ -297,7 +298,8 @@
                 <input type="number" id="input-coin" placeholder="코인" style="flex: 1;">
                 <input type="text" id="input-progress" placeholder="진도 (예: 1화)" style="flex: 2;">
             </div>
-            <p id="image-status-text" style="text-align: center; font-size: 12px; margin-bottom: 5px;">📷 사진은 선택 사항입니다.
+            <p id="image-status-text" style="text-align: center; font-size: 12px; margin-bottom: 5px;">📷 사진은 선택
+                사항입니다.
             </p>
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                 <button onclick="document.getElementById('image-input').click()" class="img-pick-btn"
@@ -411,7 +413,8 @@
             <button onclick="closeLinkSettingModal()"
                 style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
             <h3 style="margin-top: 0; text-align: center; color: #1967d2;"> 출석 링크 설정</h3>
-            <p style="font-size: 12px; color: gray; text-align: center; margin-bottom: 15px; line-height: 1.4;">기본 출석 버튼
+            <p style="font-size: 12px; color: gray; text-align: center; margin-bottom: 15px; line-height: 1.4;">
+                기본 출석 버튼
                 링크를 바꾸시려는<br>유저분들만 입력해 주세요!</p>
 
             <div style="margin-bottom: 15px;">
@@ -542,7 +545,7 @@
             mrblue: { "월요일": [], "화요일": [], "수요일": [], "목요일": [], "금요일": [], "토요일": [], "일요일": [], "10일 연재": [] }
         };
 
-        let isBomtoonFirst = localStorage.getItem('isBomtoonFirst') !== 'false';
+        let platformOrder = JSON.parse(localStorage.getItem('platformOrder')) || ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
 
         window.onload = function () {
             loadAllData(); applyTheme(); checkSaleDays(); checkAttendanceReset();
@@ -567,13 +570,47 @@
 
         function openNav() { checkStorage(); document.getElementById("side-nav").style.display = "flex"; }
         function closeNav() { document.getElementById("side-nav").style.display = "none"; }
+
         function handleMenuAction(type, value) {
-            if (type === 'toggleOrder') { isBomtoonFirst = !isBomtoonFirst; localStorage.setItem('isBomtoonFirst', isBomtoonFirst); updatePlatformOrder(); }
+            if (type === 'toggleOrder') {
+                changePlatformOrder();
+            }
             else if (type === 'darkMode') { toggleDarkMode(); }
             else if (type === 'day') { changeDay(value); }
             closeNav();
         }
 
+        // 🌟 1. 온오프 & 순서 변경 기능 (1개~4개 내 맘대로 입력!)
+        function changePlatformOrder() {
+            const input = prompt("사용할 플랫폼과 순서를 정해주세요!\n\n[1] 레진 [2] 봄툰 [3] 리디 [4] 미블\n\n사용할 플랫폼의 숫자만 원하는 순서대로 입력하세요.\n(예: 레진, 리디만 쓰면 👉 13)");
+
+            if (!input) return;
+
+            // 4개가 아니라 1~4개 자유롭게 입력 가능!
+            if (input.length < 1 || input.length > 4) {
+                alert("❌ 최소 1개에서 최대 4개의 숫자를 입력해주세요!");
+                return;
+            }
+
+            const map = { '1': 'lezhin', '2': 'bomtoon', '3': 'ridi', '4': 'mrblue' };
+            const newOrder = [];
+
+            for (let char of input) {
+                if (!map[char] || newOrder.includes(map[char])) {
+                    alert("❌ 1부터 4까지의 숫자를 한 번씩만 중복 없이 입력해주세요!");
+                    return;
+                }
+                newOrder.push(map[char]);
+            }
+
+            localStorage.setItem('platformOrder', JSON.stringify(newOrder));
+            platformOrder = newOrder;
+
+            // 바뀐 설정으로 화면 즉시 새로고침!
+            updatePlatformOrder();
+            renderAll();
+            alert("설정 완료! 선택하신 플랫폼만 화면에 표시되며 정산됩니다!");
+        }
 
         function openCalcModal() {
             closeNav();
@@ -637,7 +674,7 @@
             // 플랫폼별 단위와 맞춤 색상 세팅
             let unit = 'C'; let color = '#e60012'; // 레진, 봄툰 (기본 빨강)
             if (plt === 'cash') { unit = '캐시'; color = '#1e90ff'; } // 리디 (블루)
-            else if (plt === 'won') { unit = '원'; color = '#004e9a'; } // 미블 (네이비)
+            else if (plt === 'won') { unit = '머니'; color = '#004e9a'; } // 미블 (네이비)
 
             // 결과 적용 (쉼표 포맷팅 + 맞춤 단위 글씨 + 맞춤 색상)
             document.getElementById('calc-remain-ep').textContent = formatNum(remainEp);
@@ -667,37 +704,38 @@
             document.getElementById('calc-result-box').style.display = 'block';
         }
 
-        let pendingDeductions = { lezhin: [], bomtoon: [] };
+        // 🌟 [통합 정산 시스템] 4개 플랫폼 담을 바구니 완벽 준비!
+        let pendingDeductions = { lezhin: [], bomtoon: [], ridi: [], mrblue: [] };
         let pendingDaysStr = "";
         let isTodayDeduction = false;
 
-
         function deductToday() {
             closeNav();
-
             const webtoonDate = getWebtoonDate();
             const nowStr = formatDate(webtoonDate);
             let last = localStorage.getItem('lastCheckDate');
 
-
             if (last && last > nowStr) {
-                alert("이미 당일 정산을 완료했습니다! 내일 다시 만나요! ");
+                alert("이미 당일 정산을 완료했습니다! 내일 다시 만나요!");
                 return;
             }
 
             isTodayDeduction = true;
-            pendingDeductions = { lezhin: [], bomtoon: [] };
+            pendingDeductions = { lezhin: [], bomtoon: [], ridi: [], mrblue: [] };
             pendingDaysStr = "오늘";
             const todayObj = getWebtoonDate();
             const d = days[todayObj.getDay()];
 
-            (state.lezhin[d] || []).forEach((w, i) => { if (!isWorkOnBreak(w)) pendingDeductions.lezhin.push({ day: d, idx: i, work: w }); });
-            (state.bomtoon[d] || []).forEach((w, i) => { if (!isWorkOnBreak(w)) pendingDeductions.bomtoon.push({ day: d, idx: i, work: w }); });
-            (state.lezhin["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)) pendingDeductions.lezhin.push({ day: "10일 연재", idx: i, work: w }); });
-            (state.bomtoon["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)) pendingDeductions.bomtoon.push({ day: "10일 연재", idx: i, work: w }); });
+            // 🎯 [핵심] platformOrder(사용자가 켠 플랫폼)만 순회합니다!
+            platformOrder.forEach(plt => {
+                (state[plt][d] || []).forEach((w, i) => { if (!isWorkOnBreak(w)) pendingDeductions[plt].push({ day: d, idx: i, work: w }); });
+                (state[plt]["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)) pendingDeductions[plt].push({ day: "10일 연재", idx: i, work: w }); });
+            });
 
-            if (pendingDeductions.lezhin.length === 0 && pendingDeductions.bomtoon.length === 0) {
-                alert("오늘은 정산할 연재 작품이 없습니다! 편안히 쉬세요!"); isTodayDeduction = false; return;
+            // 켠 플랫폼 중에 오늘 볼 작품이 하나도 없으면 알림
+            const hasWorks = platformOrder.some(plt => pendingDeductions[plt].length > 0);
+            if (!hasWorks) {
+                alert("오늘은 정산할 연재 작품이 없습니다! 편안히 쉬세요! ☕"); isTodayDeduction = false; return;
             }
             showDeductionModal();
         }
@@ -708,21 +746,30 @@
 
             const dayOfWeek = webtoonDate.getDay(); const mondayDate = new Date(webtoonDate); mondayDate.setDate(webtoonDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
             const weekStr = formatDate(mondayDate);
-            if (localStorage.getItem('currentWeekStr') !== weekStr) { localStorage.setItem('currentWeekStr', weekStr); localStorage.setItem('weeklySpent', 0); }
+
+            if (localStorage.getItem('currentWeekStr') !== weekStr) {
+                localStorage.setItem('currentWeekStr', weekStr);
+                localStorage.setItem('weeklySpent', 0);
+                localStorage.setItem('weeklySpentWon', 0);
+            }
 
             if (last < nowStr) {
                 let checkParts = last.split('-'); let check = new Date(checkParts[0], checkParts[1] - 1, checkParts[2]);
-                pendingDeductions = { lezhin: [], bomtoon: [] }; let ds = [];
+                pendingDeductions = { lezhin: [], bomtoon: [], ridi: [], mrblue: [] }; let ds = [];
 
                 while (formatDate(check) < nowStr) {
                     let d = days[check.getDay()]; if (!ds.includes(d)) ds.push(d);
-                    (state.lezhin[d] || []).forEach((w, i) => { if (!isWorkOnBreak(w)) pendingDeductions.lezhin.push({ day: d, idx: i, work: w }); });
-                    (state.bomtoon[d] || []).forEach((w, i) => { if (!isWorkOnBreak(w)) pendingDeductions.bomtoon.push({ day: d, idx: i, work: w }); });
-                    (state.lezhin["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, check)) pendingDeductions.lezhin.push({ day: "10일 연재", idx: i, work: w }); });
-                    (state.bomtoon["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, check)) pendingDeductions.bomtoon.push({ day: "10일 연재", idx: i, work: w }); });
+
+                    // 🎯 [핵심] 여기서도 켠 플랫폼만 밀린 정산 체크!
+                    platformOrder.forEach(plt => {
+                        (state[plt][d] || []).forEach((w, i) => { if (!isWorkOnBreak(w)) pendingDeductions[plt].push({ day: d, idx: i, work: w }); });
+                        (state[plt]["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, check)) pendingDeductions[plt].push({ day: "10일 연재", idx: i, work: w }); });
+                    });
                     check.setDate(check.getDate() + 1);
                 }
-                if (pendingDeductions.lezhin.length > 0 || pendingDeductions.bomtoon.length > 0) {
+
+                const hasWorks = platformOrder.some(plt => pendingDeductions[plt].length > 0);
+                if (hasWorks) {
                     pendingDaysStr = ds.join(', '); showDeductionModal(); return;
                 } else {
                     localStorage.setItem('lastCheckDate', nowStr);
@@ -733,22 +780,30 @@
 
         function showDeductionModal() {
             const listEl = document.getElementById('deduction-list'); listEl.innerHTML = '';
-            let popupMsg = isTodayDeduction ? `오늘(${pendingDaysStr}) 볼 웹툰을 미리 정산할까요?` : `어제(${pendingDaysStr}) 본 웹툰 정산을 진행할까요?`;
+
+            let popupMsg = isTodayDeduction ? `오늘(${pendingDaysStr}) 볼 작품을 미리 정산할까요?` : `어제(${pendingDaysStr}) 본 작품 정산을 진행할까요?`;
             const todayDate = getKSTDate().getDate();
-            if (todayDate === 20) popupMsg += `<br><span style="color:#e60012; font-size:12px; font-weight:bold;">(💡앗! 오늘 레진 20일 할인 날이에요!)</span>`;
-            if (todayDate === 22) popupMsg += `<br><span style="color:#ff69b4; font-size:12px; font-weight:bold;">(💡앗! 오늘 봄툰 22일 할인 날이에요!)</span>`;
+            // 할인일 알림도 켠 플랫폼만 뜨게 예외 처리!
+            if (todayDate === 20 && platformOrder.includes('lezhin')) popupMsg += `<br><span style="color:#e60012; font-size:12px; font-weight:bold;">(💡앗! 오늘 레진 20일 할인 날이에요!)</span>`;
+            if (todayDate === 22 && platformOrder.includes('bomtoon')) popupMsg += `<br><span style="color:#ff69b4; font-size:12px; font-weight:bold;">(💡앗! 오늘 봄툰 22일 할인 날이에요!)</span>`;
             document.getElementById('deduction-msg').innerHTML = popupMsg;
 
-            ['lezhin', 'bomtoon'].forEach(plt => {
+            // 🎯 [핵심] 정산 팝업 리스트도 켠 플랫폼만!
+            platformOrder.forEach(plt => {
                 pendingDeductions[plt].forEach((item, i) => {
-                    const pltName = plt === 'lezhin' ? '레진' : '봄툰'; const color = plt === 'lezhin' ? '#e60012' : '#ff69b4';
+                    let pltName = '', color = '', unit = 'C';
+                    if (plt === 'lezhin') { pltName = '레진'; color = '#e60012'; }
+                    else if (plt === 'bomtoon') { pltName = '봄툰'; color = '#ff69b4'; }
+                    else if (plt === 'ridi') { pltName = '리디'; color = '#1e90ff'; unit = '캐시'; }
+                    else if (plt === 'mrblue') { pltName = '미블'; color = '#004e9a'; unit = '원'; }
+
                     const div = document.createElement('div');
                     div.style.display = 'flex'; div.style.justifyContent = 'space-between'; div.style.marginBottom = '8px'; div.style.fontSize = '14px';
                     div.innerHTML = `
                         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; width:100%;">
                             <input type="checkbox" id="deduct-chk-${plt}-${i}" checked style="width:16px; height:16px; margin:0;">
                             <span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">[${pltName}] ${item.work.title}</span>
-                            <span style="color:${color}; font-weight:bold;">${item.work.coin}C</span>
+                            <span style="color:${color}; font-weight:bold;">${item.work.coin} ${unit}</span>
                         </label>`;
                     listEl.appendChild(div);
                 });
@@ -756,35 +811,44 @@
             document.getElementById('deduction-modal').style.display = 'flex';
         }
 
-        function closeDeductionModal() { document.getElementById('deduction-modal').style.display = 'none'; isTodayDeduction = false; }
-
         function processDeduction() {
-            let tL = 0, tB = 0;
-            ['lezhin', 'bomtoon'].forEach(plt => {
+            let tL = 0, tB = 0, tR = 0, tM = 0;
+            // 🎯 [핵심] 실제 정산 계산도 켠 플랫폼만!
+            platformOrder.forEach(plt => {
                 pendingDeductions[plt].forEach((item, i) => {
                     const chk = document.getElementById(`deduct-chk-${plt}-${i}`);
                     if (chk && chk.checked) {
-                        if (plt === 'lezhin') tL += (parseInt(item.work.coin) || 0);
-                        if (plt === 'bomtoon') tB += (parseInt(item.work.coin) || 0);
+                        const coinVal = parseInt(item.work.coin) || 0;
+                        if (plt === 'lezhin') tL += coinVal;
+                        else if (plt === 'bomtoon') tB += coinVal;
+                        else if (plt === 'ridi') tR += coinVal;
+                        else if (plt === 'mrblue') tM += coinVal;
                     }
                 });
             });
 
-            if (tL > 0 || tB > 0) {
+            if (tL > 0 || tB > 0 || tR > 0 || tM > 0) {
                 localStorage.setItem('lWallet', parseInt(localStorage.getItem('lWallet') || 0) - tL);
                 localStorage.setItem('bWallet', parseInt(localStorage.getItem('bWallet') || 0) - tB);
-                addWeeklySpent(tL + tB); saveData();
+                localStorage.setItem('rWallet', parseInt(localStorage.getItem('rWallet') || 0) - tR);
+                localStorage.setItem('mWallet', parseInt(localStorage.getItem('mWallet') || 0) - tM);
 
+                const addedWon = tR + tM;
+                addWeeklySpent(tL + tB, addedWon);
 
-                alert(`총 ${tL + tB}코인이 성공적으로 정산되었습니다!`);
+                saveData();
+
+                let msg = "🎉 성공적으로 정산되었습니다!\n";
+                if (tL + tB > 0) msg += `- 코인 차감: ${tL + tB} C\n`;
+                if (tR > 0) msg += `- 리디 차감: ${tR} 캐시\n`;
+                if (tM > 0) msg += `- 미블 차감: ${tM} 원\n`;
+
+                alert(msg);
             } else {
-
-                alert("선택된 작품이 없어 코인이 차감되지 않았습니다.");
+                alert("선택된 작품이 없어 정산되지 않았습니다.");
             }
             finishDeduction();
         }
-
-
 
         function skipDeduction() {
             if (confirm("정말 오늘의 정산을 모두 건너뛰시겠습니까? (클릭하면 오늘 모든 작품 코인이 정산되지 않습니다.)")) {
@@ -868,26 +932,74 @@
         function updateAttendUI() { const lAttend = localStorage.getItem('lezhinAttend') === 'true'; const bAttend = localStorage.getItem('bomtoonAttend') === 'true'; const lBtn = document.getElementById('lezhin-attend-btn'); const bBtn = document.getElementById('bomtoon-attend-btn'); if (lAttend) { lBtn.classList.add('done'); lBtn.textContent = ' 출석완료'; } else { lBtn.classList.remove('done'); lBtn.textContent = '레진 출석 전'; } if (bAttend) { bBtn.classList.add('done'); bBtn.textContent = ' 출석완료'; } else { bBtn.classList.remove('done'); bBtn.textContent = '봄툰 출석 전'; } }
         function checkAttendance(plt) { localStorage.setItem(plt + 'Attend', 'true'); updateAttendUI(); }
 
+        // 데이터 불러오기 (리디/미블 지갑, 순서, 통계 추가!) //
         function loadAllData() {
             const data = localStorage.getItem(STORAGE_KEY);
             if (data) {
                 const p = JSON.parse(data); state = p.state || state;
-                // 레진, 봄툰, 리디, 미블 4개 모두 순회하도록 변경
                 ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
                     if (!state[plt]) state[plt] = { "월요일": [], "화요일": [], "수요일": [], "목요일": [], "금요일": [], "토요일": [], "일요일": [], "10일 연재": [] };
                     if (!state[plt]["10일 연재"]) state[plt]["10일 연재"] = [];
                     Object.keys(state[plt]).forEach(d => { state[plt][d] = state[plt][d].map(w => ({ ...w, status: w.status || '연재중', cycle: w.cycle || '' })); });
                 });
-                localStorage.setItem('lWallet', p.lWallet || 0); localStorage.setItem('bWallet', p.bWallet || 0);
+
+                localStorage.setItem('lWallet', p.lWallet || 0);
+                localStorage.setItem('bWallet', p.bWallet || 0);
+                localStorage.setItem('rWallet', p.rWallet || 0);
+                localStorage.setItem('mWallet', p.mWallet || 0);
+
+                if (p.platformOrder) {
+                    platformOrder = p.platformOrder;
+                    localStorage.setItem('platformOrder', JSON.stringify(platformOrder));
+                }
+                if (p.weeklySpent !== undefined) localStorage.setItem('weeklySpent', p.weeklySpent);
+                if (p.weeklySpentWon !== undefined) localStorage.setItem('weeklySpentWon', p.weeklySpentWon);
             }
         }
+// 🌟 2. 데이터 저장하기 (새로운 데이터들도 봉투에 쏙!)
+        function saveData() {
+            const d = {
+                state: state,
+                lWallet: localStorage.getItem('lWallet') || 0,
+                bWallet: localStorage.getItem('bWallet') || 0,
+                rWallet: localStorage.getItem('rWallet') || 0,
+                mWallet: localStorage.getItem('mWallet') || 0,
+                theme: localStorage.getItem('theme') || 'light',
+                platformOrder: platformOrder,
+                weeklySpent: localStorage.getItem('weeklySpent') || 0,
+                weeklySpentWon: localStorage.getItem('weeklySpentWon') || 0
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+            renderAll(); checkStorage();
+        }
 
-        function saveData() { const d = { state: state, lWallet: localStorage.getItem('lWallet') || 0, bWallet: localStorage.getItem('bWallet') || 0, theme: localStorage.getItem('theme') || 'light' }; localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); renderAll(); checkStorage(); }
         function toggleDarkMode() { const isDark = document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); updateDarkModeBtn(); }
         function applyTheme() { if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode'); updateDarkModeBtn(); }
         function updateDarkModeBtn() { const isDark = document.body.classList.contains('dark-mode'); const btn = document.getElementById('menu-dark-mode-btn'); if (btn) btn.textContent = isDark ? "라이트 모드" : "다크 모드"; }
         function changeDay(day) { viewDay = day; renderAll(); }
-        function updatePlatformOrder() { const l = document.getElementById('lezhin-section'); const b = document.getElementById('bomtoon-section'); const p = document.getElementById('main-content-area'); if (l && b && p) { if (isBomtoonFirst) p.insertBefore(b, l); else p.insertBefore(l, b); } }
+
+        function updatePlatformOrder() {
+            const container = document.getElementById('main-content-area');
+            if (!container) return;
+
+            // 1. 먼저 4개 플랫폼을 싹 다 확인해서, 비밀번호에 안 적힌 녀석들은 화면에서 끕니다!
+            const allPlats = ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
+            allPlats.forEach(plt => {
+                if (!platformOrder.includes(plt)) {
+                    const section = document.getElementById(plt + '-section');
+                    if (section) section.style.display = 'none';
+                }
+            });
+
+            
+            platformOrder.forEach(plt => {
+                const section = document.getElementById(plt + '-section');
+                if (section) {
+                    section.style.display = ''; // 다시 보이게 켜주고
+                    container.appendChild(section); // 정해진 순서대로 밑으로 착착착 이동!
+                }
+            });
+        }
 
         function renderAll() {
             ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
@@ -901,6 +1013,7 @@
         }
 
         let draggedIdx = null; let draggedPlt = null; let draggedDay = null;
+
         function renderList(platform) {
             const listEl = document.getElementById(`${platform}-list`); listEl.innerHTML = ''; let displayWorks = [];
             const todayObj = getWebtoonDate();
@@ -908,16 +1021,13 @@
             if (viewDay === '휴재' || viewDay === '완결') {
                 Object.keys(state[platform]).forEach(d => {
                     (state[platform][d] || []).forEach((work, idx) => {
-
                         if (work.status === viewDay || (viewDay === '휴재' && isWorkOnBreak(work) && work.status !== '완결')) displayWorks.push({ ...work, origDay: d, origIdx: idx });
                     });
                 });
             } else if (viewDay === '10일 연재') {
                 (state[platform]["10일 연재"] || []).forEach((work, idx) => { displayWorks.push({ ...work, origDay: "10일 연재", origIdx: idx }); });
             } else {
-
                 (state[platform][viewDay] || []).forEach((work, idx) => { displayWorks.push({ ...work, origDay: viewDay, origIdx: idx }); });
-
 
                 if (viewDay === days[todayObj.getDay()]) {
                     (state[platform]["10일 연재"] || []).forEach((work, idx) => {
@@ -931,10 +1041,6 @@
             displayWorks.forEach((work) => {
                 const hasImg = work.img && work.img !== ""; let statusBadge = "";
                 let isBreak = isWorkOnBreak(work);
-
-                if (work.isToday10Day || (viewDay === '10일 연재' && isDateMatch(work.cycle, todayObj))) {
-
-                }
 
                 if (viewDay !== '휴재' && viewDay !== '완결') {
                     if (work.status === '휴재') statusBadge = `<span style="position: absolute; top: 5px; left: 5px; background: #e67e22; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">[휴재]</span>`;
@@ -951,9 +1057,12 @@
 
                 if (viewDay !== '휴재' && viewDay !== '완결') { card.draggable = true; card.dataset.idx = work.origIdx; card.dataset.plt = platform; card.dataset.day = work.origDay; card.addEventListener('dragstart', handleDragStart); card.addEventListener('dragover', handleDragOver); card.addEventListener('dragenter', handleDragEnter); card.addEventListener('dragleave', handleDragLeave); card.addEventListener('drop', handleDrop); card.addEventListener('dragend', handleDragEnd); }
 
-
                 let isStrike = (work.status !== '연재중' || isBreak);
 
+                // 🌟 [신규 핵심 로직!] 플랫폼에 따라 화폐 단위 카멜레온처럼 바꾸기!
+                let unit = 'C'; // 기본은 레진, 봄툰의 코인(C)
+                if (platform === 'ridi') unit = '캐시';       // 리디면 캐시!
+                else if (platform === 'mrblue') unit = '머니';  // 미블이면 원!
 
                 const hasUrl = work.url && work.url.trim() !== "";
                 const imgOnClick = hasUrl ? `onclick="window.open('${work.url}', '_blank')"` : "";
@@ -970,7 +1079,8 @@
                         ${cycleTag}
                         <p class="title" style="margin-top: ${work.cycle ? '2px' : '0'};">${work.title}</p>
                         <div class="card-bottom-row">
-                            <p class="coin" style="${isStrike ? 'text-decoration: line-through; color: #ccc;' : ''}; margin-bottom:0;">${work.coin} C</p>
+                            <p class="coin" style="${isStrike ? 'text-decoration: line-through; color: #ccc;' : ''}; margin-bottom:0;">${work.coin} ${unit}</p>
+                            
                             <div class="quick-btn-group">
                                 <button class="quick-btn" onclick="event.stopPropagation(); incrementProgress('${platform}', '${work.origDay}', ${work.origIdx})">+1화</button>
                                 ${work.cycle && !work.cycle.includes('10일 연재') && !work.cycle.includes('격주 연재') ? `<button class="quick-btn" onclick="event.stopPropagation(); incrementCycle('${platform}', '${work.origDay}', ${work.origIdx})">+1주</button>` : ''}
@@ -1120,6 +1230,7 @@
 
         function removeSelectedImage() { tempImg = ""; document.getElementById('image-input').value = ""; document.getElementById('image-status-text').textContent = "📷 사진이 삭제되었습니다."; document.getElementById('image-status-text').style.color = "#e60012"; document.getElementById('remove-img-btn').style.display = 'none'; }
 
+        // 1. 작품 상세 수정 창 열기 (단위 자동 변경 적용!)
         function editFromAction() {
             closeActionModal(); editMode = true; currentPlatform = actionPlt;
             const work = state[actionPlt][actionOrigDay][actionIdx];
@@ -1127,7 +1238,6 @@
             document.getElementById('input-title').value = work.title;
             document.getElementById('input-url').value = work.url || '';
             let savedCyc = work.cycle || ""; let cType = ""; let cWeek = "";
-
 
             if (savedCyc) {
                 if (savedCyc.includes("10일 연재") || savedCyc.includes("격주 연재")) {
@@ -1151,6 +1261,16 @@
             document.getElementById('input-cycle-week').value = cWeek;
             toggleWeekInput();
 
+            // 플랫폼에 맞춰서 입력칸 배경 글씨(Placeholder) 바꾸기!
+            const coinInput = document.getElementById('input-coin');
+            if (actionPlt === 'ridi') {
+                coinInput.placeholder = "예: 600 (캐시)";
+            } else if (actionPlt === 'mrblue') {
+                coinInput.placeholder = "예: 500 (머니)";
+            } else {
+                coinInput.placeholder = "예: 3 (코인)";
+            }
+
             document.getElementById('input-coin').value = work.coin;
             document.getElementById('input-progress').value = work.progress;
             document.getElementById('input-day').value = actionOrigDay;
@@ -1163,15 +1283,41 @@
             document.getElementById('custom-modal').style.display = 'flex';
         }
 
+
+        // 새 작품 추가 창 열기 (단위 자동 변경 적용!)
         function openAddModal(platform) {
             editMode = false; currentPlatform = platform; tempImg = "";
-            document.getElementById('modal-title-label').textContent = "작품 추가"; document.getElementById('input-title').value = '';
+            document.getElementById('modal-title-label').textContent = "작품 추가";
+            document.getElementById('input-title').value = '';
             document.getElementById('input-url').value = '';
-            document.getElementById('input-cycle-type').value = ''; document.getElementById('input-cycle-week').value = ''; toggleWeekInput(); document.getElementById('input-coin').value = '3'; document.getElementById('input-progress').value = '1화'; document.getElementById('input-day').value = (viewDay === '휴재' || viewDay === '완결') ? days[getWebtoonDate().getDay()] : viewDay; document.getElementById('input-status').value = (viewDay === '휴재' || viewDay === '완결') ? viewDay : '연재중';
-            document.getElementById('image-input').value = ""; document.getElementById('image-status-text').textContent = "📷 사진은 선택 사항입니다."; document.getElementById('image-status-text').style.color = "#888";
+            document.getElementById('input-cycle-type').value = '';
+            document.getElementById('input-cycle-week').value = '';
+            toggleWeekInput();
+
+            // 추가할 때도 플랫폼에 맞춰 예시와 기본값 세팅!
+            const coinInput = document.getElementById('input-coin');
+            if (platform === 'ridi') {
+                coinInput.placeholder = "예: 600 (캐시)";
+                document.getElementById('input-coin').value = '300';
+            } else if (platform === 'mrblue') {
+                coinInput.placeholder = "예: 500 (머니)";
+                document.getElementById('input-coin').value = '300'; // 미블은 원 단위라 300 기본 입력 센스!
+            } else {
+                coinInput.placeholder = "예: 3 (코인)";
+                document.getElementById('input-coin').value = '3';
+            }
+
+            document.getElementById('input-progress').value = '1화';
+            document.getElementById('input-day').value = (viewDay === '휴재' || viewDay === '완결') ? days[getWebtoonDate().getDay()] : viewDay;
+            document.getElementById('input-status').value = (viewDay === '휴재' || viewDay === '완결') ? viewDay : '연재중';
+            document.getElementById('image-input').value = "";
+            document.getElementById('image-status-text').textContent = "📷 사진은 선택 사항입니다.";
+            document.getElementById('image-status-text').style.color = "#888";
             document.getElementById('remove-img-btn').style.display = 'none';
             document.getElementById('custom-modal').style.display = 'flex';
         }
+
+        
 
         function closeAddModal() { document.getElementById('custom-modal').style.display = 'none'; }
 
@@ -1187,7 +1333,7 @@
                 if (cType === "10일 연재" || cType === "격주 연재") {
                     cycleStr = cWeek ? `${cType} (${cWeek})` : cType;
                 } else if (cType === "매월 특정주 휴재") {
-                    // 👉 cWeek(주차 숫자)가 있으면 정상 저장, 만약 유저가 안 적었으면 타입 이름만 저장해서 에러 방지!
+
                     cycleStr = cWeek ? `매월 ${cWeek}주차 휴재` : "매월 특정주 휴재";
                 } else if (cWeek) {
                     cycleStr = `${cType} ${cWeek}주차`;
@@ -1282,8 +1428,26 @@
                 saveData();
             }
         }
+
         function checkStorage() { const used = encodeURIComponent(JSON.stringify(localStorage)).length; const limit = 5 * 1024 * 1024; const percent = Math.min(Math.round((used / limit) * 100), 100); const pEl = document.getElementById('storage-percent'); const fEl = document.getElementById('storage-bar-fill'); if (pEl) pEl.textContent = percent; if (fEl) fEl.style.width = percent + '%'; }
-        function exportDataToFile() { const d = localStorage.getItem(STORAGE_KEY); if (!d) return alert("백업할 데이터가 없습니다!"); const date = getKSTDate(); const dateString = date.getFullYear() + String(date.getMonth() + 1).padStart(2, '0') + String(date.getDate()).padStart(2, '0'); const fileName = `mobo_backup_${dateString}.txt`; const blob = new Blob([d], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = fileName; a.click(); URL.revokeObjectURL(url); localStorage.setItem('lastBackupDate', Date.now()); checkBackupStatus(); alert("✅ 백업 파일 다운로드 완료!"); }
+
+        // 파일로 내보내기 (다운로드 직전에 한 번 더 꽉 묶어주기!)
+        function exportDataToFile() {
+            saveData(); 
+            const d = localStorage.getItem(STORAGE_KEY);
+            if (!d) return alert("백업할 데이터가 없습니다!");
+            const date = getKSTDate();
+            const dateString = date.getFullYear() + String(date.getMonth() + 1).padStart(2, '0') + String(date.getDate()).padStart(2, '0');
+            const fileName = `mobo_backup_${dateString}.txt`;
+            const blob = new Blob([d], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = fileName; a.click();
+            URL.revokeObjectURL(url);
+            localStorage.setItem('lastBackupDate', Date.now());
+            checkBackupStatus();
+            alert("✅ 백업 파일 다운로드 완료!");
+        }
 
         function triggerImport() {
             // 파일 선택창을 열기 전에 기존 기록을 지워서 브라우저가 무조건 인식하게 만들기!
@@ -1320,15 +1484,30 @@
         }
 
         function checkBackupStatus() { const lastBackup = localStorage.getItem('lastBackupDate'); const alertEl = document.getElementById('backup-alert'); if (!lastBackup || (Date.now() - parseInt(lastBackup)) / 86400000 >= 7) alertEl.style.display = 'block'; else alertEl.style.display = 'none'; }
+
+        // 주간 누적 통계 UI 업데이트 (코인 색상 파란색으로 통일!)
         function updateWeeklyStatUI() {
-            document.getElementById('weekly-spent-val').textContent = formatNum(localStorage.getItem('weeklySpent') || 0);
+            const coinSpent = formatNum(localStorage.getItem('weeklySpent') || 0);
+            const wonSpent = formatNum(localStorage.getItem('weeklySpentWon') || 0);
+
+            const el = document.getElementById('weekly-spent-val');
+            if (el) {
+
+                el.innerHTML = `<span style="color:#004e9a; font-weight:bold;">${coinSpent} C</span> <span style="color:#ccc; margin:0 6px;">|</span> <span style="color:#004e9a; font-weight:bold;">${wonSpent} 원</span>`;
+            }
         }
-        function addWeeklySpent(amount) { localStorage.setItem('weeklySpent', parseInt(localStorage.getItem('weeklySpent') || 0) + amount); updateWeeklyStatUI(); }
+
+        // 누적 금액 더하는 로직
+        function addWeeklySpent(coinAmount, wonAmount = 0) {
+            localStorage.setItem('weeklySpent', parseInt(localStorage.getItem('weeklySpent') || 0) + coinAmount);
+            localStorage.setItem('weeklySpentWon', parseInt(localStorage.getItem('weeklySpentWon') || 0) + wonAmount);
+            updateWeeklyStatUI();
+        }
+
         function initScroll() { document.querySelectorAll('.scroll-wrapper').forEach(wrapper => { const list = wrapper.querySelector('.webtoon-list'); wrapper.querySelector('.left-btn').onclick = () => list.scrollBy({ left: -160, behavior: 'smooth' }); wrapper.querySelector('.right-btn').onclick = () => list.scrollBy({ left: 160, behavior: 'smooth' }); }); }
         function closeAttendWarning() { document.getElementById('attend-warning-modal').style.display = 'none'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
         function deleteFromAction() { if (confirm("이 작품을 영구 삭제할까요?")) { state[actionPlt][actionOrigDay].splice(actionIdx, 1); saveData(); closeActionModal(); } }
-    </script>
-    <script>
+    
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -1354,7 +1533,7 @@
         function performSearch() {
             const query = document.getElementById('search-input').value.trim().toLowerCase();
             const listEl = document.getElementById('search-result-list');
-            listEl.innerHTML = ''; // 기존 결과 지우기
+            listEl.innerHTML = '';
 
             if (!query) {
                 listEl.innerHTML = '<p style="text-align:center; color:#888; font-size:14px;">검색어를 입력해주세요.</p>';
@@ -1362,11 +1541,10 @@
             }
 
             let foundWorks = [];
-            // 레진, 봄툰의 모든 요일을 싹 다 뒤집니다!
-            ['lezhin', 'bomtoon'].forEach(plt => {
+            // 검색도 켠 플랫폼(platformOrder) 안에서만!
+            platformOrder.forEach(plt => {
                 Object.keys(state[plt]).forEach(day => {
                     (state[plt][day] || []).forEach((work, idx) => {
-                        // 제목에 검색어가 포함되어 있으면 배열에 쏙!
                         if (work.title.toLowerCase().includes(query)) {
                             foundWorks.push({ plt, day, idx, work });
                         }
@@ -1379,10 +1557,13 @@
                 return;
             }
 
-            // 찾은 작품들을 예쁘게 리스트로 그려주기
             foundWorks.forEach(item => {
-                const pltName = item.plt === 'lezhin' ? '레진' : '봄툰';
-                const color = item.plt === 'lezhin' ? '#e60012' : '#ff69b4';
+                let pltName = '', color = '';
+                if (item.plt === 'lezhin') { pltName = '레진'; color = '#e60012'; }
+                else if (item.plt === 'bomtoon') { pltName = '봄툰'; color = '#ff69b4'; }
+                else if (item.plt === 'ridi') { pltName = '리디'; color = '#1e90ff'; }
+                else if (item.plt === 'mrblue') { pltName = '미블'; color = '#004e9a'; }
+
                 const div = document.createElement('div');
                 div.style.borderBottom = '1px solid #eee';
                 div.style.padding = '10px 0';

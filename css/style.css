@@ -1005,9 +1005,30 @@ body.dark-mode .highlight-result-mrblue {
     background-color: #1e90ff;
 }
 
-/* 리디 (블루) */
+
 #mrblue-sale-badge {
     background-color: #004e9a;
 }
 
-/* 미블 (네이비) */
+/* 지갑 영역 중앙선 철벽 방어! (글씨 길이에 상관없이 무조건 50:50 고정) */
+.wallet-item {
+    flex: 1 !important;
+    /* 양쪽 비율을 무조건 1:1로 고정! */
+    width: 50% !important;
+    /* 억지로 밀어내지 못하게 50% 못 박기! */
+    box-sizing: border-box;
+    /* 여백까지 계산해서 딱 맞추기! */
+}
+
+/* 🌟 출석/이벤트 버튼 가로로 쫙 늘어나는 현상 방지! */
+.attend-btn {
+    width: fit-content !important;
+    /* 글씨 길이에 딱 맞게 사이즈 줄여! */
+    min-width: 90px !important;
+    /* 그래도 너무 옹졸해 보이지 않게 최소 크기 유지! */
+    padding: 6px 16px !important;
+    /* 좌우로 통통하고 예쁜 여백 주기! */
+    margin: 0 auto !important;
+    /* 상자 한가운데로 예쁘게 정렬! */
+    margin-top: 16px !important;
+}
