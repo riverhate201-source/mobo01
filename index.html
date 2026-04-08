@@ -438,6 +438,21 @@
 
     <script>
 
+        function applyTheme() { 
+    const savedTheme = localStorage.getItem('theme');
+    
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+    } else if (savedTheme === 'light') {
+        document.body.classList.remove('dark-mode');
+    } else {
+        // 저장된 설정이 없으면 시스템 설정을 확인!
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) document.body.classList.add('dark-mode');
+    }
+    updateDarkModeBtn(); 
+}
+
         // PC 환경 마우스 드래그로 지갑 넘기기 기능!
         window.addEventListener('DOMContentLoaded', () => {
             const slider = document.getElementById('wallet-slider');
@@ -873,8 +888,8 @@ function closeDeductionModal() {
         }
 
 
-        // 🌟 플랫폼별 할인/이벤트 날짜 체크 로직 (튼튼한 버전!)
-        // 🌟 플랫폼별 할인/이벤트 날짜 체크 로직 (겹침 완벽 대응!)
+        // 플랫폼별 할인/이벤트 날짜 체크 로직 (튼튼한 버전!)
+        // 플랫폼별 할인/이벤트 날짜 체크 로직 (겹침 완벽 대응!)
         function checkSaleDays() {
             const kst = getKSTDate();
             const date = kst.getDate();
@@ -892,7 +907,7 @@ function closeDeductionModal() {
 
             let hiddenEvents = [];
 
-            // 2. 🌟 리디 이벤트 체크 (십오야와 화요일이 겹칠 때를 계산!)
+            // 2. 리디 이벤트 체크 (십오야와 화요일이 겹칠 때를 계산!)
             const isSibo = (date >= 14 && date <= 21); // 십오야 기간인가?
             const isWeekly = (day === 2);              // 오늘이 화요일인가?
 
@@ -939,31 +954,51 @@ function closeDeductionModal() {
         function updateAttendUI() { const lAttend = localStorage.getItem('lezhinAttend') === 'true'; const bAttend = localStorage.getItem('bomtoonAttend') === 'true'; const lBtn = document.getElementById('lezhin-attend-btn'); const bBtn = document.getElementById('bomtoon-attend-btn'); if (lAttend) { lBtn.classList.add('done'); lBtn.textContent = ' 출석완료'; } else { lBtn.classList.remove('done'); lBtn.textContent = '레진 출석 전'; } if (bAttend) { bBtn.classList.add('done'); bBtn.textContent = ' 출석완료'; } else { bBtn.classList.remove('done'); bBtn.textContent = '봄툰 출석 전'; } }
         function checkAttendance(plt) { localStorage.setItem(plt + 'Attend', 'true'); updateAttendUI(); }
 
-        // 데이터 불러오기 (리디/미블 지갑, 순서, 통계 추가!) //
         function loadAllData() {
-            const data = localStorage.getItem(STORAGE_KEY);
-            if (data) {
-                const p = JSON.parse(data); state = p.state || state;
-                ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
-                    if (!state[plt]) state[plt] = { "월요일": [], "화요일": [], "수요일": [], "목요일": [], "금요일": [], "토요일": [], "일요일": [], "10일 연재": [] };
-                    if (!state[plt]["10일 연재"]) state[plt]["10일 연재"] = [];
-                    Object.keys(state[plt]).forEach(d => { state[plt][d] = state[plt][d].map(w => ({ ...w, status: w.status || '연재중', cycle: w.cycle || '' })); });
-                });
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) {
+        const p = JSON.parse(data); 
+        state = p.state || state;
 
-                localStorage.setItem('lWallet', p.lWallet || 0);
-                localStorage.setItem('bWallet', p.bWallet || 0);
-                localStorage.setItem('rWallet', p.rWallet || 0);
-                localStorage.setItem('mWallet', p.mWallet || 0);
+        let migratedCount = 0; // 👻 성불시킨 유령 수 체크
 
-                if (p.platformOrder) {
-                    platformOrder = p.platformOrder;
-                    localStorage.setItem('platformOrder', JSON.stringify(platformOrder));
-                }
-                if (p.weeklySpent !== undefined) localStorage.setItem('weeklySpent', p.weeklySpent);
-                if (p.weeklySpentWon !== undefined) localStorage.setItem('weeklySpentWon', p.weeklySpentWon);
-            }
+        ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
+            if (!state[plt]) state[plt] = { "월요일": [], "화요일": [], "수요일": [], "목요일": [], "금요일": [], "토요일": [], "일요일": [], "10일 연재": [] };
+            if (!state[plt]["10일 연재"]) state[plt]["10일 연재"] = [];
+            
+            Object.keys(state[plt]).forEach(d => { 
+                state[plt][d] = state[plt][d].map((w, idx) => {
+                    // 🌟 [핵심] ID가 없는 작품에 고유 주민번호 부여!
+                    if (!w.id) {
+                        w.id = Date.now().toString() + "_" + Math.random().toString(36).substr(2, 5);
+                        migratedCount++;
+                    }
+                    return { ...w, status: w.status || '연재중', cycle: w.cycle || '' };
+                }); 
+            });
+        });
+
+        // 유령을 성불시켰다면 즉시 저장해서 데이터 확정!
+        if (migratedCount > 0) {
+            console.log(`총 ${migratedCount}개의 작품에 새 ID를 부여했습니다.`);
+            saveData(); 
         }
-// 🌟 2. 데이터 저장하기 (새로운 데이터들도 봉투에 쏙!)
+
+        localStorage.setItem('lWallet', p.lWallet || 0);
+        localStorage.setItem('bWallet', p.bWallet || 0);
+        localStorage.setItem('rWallet', p.rWallet || 0);
+        localStorage.setItem('mWallet', p.mWallet || 0);
+
+        if (p.platformOrder) {
+            platformOrder = p.platformOrder;
+            localStorage.setItem('platformOrder', JSON.stringify(platformOrder));
+        }
+        if (p.weeklySpent !== undefined) localStorage.setItem('weeklySpent', p.weeklySpent);
+        if (p.weeklySpentWon !== undefined) localStorage.setItem('weeklySpentWon', p.weeklySpentWon);
+    }
+}
+
+// 2. 데이터 저장하기 (새로운 데이터들도 봉투에 쏙!)
         function saveData() {
             const d = {
                 state: state,
@@ -1751,6 +1786,29 @@ function closeDeductionModal() {
 
             saveData(); closeActionModal(); alert("플랫폼 이동이 완료되었습니다! 새 탭에서 확인해 보세요!");
         }
+
+        
+
+        // ==========================================
+// 🌟 [편의기능] 외부 영역(배경) 클릭 시 모든 창 닫기
+// ==========================================
+window.onclick = function(event) {
+    // 1. 일반 모달창들 (작품추가, 정산, 검색, 계산기 등)
+    if (event.target.classList.contains('modal-overlay')) {
+        event.target.style.display = 'none';
+        
+        // 정산 모달인 경우 '오늘 정산' 스위치 초기화
+        if(event.target.id === 'deduction-modal') {
+            isTodayDeduction = false;
+        }
+    }
+
+    // 2. 🌟 메뉴바 (사이드 네비게이션)
+    // 클릭한 곳이 메뉴바의 배경(nav-overlay)이라면 메뉴를 닫아줍니다.
+    if (event.target.classList.contains('nav-overlay')) {
+        closeNav(); // 기존에 만들어둔 메뉴 닫기 함수 호출!
+    }
+};
     </script>
 </body>
 
