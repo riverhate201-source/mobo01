@@ -1,0 +1,1013 @@
+@font-face {
+    font-family: 'OngleipParkDahyeon';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2411-3@1.0/Ownglyph_ParkDaHyun.woff2') format('woff2');
+}
+
+* {
+    font-family: 'OngleipParkDahyeon', sans-serif !important;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: #f4f6f8;
+    padding: 15px;
+    margin: 0;
+    color: #333;
+    transition: background-color 0.3s, color 0.3s;
+    overflow-x: hidden;
+}
+
+body.dark-mode {
+    background-color: #1a1a1b;
+    color: #e0e0e0;
+}
+
+.main-page-title {
+    text-align: center;
+    margin-top: 40px;
+    margin-bottom: 30px;
+    font-size: 28px;
+    line-height: 1.2;
+}
+
+
+.top-util-bar {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    z-index: 999;
+}
+
+.menu-btn {
+    background: none;
+    border: none;
+    font-size: 32px;
+    cursor: pointer;
+    color: #333;
+    transition: transform 0.2s;
+}
+
+body.dark-mode .menu-btn {
+    color: #fff;
+}
+
+.menu-btn:active {
+    transform: scale(0.9);
+}
+
+.nav-overlay {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: flex;
+    justify-content: flex-end;
+    backdrop-filter: blur(2px);
+}
+
+.nav-content {
+    width: 270px;
+    background: white;
+    height: 100%;
+    padding: 25px 20px;
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.3s ease-out;
+    overflow-y: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.nav-content::-webkit-scrollbar {
+    display: none;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+body.dark-mode .nav-content {
+    background: #2c2c2e;
+    color: white;
+}
+
+.nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.nav-header h3 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.close-btn {
+    font-size: 36px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #888;
+    line-height: 1;
+}
+
+.nav-section {
+    margin-bottom: 20px;
+}
+
+.nav-section h4 {
+    font-size: 13px;
+    color: #aaa;
+    margin-bottom: 10px;
+    font-weight: normal;
+}
+
+.menu-item {
+    width: 100%;
+    text-align: left;
+    padding: 12px 15px;
+    border: none;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.2s;
+    color: #333;
+    font-weight: bold;
+}
+
+body.dark-mode .menu-item {
+    background: #3a3a3c;
+    color: #eee;
+}
+
+.menu-item:active {
+    transform: scale(0.98);
+    background: #eee;
+}
+
+.storage-mini-info {
+    font-size: 12px;
+    color: #888;
+    margin-top: 15px;
+}
+
+.mini-bar {
+    background: #eee;
+    height: 6px;
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+body.dark-mode .mini-bar {
+    background: #444;
+}
+
+#storage-bar-fill {
+    background: #2ecc71;
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s;
+}
+
+
+.day-nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 30px;
+    padding: 0 10px;
+}
+
+.day-btn {
+    background: #fff;
+    border: 1px solid #ddd;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+body.dark-mode .day-btn {
+    background: #2c2c2e;
+    border-color: #444;
+    color: #eee;
+}
+
+.day-btn.active {
+    background: #333 !important;
+    color: #fff !important;
+    border-color: #333 !important;
+}
+
+body.dark-mode .day-btn.active {
+    background: #fff !important;
+    color: #333 !important;
+    border-color: #fff !important;
+}
+
+.wide-btn {
+    width: auto !important;
+    padding: 0 14px;
+    border-radius: 20px !important;
+}
+
+
+.my-wallet-container {
+    max-width: 450px;
+    margin: 0 auto 30px auto;
+    padding: 18px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+body.dark-mode .my-wallet-container {
+    background: #2c2c2e;
+}
+
+.coin-amount {
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.lezhin-wallet {
+    color: #e60012;
+}
+
+.bomtoon-wallet {
+    color: #ff69b4;
+}
+
+body.dark-mode .lezhin-wallet {
+    color: #ff6b76;
+}
+
+body.dark-mode .bomtoon-wallet {
+    color: #ff85c0;
+}
+
+.wallet-divider {
+    width: 1px;
+    height: 40px;
+    background: #eee;
+}
+
+body.dark-mode .wallet-divider {
+    background: #444;
+}
+
+
+.webtoon-container {
+    background: #fff;
+    padding: 20px;
+    border-radius: 24px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    max-width: 450px;
+    margin: 0 auto 35px auto;
+}
+
+body.dark-mode .webtoon-container {
+    background: #2c2c2e;
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.add-work-btn {
+    background: #333;
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+body.dark-mode .add-work-btn {
+    background: #444;
+}
+
+.total-coin-banner {
+    background: #fff4d1;
+    padding: 14px;
+    border-radius: 15px;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 17px;
+    color: #444;
+}
+
+body.dark-mode .total-coin-banner {
+    background: #3d3521;
+    color: #d4c18d;
+}
+
+.balance-info {
+    text-align: center;
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 15px;
+}
+
+.scroll-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.webtoon-list {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 10px 0;
+    min-height: 180px;
+    scroll-behavior: smooth;
+}
+
+.webtoon-list::-webkit-scrollbar {
+    display: none;
+}
+
+.webtoon-card-link {
+    flex: 0 0 135px;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 1px solid #f0f0f0;
+    background: #fff;
+    position: relative;
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+
+body.dark-mode .webtoon-card-link {
+    background: #3a3a3c;
+    border-color: #444;
+}
+
+.card-thumbnail {
+    height: 170px;
+    background-size: cover;
+    background-position: center;
+    background-color: #f8f8f8;
+    position: relative;
+}
+
+.no-img-title {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.lezhin-card .no-img-title {
+    background: linear-gradient(135deg, #fff0f0 0%, #ffe0e0 100%);
+    color: #e60012;
+}
+
+.bomtoon-card .no-img-title {
+    background: linear-gradient(135deg, #fff0f8 0%, #ffe0f0 100%);
+    color: #ff69b4;
+}
+
+body.dark-mode .lezhin-card .no-img-title {
+    background: linear-gradient(135deg, #3d2022 0%, #2d1012 100%);
+    color: #ff4d5a;
+}
+
+body.dark-mode .bomtoon-card .no-img-title {
+    background: linear-gradient(135deg, #3d2030 0%, #2d1030 100%);
+    color: #ff85c0;
+}
+
+.progress-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+}
+
+.more-options-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-info {
+    padding: 12px 10px;
+}
+
+.card-info .title {
+    font-weight: bold;
+    font-size: 15px;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.card-info .coin {
+    color: #999;
+    font-size: 13px;
+    margin: 0;
+}
+
+.quick-btn-group {
+    display: flex;
+    gap: 5px;
+}
+
+.quick-btn {
+    background: #f1f1f1;
+    border: 1px solid #ddd;
+    color: #666;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+body.dark-mode .quick-btn {
+    background: #444;
+    border-color: #555;
+    color: #ccc;
+}
+
+
+.scroll-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 10;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .scroll-btn {
+    background: rgba(60, 60, 60, 0.9);
+    border-color: #555;
+    color: #fff;
+}
+
+.left-btn {
+    left: -12px;
+}
+
+.right-btn {
+    right: -12px;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 25px;
+    border-radius: 24px;
+    width: 90%;
+    max-width: 360px;
+}
+
+body.dark-mode .modal-content {
+    background: #2c2c2e;
+    color: #fff;
+}
+
+.modal-content input,
+.modal-select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+    background: #f9f9f9;
+    color: #333;
+}
+
+body.dark-mode .modal-content input,
+body.dark-mode .modal-select {
+    background: #3a3a3c;
+    border-color: #444;
+    color: #fff;
+}
+
+.img-pick-btn {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px dashed #ccc;
+    background: #fdfdfd;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+}
+
+body.dark-mode .img-pick-btn {
+    background: #333;
+    border-color: #555;
+    color: #aaa;
+}
+
+.modal-btns {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-btns button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.cancel-btn {
+    background: #eee;
+    color: #666;
+}
+
+.save-btn {
+    background: #333;
+    color: #fff;
+}
+
+.work-count-text {
+    font-size: 14px;
+    color: #777;
+    font-weight: normal;
+    margin-left: 4px;
+}
+
+body.dark-mode .work-count-text {
+    color: #aaa;
+}
+
+.highlight-result-lezhin {
+    font-weight: 900;
+    font-size: 15px;
+    color: #e60012;
+}
+
+body.dark-mode .highlight-result-lezhin {
+    color: #ff6b76;
+}
+
+.highlight-result-bomtoon {
+    font-weight: 900;
+    font-size: 15px;
+    color: #ff69b4;
+}
+
+body.dark-mode .highlight-result-bomtoon {
+    color: #ff85c0;
+}
+
+.backup-alert {
+    text-align: center;
+    font-size: 13px;
+    color: #d32f2f;
+    background: #ffebee;
+    padding: 12px;
+    border-radius: 15px;
+    margin: 10px auto 20px auto;
+    max-width: 450px;
+    font-weight: bold;
+}
+
+body.dark-mode .backup-alert {
+    background: #3d2022;
+    color: #ff7982;
+}
+
+.weekly-stat-container {
+    max-width: 450px;
+    margin: 20px auto 40px auto;
+    padding: 15px;
+    background: #e8f0fe;
+    border-radius: 15px;
+    text-align: center;
+    font-size: 15px;
+    color: #1967d2;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(25, 103, 210, 0.1);
+}
+
+body.dark-mode .weekly-stat-container {
+    background: #1a233a;
+    color: #8ab4f8;
+    box-shadow: 0 2px 8px rgba(138, 180, 248, 0.1);
+}
+
+.weekly-highlight {
+    font-size: 18px;
+    color: #174ea6;
+}
+
+body.dark-mode .weekly-highlight {
+    color: #aecbfa;
+}
+
+.action-btns-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.act-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.edit-btn {
+    background: #e8f0fe;
+    color: #1967d2;
+}
+
+body.dark-mode .edit-btn {
+    background: #1a233a;
+    color: #8ab4f8;
+}
+
+.del-btn {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+body.dark-mode .del-btn {
+    background: #3d2022;
+    color: #ff6b76;
+}
+
+.sale-badge {
+    background: #ff4d4d;
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-left: 5px;
+    display: inline-block;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.attend-btn {
+    display: block;
+    width: 100%;
+    margin: 10px auto 0 auto;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #666;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.attend-btn.done {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border-color: #c8e6c9;
+}
+
+body.dark-mode .attend-btn {
+    background: #3a3a3c;
+    border-color: #555;
+    color: #ccc;
+}
+
+body.dark-mode .attend-btn.done {
+    background: #1b3320;
+    color: #81c784;
+    border-color: #2e7d32;
+}
+
+
+body.dark-mode #calc-result-box,
+body.dark-mode #deduction-list {
+    background: #3a3a3c !important;
+    border-color: #444 !important;
+}
+
+body.dark-mode #calc-modal label,
+body.dark-mode #deduction-msg,
+body.dark-mode #calc-result-box p {
+    color: #eee !important;
+}
+
+body.dark-mode #calc-remain-ep {
+    color: #fff !important;
+}
+
+body.dark-mode #deduction-list label span {
+    color: #eee !important;
+}
+
+/* --- 코인백 이벤트 계산기 색상 (라이트 모드) --- */
+.coinback-box {
+    background-color: #fff0f5;
+}
+
+.coinback-label {
+    color: #e84393;
+}
+
+/* --- 코인백 이벤트 계산기 색상 (다크 모드) --- */
+body.dark-mode .coinback-box {
+    background-color: #2d3436;
+    /* 다크모드용 어두운 배경 */
+}
+
+body.dark-mode .coinback-label {
+    color: #ff9ff3;
+    /* 다크모드용 밝은 핑크 글씨 */
+}
+
+/* --- 애플(iOS) 파란색 강제 변환 금지 (더블 체크) --- */
+.menu-item,
+.scroll-btn,
+.nav-section button {
+    color: inherit !important;
+    /* 부모 색상을 무조건 따라가게 만듦! */
+    -webkit-text-fill-color: currentcolor !important;
+    /* 애플 전용 강제 고정 */
+    -webkit-appearance: none !important;
+    appearance: none !important;
+}
+
+/* ==========================================
+   🌟 신규 추가: 지갑 전체 카드 스와이프 & 안쪽 도트 점
+   ========================================== */
+.wallet-master-wrapper {
+    position: relative;
+    /* 도트 점을 이 박스 기준으로 고정! */
+    max-width: 450px;
+    margin: 0 auto 30px auto;
+}
+
+.wallet-swipe-wrapper {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    padding-bottom: 10px;
+    /* 그림자 잘림 방지 */
+}
+
+.wallet-swipe-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+.snap-page {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    box-sizing: border-box;
+    margin-bottom: 0 !important;
+    padding-bottom: 35px !important;
+    /* 🌟 하얀 박스 밑을 살짝 늘려서 도트 점 공간 확보! */
+}
+
+/* 🌟 도트 점을 하얀 박스 안쪽 맨 밑으로 쏙! */
+.wallet-pagination {
+    position: absolute;
+    bottom: 25px;
+    /* 하얀 박스 밑바닥에서 살짝 위로 */
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 0;
+    z-index: 10;
+    pointer-events: none;
+    /* 클릭 방해 금지 */
+}
+
+.wallet-pagination .dot {
+    width: 6px;
+    height: 6px;
+    background-color: #d1d8e0;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.wallet-pagination .dot.active {
+    background-color: #696969;
+    transform: scale(1.4);
+}
+
+body.dark-mode .wallet-pagination .dot {
+    background-color: #444;
+}
+
+body.dark-mode .wallet-pagination .dot.active {
+    background-color: #fbfbfb;
+}
+
+/* ==========================================
+   🌟 신규 추가: 리디 & 미블 작품 썸네일 테마색 (솔리드 컬러)
+   ========================================== */
+/* 리디 썸네일 (연하늘 바탕 + 짙은 회/검정 글씨) */
+.ridi-card .no-img-title {
+    background: #e6f2ff;
+    color: #333;
+}
+
+/* 다크모드 리디 (톤다운 네이비 바탕 + 파스텔 하늘색 글씨) */
+body.dark-mode .ridi-card .no-img-title {
+    background: #1a334d;
+    color: #b3d9ff;
+}
+
+/* 미블 썸네일 (하얀 바탕 + 짙은 파랑 글씨) */
+.mrblue-card .no-img-title {
+    background: #ffffff;
+    color: #004e9a;
+    border: 1px solid #eaeaea;
+    /* 하얀색이라 배경이랑 섞이지 않게 얇은 선! */
+}
+
+/* 다크모드 미블 (다크 회색 바탕 + 파스텔 블루 글씨) */
+body.dark-mode .mrblue-card .no-img-title {
+    background: #2c2c2e;
+    color: #8ab4f8;
+    border: 1px solid #444;
+}
+
+/* --- 리디 지갑 색상 관리 --- */
+.ridi-wallet .platform-name,
+.ridi-wallet .coin-amount {
+    color: #1e90ff;
+    /* 라이트 모드: 원래 리디색 */
+}
+
+body.dark-mode .ridi-wallet .platform-name,
+body.dark-mode .ridi-wallet .coin-amount {
+    color: #5dade2;
+    /* 다크 모드: 눈 편한 하늘색 */
+}
+
+/* --- 미블 지갑 색상 관리 --- */
+.mrblue-wallet .platform-name,
+.mrblue-wallet .coin-amount {
+    color: #004e9a;
+    /* 라이트 모드: 원래 미블색 */
+}
+
+body.dark-mode .mrblue-wallet .platform-name,
+body.dark-mode .mrblue-wallet .coin-amount {
+    color: #8ab4f8;
+    /* 다크 모드: 선생님이 찜한 밝은 파랑! */
+}
+
+
+/* 정산 후 남은 코인 강조색 */
+.highlight-result-ridi {
+    font-weight: 900;
+    font-size: 15px;
+    color: #1e90ff;
+}
+
+body.dark-mode .highlight-result-ridi {
+    color: #5dade2;
+}
+
+.highlight-result-mrblue {
+    font-weight: 900;
+    font-size: 15px;
+    color: #004e9a;
+}
+
+body.dark-mode .highlight-result-mrblue {
+    color: #66a3ff;
+}
+
+/* 공통 이벤트 뱃지 스타일  */
+.sale-badge {
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+    margin-bottom: 2px;
+    line-height: 1;
+}
+
+/* 플랫폼별 뱃지 배경색 */
+#lezhin-sale-badge {
+    background-color: #e60012;
+}
+
+/* 레진 (빨강) */
+#bomtoon-sale-badge {
+    background-color: #e84393;
+}
+
+/* 봄툰 (핑크) */
+#ridi-sale-badge {
+    background-color: #1e90ff;
+}
+
+/* 리디 (블루) */
+#mrblue-sale-badge {
+    background-color: #004e9a;
+}
+
+/* 미블 (네이비) */

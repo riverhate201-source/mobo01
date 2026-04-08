@@ -1,0 +1,20 @@
+{
+    "name": "모보 mobo",
+    "short_name": "mobo",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#f4f6f8",
+    "theme_color": "#f4f6f8",
+    "icons": [
+        {
+            "src": "./icon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "./icon.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

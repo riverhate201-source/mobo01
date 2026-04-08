@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>모아보기mobo</title>
+
+    <meta name="format-detection" content="telephone=no, date=no, email=no, address=no">
+    <link rel="stylesheet" href="./css/style.css">
+
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#f4f6f8">
+    <link rel="apple-touch-icon" href="./icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="mobo">
+</head>
+
+
+<body>
+
+    <h1 class="main-page-title">모아보기 mobo<br>나의 웹툰 스케줄러</h1>
+
+    <div class="top-util-bar">
+        <button onclick="openNav()" class="menu-btn">☰</button>
+    </div>
+
+    <div id="side-nav" class="nav-overlay" style="display:none;">
+        <div class="nav-content">
+            <div class="nav-header">
+                <h3>메뉴</h3>
+                <button onclick="closeNav()" class="close-btn">×</button>
+            </div>
+
+            <div class="nav-section">
+                <h4>보기 설정</h4>
+                <button onclick="handleMenuAction('toggleOrder')" class="menu-item">플랫폼 순서 변경</button>
+                <button onclick="handleMenuAction('darkMode')" id="menu-dark-mode-btn" class="menu-item">다크
+                    모드</button>
+            </div>
+
+            <div class="nav-section">
+                <h4>특별 분류</h4>
+                <button onclick="handleMenuAction('day', '10일 연재')" class="menu-item"> 10일 연재 작품</button>
+                <button onclick="handleMenuAction('day', '휴재')" class="menu-item"> 휴재 중인 작품</button>
+                <button onclick="handleMenuAction('day', '완결')" class="menu-item"> 완결된 작품</button>
+            </div>
+
+            <div class="nav-section">
+                <h4>편의 기능</h4>
+                <button onclick="openSearchModal()" class="menu-item"> 작품 검색하기</button>
+                <button onclick="openCalcModal()" class="menu-item"> 정주행 코인 및 페이 계산기</button>
+                <button onclick="deductToday()" class="menu-item"> 오늘 작품 당일 정산</button>
+                <button onclick="openLinkSettingModal()" class="menu-item"> 출석 링크 직접 설정</button>
+            </div>
+
+            <div class="nav-section">
+                <h4>데이터 관리</h4>
+                <button onclick="exportDataToFile()" class="menu-item">기록 백업하기</button>
+                <button onclick="triggerImport()" class="menu-item">기록 복구하기</button>
+                <div class="storage-mini-info">
+                    저장공간량: <span id="storage-percent">0</span>%
+                    <div class="mini-bar">
+                        <div id="storage-bar-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="attend-warning-modal" class="modal-overlay" style="display: none; z-index: 9999;">
+        <div class="modal-content" style="text-align: center; border: 3px solid #ff4757;">
+            <h2 style="color: #ff4757; margin-top: 0;">🚨 잠깐만요! 🚨</h2>
+            <p style="font-size: 16px; font-weight: bold; line-height: 1.5;">오늘 무료 코인 받을 수 있는<br>출석체크를 아직 안 하셨어요!</p>
+            <p id="attend-missing-text" style="color: #747d8c; margin-bottom: 20px; font-size: 14px;"></p>
+            <button onclick="closeAttendWarning()" class="save-btn" style="width: 100%; font-size: 16px;">지금 출석하러 가기
+            </button>
+        </div>
+    </div>
+
+    <div id="deduction-modal" class="modal-overlay" style="display: none; z-index: 4000;">
+        <div class="modal-content" style="max-width: 400px; position: relative;">
+            <button onclick="closeDeductionModal()"
+                style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
+            <h3 style="margin-top: 0; text-align: center; color: #1967d2;">모든 코인 정산</h3>
+            <p id="deduction-msg" style="font-size: 14px; text-align: center; color: #555; margin-bottom: 15px;"></p>
+
+            <div id="deduction-list"
+                style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; border-radius: 10px; padding: 10px; background: #fdfdfd;">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="skipDeduction()" class="cancel-btn" style="flex: 1;">모두 건너뛰기</button>
+                <button onclick="processDeduction()" class="save-btn" style="flex: 2;">선택한 작품 정산</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="backup-file-input" accept=".txt, text/plain, application/json, *" style="display: none;"
+        onchange="handleImport(event)">
+    <div id="backup-alert" class="backup-alert" style="display: none;">
+        &lt;경고&gt; 백업을 안 한 지 7일이 넘었어요! 안전하게 데이터를 백업해 주세요.
+    </div>
+
+    <div id="global-event-alert"
+        style="display:none; text-align:center; font-size:12px; color:#e60012; background-color:#fff0f0; border:1px solid #ffcccc; padding:4px 12px; border-radius:20px; width:fit-content; margin:0 auto 10px auto; font-weight:bold;">
+        옆으로 넘겨보세요! 플랫폼 이벤트 진행 중!
+    </div>
+
+    <div class="wallet-master-wrapper">
+        <div class="wallet-swipe-wrapper" id="wallet-slider" onscroll="updateWalletDots()">
+
+            <div class="my-wallet-container snap-page">
+                <div class="wallet-item bomtoon-wallet"
+                    style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+                    <span class="platform-name" style="margin-bottom: 2px;">봄툰 코인</span>
+                    <div id="bomtoon-sale-badge" class="sale-badge" style="display:none;">
+                        22일 코인 할인날!</div>
+                    <span class="coin-amount" onclick="updateCoin('bomtoon')" style="cursor:pointer;"><span
+                            id="bomtoon-wallet-val">0</span> C</span>
+                    <button id="bomtoon-attend-btn" class="attend-btn" onclick="goToAttendance('bomtoon')">봄툰 출석
+                        전</button>
+                </div>
+                <div class="wallet-divider"></div>
+                <div class="wallet-item lezhin-wallet"
+                    style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+                    <span class="platform-name" style="margin-bottom: 2px;">레진 코인</span>
+                    <div id="lezhin-sale-badge" class="sale-badge" style="display:none;">
+                        20일 코인 할인날!</div>
+                    <span class="coin-amount" onclick="updateCoin('lezhin')" style="cursor:pointer;"><span
+                            id="lezhin-wallet-val">0</span> C</span>
+                    <button id="lezhin-attend-btn" class="attend-btn" onclick="goToAttendance('lezhin')">레진 출석
+                        전</button>
+                </div>
+            </div>
+
+            <div class="my-wallet-container snap-page">
+                <div class="wallet-item ridi-wallet"
+                    style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+                    <span class="platform-name" style="margin-bottom: 2px;">리디 캐시</span>
+
+                    <div id="ridi-sale-badge" class="sale-badge" style="display:none;">
+                        십오야 이벤트!</div>
+
+                    <span class="coin-amount" onclick="updateCoin('ridi')" style="cursor:pointer;"><span
+                            id="ridi-wallet-val">0</span> 캐시</span>
+                    <button class="attend-btn" onclick="window.open('https://ridibooks.com/event', '_blank')">리디 이벤트
+                        보기</button>
+                </div>
+
+                <div class="wallet-divider"></div>
+
+                <div class="wallet-item mrblue-wallet"
+                    style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+                    <span class="platform-name" style="margin-bottom: 2px;">미블 머니</span>
+
+                    <div id="mrblue-sale-badge" class="sale-badge" style="display:none;">
+                        메가 블루데이!</div>
+
+                    <span class="coin-amount" onclick="updateCoin('mrblue')" style="cursor:pointer;"><span
+                            id="mrblue-wallet-val">0</span> 원</span>
+                    <button id="mrblue-attend-btn" class="attend-btn"
+                        onclick="window.open('https://m.mrblue.com/event/list.asp', '_blank')">미블 이벤트 보기</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="wallet-pagination">
+            <span class="dot active"></span>
+            <span class="dot"></span>
+        </div>
+    </div>
+
+
+    <div class="day-nav">
+        <button onclick="changeDay('월요일')" class="day-btn" data-day="월요일">월</button>
+        <button onclick="changeDay('화요일')" class="day-btn" data-day="화요일">화</button>
+        <button onclick="changeDay('수요일')" class="day-btn" data-day="수요일">수</button>
+        <button onclick="changeDay('목요일')" class="day-btn" data-day="목요일">목</button>
+        <button onclick="changeDay('금요일')" class="day-btn" data-day="금요일">금</button>
+        <button onclick="changeDay('토요일')" class="day-btn" data-day="토요일">토</button>
+        <button onclick="changeDay('일요일')" class="day-btn" data-day="일요일">일</button>
+    </div>
+
+    <div id="main-content-area">
+        <div class="webtoon-container" id="lezhin-section">
+            <div class="header-row">
+                <h2 class="platform-header lezhin-title">레진 (<span id="lezhin-day-display">요일</span>)</h2>
+                <button class="add-work-btn" onclick="openAddModal('lezhin')">+ 추가</button>
+            </div>
+            <div class="total-coin-banner">오늘의 필요 코인: <span id="lezhin-needed-val">0</span>개 <span id="lezhin-count-val"
+                    class="work-count-text">(작품 총 0개)</span></div>
+            <div class="balance-info">정산 후 <span id="lezhin-result" class="highlight-result-lezhin">0</span>C 남아요</div>
+            <div class="scroll-wrapper">
+                <button class="scroll-btn left-btn">◀</button>
+                <div class="webtoon-list" id="lezhin-list"></div>
+                <button class="scroll-btn right-btn">▶</button>
+            </div>
+        </div>
+
+        <div class="webtoon-container" id="bomtoon-section">
+            <div class="header-row">
+                <h2 class="platform-header bomtoon-title">봄툰 (<span id="bomtoon-day-display">요일</span>)</h2>
+                <button class="add-work-btn" onclick="openAddModal('bomtoon')">+ 추가</button>
+            </div>
+            <div class="total-coin-banner">오늘의 필요 코인: <span id="bomtoon-needed-val">0</span>개 <span
+                    id="bomtoon-count-val" class="work-count-text">(작품 총 0개)</span></div>
+            <div class="balance-info">정산 후 <span id="bomtoon-result" class="highlight-result-bomtoon">0</span>C 남아요
+            </div>
+            <div class="scroll-wrapper">
+                <button class="scroll-btn left-btn">◀</button>
+                <div class="webtoon-list" id="bomtoon-list"></div>
+                <button class="scroll-btn right-btn">▶</button>
+            </div>
+        </div>
+
+        <div class="webtoon-container" id="ridi-section">
+            <div class="header-row">
+                <h2 class="platform-header ridi-title">리디 (<span id="ridi-day-display">요일</span>)</h2>
+                <button class="add-work-btn" onclick="openAddModal('ridi')">+ 추가</button>
+            </div>
+            <div class="total-coin-banner">오늘의 필요 캐시: <span id="ridi-needed-val">0</span>원 <span id="ridi-count-val"
+                    class="work-count-text">(작품 총 0개)</span></div>
+            <div class="balance-info">정산 후 <span id="ridi-result" class="highlight-result-ridi">0</span>원 남아요</div>
+            <div class="scroll-wrapper">
+                <button class="scroll-btn left-btn">◀</button>
+                <div class="webtoon-list" id="ridi-list"></div>
+                <button class="scroll-btn right-btn">▶</button>
+            </div>
+        </div>
+
+        <div class="webtoon-container" id="mrblue-section">
+            <div class="header-row">
+                <h2 class="platform-header mrblue-title">미블 (<span id="mrblue-day-display">요일</span>)</h2>
+                <button class="add-work-btn" onclick="openAddModal('mrblue')">+ 추가</button>
+            </div>
+            <div class="total-coin-banner">오늘의 필요 머니: <span id="mrblue-needed-val">0</span>원 <span id="mrblue-count-val"
+                    class="work-count-text">(작품 총 0개)</span></div>
+            <div class="balance-info">정산 후 <span id="mrblue-result" class="highlight-result-mrblue">0</span>원 남아요</div>
+            <div class="scroll-wrapper">
+                <button class="scroll-btn left-btn">◀</button>
+                <div class="webtoon-list" id="mrblue-list"></div>
+                <button class="scroll-btn right-btn">▶</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="weekly-stat-container" style="margin: 20px auto 40px auto;">
+        이번 주 누적 소비 코인: <span class="weekly-highlight"><span id="weekly-spent-val">0</span> C</span>
+    </div>
+    <footer style="text-align: center; color: #aaa; font-size: 13px; font-weight: bold; margin-bottom: 20px;">&copy;
+        2026 우니 @s_euni_
+    </footer>
+
+    <div id="custom-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3 id="modal-title-label">작품 추가</h3>
+            <input type="text" id="input-title" placeholder="작품 제목">
+            <input type="text" id="input-url" placeholder="작품 바로가기 링크 (선택)" style="margin-top: 2px;">
+
+            <div style="display: flex; gap: 10px;">
+                <select id="input-day" class="modal-select" style="flex: 1;">
+                    <option value="월요일">월</option>
+                    <option value="화요일">화</option>
+                    <option value="수요일">수</option>
+                    <option value="목요일">목</option>
+                    <option value="금요일">금</option>
+                    <option value="토요일">토</option>
+                    <option value="일요일">일</option>
+                    <option value="10일 연재">10일 지정석</option>
+                </select>
+                <select id="input-status" class="modal-select" style="flex: 2;">
+                    <option value="연재중">연재 중</option>
+                    <option value="휴재">휴재 (코인 안빠짐)</option>
+                    <option value="완결">완결 (코인 안빠짐)</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                <select id="input-cycle-type" class="modal-select" style="flex: 2; margin-bottom: 0;"
+                    onchange="toggleWeekInput()">
+                    <option value="">연재 주기 선택 (없음)</option>
+                    <option value="5연 1휴">5연 1휴</option>
+                    <option value="4연 1휴">4연 1휴</option>
+                    <option value="3연 1휴">3연 1휴</option>
+                    <option value="2연 1휴">2연 1휴</option>
+                    <option value="매월 특정주 휴재">매월 특정 주 휴재</option>
+                    <option value="격주 연재">격주 연재</option>
+                    <option value="10일 연재">10일 연재</option>
+
+                </select>
+                <input type="text" id="input-cycle-week" placeholder="n주차 (숫자)" style="flex: 1; margin-bottom: 0;">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <input type="number" id="input-coin" placeholder="코인" style="flex: 1;">
+                <input type="text" id="input-progress" placeholder="진도 (예: 1화)" style="flex: 2;">
+            </div>
+            <p id="image-status-text" style="text-align: center; font-size: 12px; margin-bottom: 5px;">📷 사진은 선택 사항입니다.
+            </p>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button onclick="document.getElementById('image-input').click()" class="img-pick-btn"
+                    style="margin-bottom: 0; flex: 1;">사진 선택하기</button>
+                <button id="remove-img-btn" onclick="removeSelectedImage()" class="cancel-btn"
+                    style="margin-bottom: 0; display: none; flex: 1; background: #ffebee; color: #d32f2f;">사진
+                    삭제</button>
+            </div>
+            <div class="modal-btns">
+                <button onclick="closeAddModal()" class="cancel-btn">취소</button>
+                <button onclick="saveWorkFinal()" class="save-btn">저장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="action-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content action-modal-content">
+            <h3 id="action-title" style="text-align:center; margin-top:0;">작품명</h3>
+            <div class="action-btns-container">
+                <button class="act-btn edit-btn" onclick="editFromAction()">작품 상세 수정</button>
+                <button onclick="moveFromAction()" class="act-btn"
+                    style="background-color: #ffebd8; color: rgb(255, 157, 91); ">다른 플랫폼으로 이동</button>
+                <button class="act-btn del-btn" onclick="deleteFromAction()"> 서랍에서 영구 삭제</button>
+            </div>
+            <button onclick="closeActionModal()" class="cancel-btn" style="margin-top:15px; width:100%;">닫기</button>
+        </div>
+    </div>
+
+    <div id="search-modal" class="modal-overlay" style="display: none; z-index: 5000;">
+        <div class="modal-content" style="max-width: 400px; position: relative;">
+            <button onclick="closeSearchModal()"
+                style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
+            <h3 style="margin-top: 0; text-align: center; color: #1967d2;"> 작품 검색</h3>
+
+            <input type="text" id="search-input" placeholder="웹툰 제목을 입력하세요" onkeyup="performSearch()"
+                style="width: 100%; box-sizing: border-box; margin-bottom: 15px; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+
+            <div id="search-result-list" style="max-height: 300px; overflow-y: auto; padding-right: 5px;">
+            </div>
+        </div>
+    </div>
+
+    <div id="calc-modal" class="modal-overlay" style="display: none; z-index: 5000;">
+        <div class="modal-content" style="max-width: 350px;">
+            <h3 style="margin-top: 0; text-align: center;">정주행 계산기</h3>
+
+            <div style="margin-bottom: 15px;">
+                <select id="calc-platform" class="modal-select" style="font-weight: bold;"
+                    onchange="updateCalcLabels()">
+                    <option value="coin">레진 / 봄툰 (코인)</option>
+                    <option value="cash">리디 (캐시)</option>
+                    <option value="won">미블 (머니)</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 13px; color: #666;">작품 총 화수</label>
+                <input type="number" id="calc-total" placeholder="예: 100"
+                    style="margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 13px; color: #666;">내가 본 화수 (현재 진도)</label>
+                <input type="number" id="calc-current" placeholder="예: 15"
+                    style="margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label id="calc-price-label" style="font-size: 13px; color: #666;">1화당 코인 (기본 3코인)</label>
+                <input type="number" id="calc-price" placeholder="예: 3"
+                    style="margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
+            </div>
+
+            <div class="coinback-box" style="margin-bottom: 15px; padding: 12px; border-radius: 8px;">
+                <label class="coinback-label"
+                    style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: bold; cursor: pointer;">
+                    <input type="checkbox" id="calc-coinback-toggle" onchange="toggleCoinbackInput()"
+                        style="margin: 0; width: 16px; height: 16px;">
+                    코인백 / 페이백(이벤트) 적용하기
+                </label>
+                <div id="calc-coinback-area" style="display: none; margin-top: 10px;">
+                    <label style="font-size: 12px; color: #666;">몇 퍼센트 돌려받나요? (%)</label>
+                    <input type="number" id="calc-coinback-percent" placeholder="예: 50"
+                        style="margin-top: 5px; margin-bottom: 0; width: 100%; box-sizing: border-box; padding: 8px;">
+                </div>
+            </div>
+
+            <button onclick="calculateCoins()" class="save-btn" style="width: 100%; margin-bottom: 15px;">얼마나
+                필요할까?</button>
+
+            <div id="calc-result-box"
+                style="display: none; background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;">
+                <p style="margin: 0; font-size: 14px; color: #555;">남은 화수: <span id="calc-remain-ep"
+                        style="font-weight: bold; color: #333;">0</span>화</p>
+                <p style="margin: 5px 0 0 0; font-size: 16px;">필요한 금액: <span id="calc-need-coin"
+                        style="font-weight: bold; color: #e60012; font-size: 20px;">0</span></p>
+
+                <div id="calc-coinback-result"
+                    style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ccc;">
+                    <p style="margin: 0; font-size: 13px; color: #e84393;">돌려받는 금액: <span id="calc-back-coin"
+                            style="font-weight: bold;">0</span></p>
+                    <p style="margin: 5px 0 0 0; font-size: 15px; font-weight: bold; color: #1967d2;">👉 <span
+                            id="calc-extra-ep" style="color:#e60012; font-size:18px;">0</span>화 더 볼 수 있어요!</p>
+                </div>
+            </div>
+
+            <button onclick="closeCalcModal()" class="cancel-btn" style="width: 100%; margin-top: 15px;">닫기</button>
+        </div>
+    </div>
+
+    <div id="link-setting-modal" class="modal-overlay" style="display: none; z-index: 5000;">
+        <div class="modal-content" style="max-width: 400px; position: relative;">
+            <button onclick="closeLinkSettingModal()"
+                style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
+            <h3 style="margin-top: 0; text-align: center; color: #1967d2;"> 출석 링크 설정</h3>
+            <p style="font-size: 12px; color: gray; text-align: center; margin-bottom: 15px; line-height: 1.4;">기본 출석 버튼
+                링크를 바꾸시려는<br>유저분들만 입력해 주세요!</p>
+
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 13px; font-weight: bold; color: #333;">봄툰 출석 링크</label>
+                <input type="text" id="bomtoonCustomLink" placeholder="예: https://www.bomtoon.com/play"
+                    style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 13px; font-weight: bold; color: #333;">레진 출석 링크</label>
+                <input type="text" id="lezhinCustomLink" placeholder="예: https://www.lezhin.com/ko/arcade/attendance"
+                    style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px;">
+            </div>
+
+            <button onclick="saveCustomLinks()" class="save-btn" style="width: 100%; margin-bottom: 10px;">저장하기</button>
+        </div>
+    </div>
+
+    <input type="file" id="image-input" accept="image/jpeg, image/png, image/webp, image/gif" style="display: none;">
+
+    <script>
+
+        // 🌟 PC 환경 마우스 드래그로 지갑 넘기기 기능!
+        window.addEventListener('DOMContentLoaded', () => {
+            const slider = document.getElementById('wallet-slider');
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            if (slider) {
+                slider.addEventListener('mousedown', (e) => {
+                    isDown = true;
+                    slider.style.scrollSnapType = 'none'; // 드래그 중엔 스냅 잠깐 끄기
+                    startX = e.pageX - slider.offsetLeft;
+                    scrollLeft = slider.scrollLeft;
+                });
+                slider.addEventListener('mouseleave', () => {
+                    isDown = false;
+                    slider.style.scrollSnapType = 'x mandatory';
+                });
+                slider.addEventListener('mouseup', () => {
+                    isDown = false;
+                    slider.style.scrollSnapType = 'x mandatory';
+                });
+                slider.addEventListener('mousemove', (e) => {
+                    if (!isDown) return;
+                    e.preventDefault(); // 텍스트 파랗게 선택되는 거 방지
+                    const x = e.pageX - slider.offsetLeft;
+                    const walk = (x - startX) * 1.5; // 드래그 속도 조절
+                    slider.scrollLeft = scrollLeft - walk;
+                });
+            }
+        });
+
+        function getKSTDate() { const now = new Date(); const utc = now.getTime() + (now.getTimezoneOffset() * 60 * 1000); return new Date(utc + (9 * 60 * 60 * 1000)); }
+
+
+        function getWebtoonDate() { const kst = getKSTDate(); if (kst.getHours() >= 22) kst.setDate(kst.getDate() + 1); return kst; }
+        function formatDate(dateObj) { return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`; }
+
+        function isWorkOnBreak(work) {
+            if (work.status === '휴재' || work.status === '완결') return true;
+
+            // 1. N연 M휴 로직
+            if (work.cycle && work.cycle.includes('휴') && !work.cycle.includes('매월')) {
+                let match = work.cycle.match(/(\d+)연\s*(\d+)휴\s*(\d+)주차/);
+                if (match) {
+                    let onW = parseInt(match[1]); let curW = parseInt(match[3]);
+                    if (curW > onW) return true;
+                }
+            }
+
+            // 2. 매월 특정 주 휴재 (5주차 없는 달 고려 로직)
+            if (work.cycle && work.cycle.includes('매월')) {
+                let match = work.cycle.match(/매월\s*(\d+)주차\s*휴재/);
+                if (match) {
+                    const targetWeek = parseInt(match[1]);
+                    const today = getWebtoonDate();
+                    const currentDay = today.getDate();
+
+                    // 현재 주차 계산 (1~7=1, 8~14=2 ...)
+                    let currentWeek = Math.ceil(currentDay / 7);
+
+                    // [추가 로직] 만약 설정이 5주차인데, 이번 달이 4주차로 끝나는 달이고 오늘이 마지막 주라면?
+                    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+                    const maxWeekInMonth = Math.ceil(lastDayOfMonth / 7);
+
+                    // 유저가 설정한 주차가 해당 달의 최대 주차보다 크면, 마지막 주에 쉼
+                    let effectiveTarget = targetWeek;
+                    if (targetWeek > maxWeekInMonth) {
+                        effectiveTarget = maxWeekInMonth;
+                    }
+
+                    if (currentWeek === effectiveTarget) return true;
+                }
+            }
+
+            // 3. 격주 연재 로직 (기존과 동일)
+            if (work.cycle && work.cycle.includes('격주 연재')) {
+                let match = work.cycle.match(/\((.*?)\)/);
+                if (match) {
+                    const baseDate = new Date(match[1]);
+                    baseDate.setHours(0, 0, 0, 0);
+                    const today = getWebtoonDate();
+                    today.setHours(0, 0, 0, 0);
+                    const diffTime = today.getTime() - baseDate.getTime();
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays >= 0) {
+                        const weeksPassed = Math.floor(diffDays / 7);
+                        if (weeksPassed % 2 !== 0) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function isDateMatch(cycleStr, dateObj) { if (!cycleStr || !cycleStr.includes("10일 연재")) return false; let match = cycleStr.match(/\((.*?)\)/); if (!match) return false; let daysArr = match[1].split('/').map(Number); let todayDate = dateObj.getDate(); let lastDayOfMonth = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0).getDate(); for (let targetDay of daysArr) { if (todayDate === targetDay || (targetDay > lastDayOfMonth && todayDate === lastDayOfMonth)) return true; } return false; }
+
+        const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+        let viewDay = days[getWebtoonDate().getDay()];
+        let currentPlatform = ''; let tempImg = ""; let editMode = false; let actionPlt = ''; let actionOrigDay = ''; let actionIdx = -1;
+        const STORAGE_KEY = 'WEBTOON_APP_STABLE_V1';
+
+        let state = {
+            lezhin: { "월요일": [], "화요일": [], "수요일": [], "목요일": [], "금요일": [], "토요일": [], "일요일": [], "10일 연재": [] },
+            bomtoon: { "월요일": [], "화요일": [], "수요일": [], "목요일": [], "금요일": [], "토요일": [], "일요일": [], "10일 연재": [] },
+            ridi: { "월요일": [], "화요일": [], "수요일": [], "목요일": [], "금요일": [], "토요일": [], "일요일": [], "10일 연재": [] },
+            mrblue: { "월요일": [], "화요일": [], "수요일": [], "목요일": [], "금요일": [], "토요일": [], "일요일": [], "10일 연재": [] }
+        };
+
+        let isBomtoonFirst = localStorage.getItem('isBomtoonFirst') !== 'false';
+
+        window.onload = function () {
+            loadAllData(); applyTheme(); checkSaleDays(); checkAttendanceReset();
+            checkAndShowAttendPopup();
+            askForDeduction();
+            viewDay = days[getWebtoonDate().getDay()];
+            renderAll(); initScroll(); checkStorage(); checkBackupStatus(); updatePlatformOrder();
+        };
+
+
+        function checkAndShowAttendPopup() {
+            const lAttend = localStorage.getItem('lezhinAttend') === 'true';
+            const bAttend = localStorage.getItem('bomtoonAttend') === 'true';
+            let missing = [];
+            if (!lAttend) missing.push("레진"); if (!bAttend) missing.push("봄툰");
+            if (missing.length > 0) {
+                document.getElementById('attend-missing-text').innerHTML = `(현재 <b>${missing.join(', ')}</b> 출석 전입니다)`;
+                document.getElementById('attend-warning-modal').style.display = 'flex';
+            }
+        }
+
+
+        function openNav() { checkStorage(); document.getElementById("side-nav").style.display = "flex"; }
+        function closeNav() { document.getElementById("side-nav").style.display = "none"; }
+        function handleMenuAction(type, value) {
+            if (type === 'toggleOrder') { isBomtoonFirst = !isBomtoonFirst; localStorage.setItem('isBomtoonFirst', isBomtoonFirst); updatePlatformOrder(); }
+            else if (type === 'darkMode') { toggleDarkMode(); }
+            else if (type === 'day') { changeDay(value); }
+            closeNav();
+        }
+
+
+        function openCalcModal() {
+            closeNav();
+
+            // 계산기 열 때마다 드롭다운 초기화
+            const pltSelect = document.getElementById('calc-platform');
+            if (pltSelect) { pltSelect.value = 'coin'; updateCalcLabels(); }
+
+            document.getElementById('calc-total').value = '';
+            document.getElementById('calc-current').value = '';
+            document.getElementById('calc-price').value = '3';
+
+            // 코인백 초기화
+            document.getElementById('calc-coinback-toggle').checked = false;
+            document.getElementById('calc-coinback-percent').value = '';
+            toggleCoinbackInput();
+
+            document.getElementById('calc-result-box').style.display = 'none';
+            document.getElementById('calc-modal').style.display = 'flex';
+        }
+
+        function closeCalcModal() {
+            document.getElementById('calc-modal').style.display = 'none';
+        }
+
+        function toggleCoinbackInput() {
+            const isChecked = document.getElementById('calc-coinback-toggle').checked;
+            document.getElementById('calc-coinback-area').style.display = isChecked ? 'block' : 'none';
+
+
+            if (!isChecked) {
+                const resultArea = document.getElementById('calc-coinback-result');
+                if (resultArea) resultArea.style.display = 'none';
+            }
+        }
+
+        // 신규: 드롭다운 선택 시 글씨(코인/캐시/원) 알아서 바꿔주기
+        function updateCalcLabels() {
+            const plt = document.getElementById('calc-platform').value;
+            const priceLabel = document.getElementById('calc-price-label');
+            if (plt === 'cash') priceLabel.textContent = '1화당 캐시 (리디)';
+            else if (plt === 'won') priceLabel.textContent = '1화당 머니 (미블)';
+            else priceLabel.textContent = '1화당 코인 (레진/봄툰)';
+        }
+
+        // 수정: 계산기 로직 (선택한 플랫폼에 맞게 쉼표 + 단위 + 색상 싹 다 적용!)
+        function calculateCoins() {
+            const total = parseInt(document.getElementById('calc-total').value) || 0;
+            const current = parseInt(document.getElementById('calc-current').value) || 0;
+            const price = parseInt(document.getElementById('calc-price').value) || 0;
+            const plt = document.getElementById('calc-platform') ? document.getElementById('calc-platform').value : 'coin';
+
+            if (total === 0 || total <= current) {
+                alert("총 화수가 현재 진도보다 커야 계산할 수 있어요!");
+                return;
+            }
+
+            const remainEp = total - current;
+            const needCoin = remainEp * price;
+
+            // 플랫폼별 단위와 맞춤 색상 세팅
+            let unit = 'C'; let color = '#e60012'; // 레진, 봄툰 (기본 빨강)
+            if (plt === 'cash') { unit = '캐시'; color = '#1e90ff'; } // 리디 (블루)
+            else if (plt === 'won') { unit = '원'; color = '#004e9a'; } // 미블 (네이비)
+
+            // 결과 적용 (쉼표 포맷팅 + 맞춤 단위 글씨 + 맞춤 색상)
+            document.getElementById('calc-remain-ep').textContent = formatNum(remainEp);
+            const needCoinEl = document.getElementById('calc-need-coin');
+            needCoinEl.textContent = formatNum(needCoin) + ' ' + unit;
+            needCoinEl.style.color = color; // 결과창 색깔도 플랫폼에 맞게
+
+            // 코인백 로직 계산
+            const isCoinback = document.getElementById('calc-coinback-toggle').checked;
+            const coinbackResultArea = document.getElementById('calc-coinback-result');
+
+            if (isCoinback) {
+                const percent = parseInt(document.getElementById('calc-coinback-percent').value) || 0;
+                // 돌려받는 코인 계산 (소수점 버림)
+                const backCoin = Math.floor(needCoin * (percent / 100));
+                // 돌려받은 코인으로 더 볼 수 있는 화수 계산
+                const extraEp = Math.floor(backCoin / price);
+
+                // 코인백 결과에도 쉼표와 맞춤 단위 적용!
+                document.getElementById('calc-back-coin').textContent = formatNum(backCoin) + ' ' + unit;
+                document.getElementById('calc-extra-ep').textContent = formatNum(extraEp);
+                coinbackResultArea.style.display = 'block';
+            } else {
+                coinbackResultArea.style.display = 'none';
+            }
+
+            document.getElementById('calc-result-box').style.display = 'block';
+        }
+
+        let pendingDeductions = { lezhin: [], bomtoon: [] };
+        let pendingDaysStr = "";
+        let isTodayDeduction = false;
+
+
+        function deductToday() {
+            closeNav();
+
+            const webtoonDate = getWebtoonDate();
+            const nowStr = formatDate(webtoonDate);
+            let last = localStorage.getItem('lastCheckDate');
+
+
+            if (last && last > nowStr) {
+                alert("이미 당일 정산을 완료했습니다! 내일 다시 만나요! ");
+                return;
+            }
+
+            isTodayDeduction = true;
+            pendingDeductions = { lezhin: [], bomtoon: [] };
+            pendingDaysStr = "오늘";
+            const todayObj = getWebtoonDate();
+            const d = days[todayObj.getDay()];
+
+            (state.lezhin[d] || []).forEach((w, i) => { if (!isWorkOnBreak(w)) pendingDeductions.lezhin.push({ day: d, idx: i, work: w }); });
+            (state.bomtoon[d] || []).forEach((w, i) => { if (!isWorkOnBreak(w)) pendingDeductions.bomtoon.push({ day: d, idx: i, work: w }); });
+            (state.lezhin["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)) pendingDeductions.lezhin.push({ day: "10일 연재", idx: i, work: w }); });
+            (state.bomtoon["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)) pendingDeductions.bomtoon.push({ day: "10일 연재", idx: i, work: w }); });
+
+            if (pendingDeductions.lezhin.length === 0 && pendingDeductions.bomtoon.length === 0) {
+                alert("오늘은 정산할 연재 작품이 없습니다! 편안히 쉬세요!"); isTodayDeduction = false; return;
+            }
+            showDeductionModal();
+        }
+
+        function askForDeduction() {
+            const webtoonDate = getWebtoonDate(); const nowStr = formatDate(webtoonDate); let last = localStorage.getItem('lastCheckDate');
+            if (!last) { last = nowStr; localStorage.setItem('lastCheckDate', nowStr); }
+
+            const dayOfWeek = webtoonDate.getDay(); const mondayDate = new Date(webtoonDate); mondayDate.setDate(webtoonDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
+            const weekStr = formatDate(mondayDate);
+            if (localStorage.getItem('currentWeekStr') !== weekStr) { localStorage.setItem('currentWeekStr', weekStr); localStorage.setItem('weeklySpent', 0); }
+
+            if (last < nowStr) {
+                let checkParts = last.split('-'); let check = new Date(checkParts[0], checkParts[1] - 1, checkParts[2]);
+                pendingDeductions = { lezhin: [], bomtoon: [] }; let ds = [];
+
+                while (formatDate(check) < nowStr) {
+                    let d = days[check.getDay()]; if (!ds.includes(d)) ds.push(d);
+                    (state.lezhin[d] || []).forEach((w, i) => { if (!isWorkOnBreak(w)) pendingDeductions.lezhin.push({ day: d, idx: i, work: w }); });
+                    (state.bomtoon[d] || []).forEach((w, i) => { if (!isWorkOnBreak(w)) pendingDeductions.bomtoon.push({ day: d, idx: i, work: w }); });
+                    (state.lezhin["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, check)) pendingDeductions.lezhin.push({ day: "10일 연재", idx: i, work: w }); });
+                    (state.bomtoon["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, check)) pendingDeductions.bomtoon.push({ day: "10일 연재", idx: i, work: w }); });
+                    check.setDate(check.getDate() + 1);
+                }
+                if (pendingDeductions.lezhin.length > 0 || pendingDeductions.bomtoon.length > 0) {
+                    pendingDaysStr = ds.join(', '); showDeductionModal(); return;
+                } else {
+                    localStorage.setItem('lastCheckDate', nowStr);
+                }
+            }
+            updateWeeklyStatUI();
+        }
+
+        function showDeductionModal() {
+            const listEl = document.getElementById('deduction-list'); listEl.innerHTML = '';
+            let popupMsg = isTodayDeduction ? `오늘(${pendingDaysStr}) 볼 웹툰을 미리 정산할까요?` : `어제(${pendingDaysStr}) 본 웹툰 정산을 진행할까요?`;
+            const todayDate = getKSTDate().getDate();
+            if (todayDate === 20) popupMsg += `<br><span style="color:#e60012; font-size:12px; font-weight:bold;">(💡앗! 오늘 레진 20일 할인 날이에요!)</span>`;
+            if (todayDate === 22) popupMsg += `<br><span style="color:#ff69b4; font-size:12px; font-weight:bold;">(💡앗! 오늘 봄툰 22일 할인 날이에요!)</span>`;
+            document.getElementById('deduction-msg').innerHTML = popupMsg;
+
+            ['lezhin', 'bomtoon'].forEach(plt => {
+                pendingDeductions[plt].forEach((item, i) => {
+                    const pltName = plt === 'lezhin' ? '레진' : '봄툰'; const color = plt === 'lezhin' ? '#e60012' : '#ff69b4';
+                    const div = document.createElement('div');
+                    div.style.display = 'flex'; div.style.justifyContent = 'space-between'; div.style.marginBottom = '8px'; div.style.fontSize = '14px';
+                    div.innerHTML = `
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; width:100%;">
+                            <input type="checkbox" id="deduct-chk-${plt}-${i}" checked style="width:16px; height:16px; margin:0;">
+                            <span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">[${pltName}] ${item.work.title}</span>
+                            <span style="color:${color}; font-weight:bold;">${item.work.coin}C</span>
+                        </label>`;
+                    listEl.appendChild(div);
+                });
+            });
+            document.getElementById('deduction-modal').style.display = 'flex';
+        }
+
+        function closeDeductionModal() { document.getElementById('deduction-modal').style.display = 'none'; isTodayDeduction = false; }
+
+        function processDeduction() {
+            let tL = 0, tB = 0;
+            ['lezhin', 'bomtoon'].forEach(plt => {
+                pendingDeductions[plt].forEach((item, i) => {
+                    const chk = document.getElementById(`deduct-chk-${plt}-${i}`);
+                    if (chk && chk.checked) {
+                        if (plt === 'lezhin') tL += (parseInt(item.work.coin) || 0);
+                        if (plt === 'bomtoon') tB += (parseInt(item.work.coin) || 0);
+                    }
+                });
+            });
+
+            if (tL > 0 || tB > 0) {
+                localStorage.setItem('lWallet', parseInt(localStorage.getItem('lWallet') || 0) - tL);
+                localStorage.setItem('bWallet', parseInt(localStorage.getItem('bWallet') || 0) - tB);
+                addWeeklySpent(tL + tB); saveData();
+
+
+                alert(`총 ${tL + tB}코인이 성공적으로 정산되었습니다!`);
+            } else {
+
+                alert("선택된 작품이 없어 코인이 차감되지 않았습니다.");
+            }
+            finishDeduction();
+        }
+
+
+
+        function skipDeduction() {
+            if (confirm("정말 오늘의 정산을 모두 건너뛰시겠습니까? (클릭하면 오늘 모든 작품 코인이 정산되지 않습니다.)")) {
+                finishDeduction();
+            }
+        }
+
+        function finishDeduction() {
+            document.getElementById('deduction-modal').style.display = 'none';
+            let dateToSave = getWebtoonDate();
+            if (isTodayDeduction) dateToSave.setDate(dateToSave.getDate() + 1);
+            localStorage.setItem('lastCheckDate', formatDate(dateToSave));
+            isTodayDeduction = false;
+            updateWeeklyStatUI(); refreshBalance();
+        }
+
+
+        // 🌟 플랫폼별 할인/이벤트 날짜 체크 로직 (튼튼한 버전!)
+        // 🌟 플랫폼별 할인/이벤트 날짜 체크 로직 (겹침 완벽 대응!)
+        function checkSaleDays() {
+            const kst = getKSTDate();
+            const date = kst.getDate();
+            const day = kst.getDay();
+
+            const lBadge = document.getElementById('lezhin-sale-badge');
+            const bBadge = document.getElementById('bomtoon-sale-badge');
+            const rBadge = document.getElementById('ridi-sale-badge');
+            const mBadge = document.getElementById('mrblue-sale-badge');
+            const globalAlert = document.getElementById('global-event-alert');
+
+            // 1. 레진/봄툰 할인일
+            if (lBadge) lBadge.style.display = (date === 20) ? 'inline-block' : 'none';
+            if (bBadge) bBadge.style.display = (date === 22) ? 'inline-block' : 'none';
+
+            let hiddenEvents = [];
+
+            // 2. 🌟 리디 이벤트 체크 (십오야와 화요일이 겹칠 때를 계산!)
+            const isSibo = (date >= 14 && date <= 21); // 십오야 기간인가?
+            const isWeekly = (day === 2);              // 오늘이 화요일인가?
+
+            if (isSibo && isWeekly) {
+                // 둘 다 겹치는 대박날!
+                hiddenEvents.push('리디 십오야 및 위클리');
+                if (rBadge) { rBadge.textContent = "십오야 & 위클리!"; rBadge.style.display = 'inline-block'; }
+            } else if (isSibo) {
+                // 십오야만 진행 중
+                hiddenEvents.push('리디 십오야');
+                if (rBadge) { rBadge.textContent = "십오야 기간!"; rBadge.style.display = 'inline-block'; }
+            } else if (isWeekly) {
+                // 화요 위클리만 진행 중
+                hiddenEvents.push('리디 화요 위클리');
+                if (rBadge) { rBadge.textContent = "화요 위클리!"; rBadge.style.display = 'inline-block'; }
+            } else {
+                // 아무것도 없음
+                if (rBadge) rBadge.style.display = 'none';
+            }
+
+            // 3. 미블 이벤트 체크
+            if (date >= 1 && date <= 3) {
+                hiddenEvents.push('미블 메가 블루데이');
+                if (mBadge) {
+                    mBadge.textContent = "메가 블루데이!"; // 👈 추가된 부분!
+                    mBadge.style.display = 'inline-block';
+                }
+            } else {
+                if (mBadge) mBadge.style.display = 'none';
+            }
+
+            // 4. 알림바 띄우기
+            if (globalAlert) {
+                if (hiddenEvents.length > 0) {
+                    globalAlert.innerHTML = `옆으로 넘겨보세요! <b style="color:#d32f2f;">${hiddenEvents.join(', ')}</b> 진행 중!`;
+                    globalAlert.style.display = 'block';
+                } else {
+                    globalAlert.style.display = 'none';
+                }
+            }
+        }
+
+        function checkAttendanceReset() { const kst = getKSTDate(); const todayStr = `${kst.getFullYear()}-${kst.getMonth() + 1}-${kst.getDate()}`; if (localStorage.getItem('lastAttendDate') !== todayStr) { localStorage.setItem('lastAttendDate', todayStr); localStorage.setItem('lezhinAttend', 'false'); localStorage.setItem('bomtoonAttend', 'false'); } updateAttendUI(); }
+        function updateAttendUI() { const lAttend = localStorage.getItem('lezhinAttend') === 'true'; const bAttend = localStorage.getItem('bomtoonAttend') === 'true'; const lBtn = document.getElementById('lezhin-attend-btn'); const bBtn = document.getElementById('bomtoon-attend-btn'); if (lAttend) { lBtn.classList.add('done'); lBtn.textContent = ' 출석완료'; } else { lBtn.classList.remove('done'); lBtn.textContent = '레진 출석 전'; } if (bAttend) { bBtn.classList.add('done'); bBtn.textContent = ' 출석완료'; } else { bBtn.classList.remove('done'); bBtn.textContent = '봄툰 출석 전'; } }
+        function checkAttendance(plt) { localStorage.setItem(plt + 'Attend', 'true'); updateAttendUI(); }
+
+        function loadAllData() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                const p = JSON.parse(data); state = p.state || state;
+                // 레진, 봄툰, 리디, 미블 4개 모두 순회하도록 변경
+                ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
+                    if (!state[plt]) state[plt] = { "월요일": [], "화요일": [], "수요일": [], "목요일": [], "금요일": [], "토요일": [], "일요일": [], "10일 연재": [] };
+                    if (!state[plt]["10일 연재"]) state[plt]["10일 연재"] = [];
+                    Object.keys(state[plt]).forEach(d => { state[plt][d] = state[plt][d].map(w => ({ ...w, status: w.status || '연재중', cycle: w.cycle || '' })); });
+                });
+                localStorage.setItem('lWallet', p.lWallet || 0); localStorage.setItem('bWallet', p.bWallet || 0);
+            }
+        }
+
+        function saveData() { const d = { state: state, lWallet: localStorage.getItem('lWallet') || 0, bWallet: localStorage.getItem('bWallet') || 0, theme: localStorage.getItem('theme') || 'light' }; localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); renderAll(); checkStorage(); }
+        function toggleDarkMode() { const isDark = document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); updateDarkModeBtn(); }
+        function applyTheme() { if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode'); updateDarkModeBtn(); }
+        function updateDarkModeBtn() { const isDark = document.body.classList.contains('dark-mode'); const btn = document.getElementById('menu-dark-mode-btn'); if (btn) btn.textContent = isDark ? "라이트 모드" : "다크 모드"; }
+        function changeDay(day) { viewDay = day; renderAll(); }
+        function updatePlatformOrder() { const l = document.getElementById('lezhin-section'); const b = document.getElementById('bomtoon-section'); const p = document.getElementById('main-content-area'); if (l && b && p) { if (isBomtoonFirst) p.insertBefore(b, l); else p.insertBefore(l, b); } }
+
+        function renderAll() {
+            ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
+                const el = document.getElementById(plt + '-day-display');
+                if (el) el.textContent = viewDay;
+            });
+            document.querySelectorAll('.day-btn').forEach(btn => { if (btn.dataset.day === viewDay) btn.classList.add('active'); else btn.classList.remove('active'); });
+
+            ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => renderList(plt));
+            refreshBalance();
+        }
+
+        let draggedIdx = null; let draggedPlt = null; let draggedDay = null;
+        function renderList(platform) {
+            const listEl = document.getElementById(`${platform}-list`); listEl.innerHTML = ''; let displayWorks = [];
+            const todayObj = getWebtoonDate();
+
+            if (viewDay === '휴재' || viewDay === '완결') {
+                Object.keys(state[platform]).forEach(d => {
+                    (state[platform][d] || []).forEach((work, idx) => {
+
+                        if (work.status === viewDay || (viewDay === '휴재' && isWorkOnBreak(work) && work.status !== '완결')) displayWorks.push({ ...work, origDay: d, origIdx: idx });
+                    });
+                });
+            } else if (viewDay === '10일 연재') {
+                (state[platform]["10일 연재"] || []).forEach((work, idx) => { displayWorks.push({ ...work, origDay: "10일 연재", origIdx: idx }); });
+            } else {
+
+                (state[platform][viewDay] || []).forEach((work, idx) => { displayWorks.push({ ...work, origDay: viewDay, origIdx: idx }); });
+
+
+                if (viewDay === days[todayObj.getDay()]) {
+                    (state[platform]["10일 연재"] || []).forEach((work, idx) => {
+                        if (isDateMatch(work.cycle, todayObj)) {
+                            displayWorks.push({ ...work, origDay: "10일 연재", origIdx: idx, isToday10Day: true });
+                        }
+                    });
+                }
+            }
+
+            displayWorks.forEach((work) => {
+                const hasImg = work.img && work.img !== ""; let statusBadge = "";
+                let isBreak = isWorkOnBreak(work);
+
+                if (work.isToday10Day || (viewDay === '10일 연재' && isDateMatch(work.cycle, todayObj))) {
+
+                }
+
+                if (viewDay !== '휴재' && viewDay !== '완결') {
+                    if (work.status === '휴재') statusBadge = `<span style="position: absolute; top: 5px; left: 5px; background: #e67e22; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">[휴재]</span>`;
+                    else if (work.status === '완결') statusBadge = `<span style="position: absolute; top: 5px; left: 5px; background: #7f8c8d; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">[완결]</span>`;
+                    else if (isBreak) statusBadge = `<span style="position: absolute; top: 5px; left: 5px; background: #e67e22; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">[자동휴재]</span>`;
+                }
+
+                const cycleTag = work.cycle ? `<div class="cycle-badge" style="font-size:11px; color:#1967d2; background:#e8f0fe; padding:2px 6px; border-radius:4px; display:inline-block; margin-bottom:4px;">🔄 ${work.cycle}</div>` : '';
+                const card = document.createElement('div'); card.className = `webtoon-card-link ${platform}-card`;
+
+                if (work.isToday10Day || (viewDay === '10일 연재' && isDateMatch(work.cycle, todayObj))) {
+                    const borderColor = platform === 'lezhin' ? '#ff9999' : '#ffb3d9'; card.style.border = `2px solid ${borderColor}`;
+                }
+
+                if (viewDay !== '휴재' && viewDay !== '완결') { card.draggable = true; card.dataset.idx = work.origIdx; card.dataset.plt = platform; card.dataset.day = work.origDay; card.addEventListener('dragstart', handleDragStart); card.addEventListener('dragover', handleDragOver); card.addEventListener('dragenter', handleDragEnter); card.addEventListener('dragleave', handleDragLeave); card.addEventListener('drop', handleDrop); card.addEventListener('dragend', handleDragEnd); }
+
+
+                let isStrike = (work.status !== '연재중' || isBreak);
+
+
+                const hasUrl = work.url && work.url.trim() !== "";
+                const imgOnClick = hasUrl ? `onclick="window.open('${work.url}', '_blank')"` : "";
+                const cursorStyle = hasUrl ? "cursor: pointer;" : "";
+
+                card.innerHTML = `
+                    <div class="card-thumbnail" ${imgOnClick} style="background-image: url('${work.img || ''}'); ${cursorStyle}">
+                        ${statusBadge}
+                        ${!work.img ? `<div class="no-img-title">${work.title}</div>` : ''}
+                        <button class="more-options-btn" onclick="event.stopPropagation(); openActionModal('${platform}', '${work.origDay}', ${work.origIdx})">⋮</button>
+                        <span class="progress-badge" id="prog-${platform}-${work.origDay}-${work.origIdx}">${work.progress}</span>
+                    </div>
+                    <div class="card-info">
+                        ${cycleTag}
+                        <p class="title" style="margin-top: ${work.cycle ? '2px' : '0'};">${work.title}</p>
+                        <div class="card-bottom-row">
+                            <p class="coin" style="${isStrike ? 'text-decoration: line-through; color: #ccc;' : ''}; margin-bottom:0;">${work.coin} C</p>
+                            <div class="quick-btn-group">
+                                <button class="quick-btn" onclick="event.stopPropagation(); incrementProgress('${platform}', '${work.origDay}', ${work.origIdx})">+1화</button>
+                                ${work.cycle && !work.cycle.includes('10일 연재') && !work.cycle.includes('격주 연재') ? `<button class="quick-btn" onclick="event.stopPropagation(); incrementCycle('${platform}', '${work.origDay}', ${work.origIdx})">+1주</button>` : ''}
+                            </div>
+                        </div>
+                    </div>`;
+                listEl.appendChild(card);
+            });
+        }
+
+        function handleDragStart(e) { draggedIdx = parseInt(this.dataset.idx); draggedPlt = this.dataset.plt; draggedDay = this.dataset.day; this.style.opacity = '0.4'; }
+        function handleDragOver(e) { e.preventDefault(); }
+        function handleDragEnter(e) { e.preventDefault(); this.style.transform = 'scale(1.03)'; this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)'; }
+        function handleDragLeave(e) { this.style.transform = 'scale(1)'; this.style.boxShadow = 'none'; }
+        function handleDrop(e) { e.stopPropagation(); this.style.transform = 'scale(1)'; this.style.boxShadow = 'none'; const targetIdx = parseInt(this.dataset.idx); const targetPlt = this.dataset.plt; const targetDay = this.dataset.day; if (draggedPlt === targetPlt && draggedDay === targetDay && draggedIdx !== targetIdx) { const arr = state[draggedPlt][draggedDay]; const draggedItem = arr.splice(draggedIdx, 1)[0]; arr.splice(targetIdx, 0, draggedItem); saveData(); } }
+        function handleDragEnd(e) { this.style.opacity = '1'; renderAll(); }
+
+        function incrementProgress(plt, day, idx) { let work = state[plt][day][idx]; let prog = work.progress; let newProg = prog.replace(/(\d+)(?!.*\d)/, match => parseInt(match) + 1); if (prog === newProg) newProg = prog + " +1"; work.progress = newProg; saveData(); let badge = document.getElementById(`prog-${plt}-${day}-${idx}`); if (badge) { const activeColor = plt === 'lezhin' ? '#ff7675' : plt === 'bomtoon' ? '#ff78cb' : plt === 'ridi' ? '#5dade2' : '#66a3ff'; badge.style.transform = "scale(1.2)"; badge.style.backgroundColor = activeColor; setTimeout(() => { badge.style.transform = "scale(1)"; badge.style.backgroundColor = "rgba(0, 0, 0, 0.6)"; }, 250); } }
+
+        function incrementCycle(plt, day, idx) {
+            let work = state[plt][day][idx];
+            let cyc = work.cycle;
+            if (!cyc) return;
+
+            // 'n주차'라는 글자가 들어있는 모든 경우 처리
+            if (/(\d+)주차/.test(cyc)) {
+                let maxCycle = 5; // 기본적으로 매월 주차는 5주차까지 보고 리셋
+
+                // 1. 만약 'N연 M휴' 형태라면 주기를 계산해서 리셋
+                let cycleParts = cyc.match(/(\d+)연\s*(\d+)휴/);
+                if (cycleParts) {
+                    let runOn = parseInt(cycleParts[1]);
+                    let restOn = parseInt(cycleParts[2]);
+                    maxCycle = runOn + restOn;
+                }
+
+                // 2. 주차 숫자 올리기 및 리셋 실행
+                work.cycle = cyc.replace(/(\d+)주차/, (m, p1) => {
+                    let nextWeek = parseInt(p1) + 1;
+
+                    if (nextWeek > maxCycle) {
+                        return "1주차"; // 최대 주차를 넘기면 1주차로 리셋!
+                    } else {
+                        return nextWeek + "주차";
+                    }
+                });
+                saveData();
+            }
+        }
+
+        function refreshBalance() {
+            const lW = parseInt(localStorage.getItem('lWallet') || 0); const bW = parseInt(localStorage.getItem('bWallet') || 0);
+            const rW = parseInt(localStorage.getItem('rWallet') || 0); const mW = parseInt(localStorage.getItem('mWallet') || 0);
+
+
+            document.getElementById('lezhin-wallet-val').textContent = formatNum(lW);
+            document.getElementById('bomtoon-wallet-val').textContent = formatNum(bW);
+            if (document.getElementById('ridi-wallet-val')) document.getElementById('ridi-wallet-val').textContent = formatNum(rW);
+            if (document.getElementById('mrblue-wallet-val')) document.getElementById('mrblue-wallet-val').textContent = formatNum(mW);
+
+            let lT = 0, bT = 0, rT = 0, mT = 0; let lCount = 0, bCount = 0, rCount = 0, mCount = 0;
+            const todayObj = getWebtoonDate();
+
+            if (viewDay !== '휴재' && viewDay !== '완결') {
+                const lezhinWorks = state.lezhin[viewDay] || []; const bomtoonWorks = state.bomtoon[viewDay] || [];
+                const ridiWorks = state.ridi[viewDay] || []; const mrblueWorks = state.mrblue[viewDay] || [];
+                lCount = lezhinWorks.length; bCount = bomtoonWorks.length; rCount = ridiWorks.length; mCount = mrblueWorks.length;
+
+                if (viewDay === '10일 연재') {
+                    lT = lezhinWorks.filter(w => !isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
+                    bT = bomtoonWorks.filter(w => !isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
+                    rT = ridiWorks.filter(w => !isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
+                    mT = mrblueWorks.filter(w => !isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
+                } else {
+                    lT = lezhinWorks.filter(w => !isWorkOnBreak(w)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
+                    bT = bomtoonWorks.filter(w => !isWorkOnBreak(w)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
+                    rT = ridiWorks.filter(w => !isWorkOnBreak(w)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
+                    mT = mrblueWorks.filter(w => !isWorkOnBreak(w)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
+                }
+
+                const todayDayStr = days[todayObj.getDay()];
+                if (viewDay === todayDayStr) {
+                    (state.lezhin["10일 연재"] || []).forEach(w => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)) lT += (parseInt(w.coin) || 0); });
+                    (state.bomtoon["10일 연재"] || []).forEach(w => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)) bT += (parseInt(w.coin) || 0); });
+                    (state.ridi["10일 연재"] || []).forEach(w => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)) rT += (parseInt(w.coin) || 0); });
+                    (state.mrblue["10일 연재"] || []).forEach(w => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)) mT += (parseInt(w.coin) || 0); });
+                }
+            } else {
+                Object.keys(state.lezhin).forEach(d => { (state.lezhin[d] || []).forEach(w => { if (w.status === viewDay) lCount++; }); });
+                Object.keys(state.bomtoon).forEach(d => { (state.bomtoon[d] || []).forEach(w => { if (w.status === viewDay) bCount++; }); });
+                Object.keys(state.ridi).forEach(d => { (state.ridi[d] || []).forEach(w => { if (w.status === viewDay) rCount++; }); });
+                Object.keys(state.mrblue).forEach(d => { (state.mrblue[d] || []).forEach(w => { if (w.status === viewDay) mCount++; }); });
+            }
+
+            // 오늘의 필요 코인에 쉼표 팡팡!
+            document.getElementById('lezhin-needed-val').textContent = formatNum(lT);
+            document.getElementById('bomtoon-needed-val').textContent = formatNum(bT);
+            if (document.getElementById('ridi-needed-val')) document.getElementById('ridi-needed-val').textContent = formatNum(rT);
+            if (document.getElementById('mrblue-needed-val')) document.getElementById('mrblue-needed-val').textContent = formatNum(mT);
+
+            document.getElementById('lezhin-count-val').textContent = `(작품 총 ${lCount}개)`; document.getElementById('bomtoon-count-val').textContent = `(작품 총 ${bCount}개)`;
+            if (document.getElementById('ridi-count-val')) document.getElementById('ridi-count-val').textContent = `(작품 총 ${rCount}개)`;
+            if (document.getElementById('mrblue-count-val')) document.getElementById('mrblue-count-val').textContent = `(작품 총 ${mCount}개)`;
+
+            // 정산 후 결과에 쉼표 팡팡!
+            document.getElementById('lezhin-result').textContent = formatNum(lW - lT);
+            document.getElementById('bomtoon-result').textContent = formatNum(bW - bT);
+            if (document.getElementById('ridi-result')) document.getElementById('ridi-result').textContent = formatNum(rW - rT);
+            if (document.getElementById('mrblue-result')) document.getElementById('mrblue-result').textContent = formatNum(mW - mT);
+        }
+
+        function openActionModal(plt, origDay, idx) { actionPlt = plt; actionOrigDay = origDay; actionIdx = idx; document.getElementById('action-title').textContent = state[plt][origDay][idx].title; document.getElementById('action-modal').style.display = 'flex'; }
+        function closeActionModal() { document.getElementById('action-modal').style.display = 'none'; }
+
+        function toggleWeekInput() {
+            const typeVal = document.getElementById('input-cycle-type').value;
+            const weekInput = document.getElementById('input-cycle-week');
+
+            if (!typeVal) {
+                weekInput.type = 'text';
+                weekInput.value = '';
+                weekInput.disabled = true;
+                weekInput.style.backgroundColor = '#eee';
+                weekInput.placeholder = '입력 불가';
+            } else if (typeVal === '매월 특정주 휴재') {
+                weekInput.type = 'number';
+                weekInput.disabled = false;
+                weekInput.style.backgroundColor = '';
+                weekInput.placeholder = '몇 주차? (예: 1)';
+            } else if (typeVal === '10일 연재') {
+                weekInput.type = 'text';
+                weekInput.disabled = false;
+                weekInput.style.backgroundColor = '';
+                weekInput.placeholder = '예: 10/20/30';
+            } else if (typeVal === '격주 연재') {
+
+                weekInput.type = 'date';
+                weekInput.disabled = false;
+                weekInput.style.backgroundColor = '';
+            } else {
+                weekInput.type = 'text';
+                weekInput.disabled = false;
+                weekInput.style.backgroundColor = '';
+                weekInput.placeholder = 'n주차 (숫자)';
+            }
+        }
+
+        function removeSelectedImage() { tempImg = ""; document.getElementById('image-input').value = ""; document.getElementById('image-status-text').textContent = "📷 사진이 삭제되었습니다."; document.getElementById('image-status-text').style.color = "#e60012"; document.getElementById('remove-img-btn').style.display = 'none'; }
+
+        function editFromAction() {
+            closeActionModal(); editMode = true; currentPlatform = actionPlt;
+            const work = state[actionPlt][actionOrigDay][actionIdx];
+            document.getElementById('modal-title-label').textContent = "작품 수정";
+            document.getElementById('input-title').value = work.title;
+            document.getElementById('input-url').value = work.url || '';
+            let savedCyc = work.cycle || ""; let cType = ""; let cWeek = "";
+
+
+            if (savedCyc) {
+                if (savedCyc.includes("10일 연재") || savedCyc.includes("격주 연재")) {
+                    cType = savedCyc.includes("10일 연재") ? "10일 연재" : "격주 연재";
+                    let match = savedCyc.match(/\((.*?)\)/);
+                    if (match) cWeek = match[1];
+                } else if (savedCyc.includes("매월")) {
+                    cType = "매월 특정주 휴재";
+                    let match = savedCyc.match(/매월\s*(\d+)주차\s*휴재/);
+                    if (match) cWeek = match[1];
+                } else {
+                    let match = savedCyc.match(/^(.*?)(?:\s+(\d+)주차)?$/);
+                    if (match) { cType = match[1].trim(); cWeek = match[2] || ""; }
+                }
+            }
+
+            const typeSelect = document.getElementById('input-cycle-type');
+            const typeExists = Array.from(typeSelect.options).some(o => o.value === cType);
+            typeSelect.value = typeExists ? cType : "";
+
+            document.getElementById('input-cycle-week').value = cWeek;
+            toggleWeekInput();
+
+            document.getElementById('input-coin').value = work.coin;
+            document.getElementById('input-progress').value = work.progress;
+            document.getElementById('input-day').value = actionOrigDay;
+            document.getElementById('input-status').value = work.status || '연재중';
+
+            tempImg = work.img || ""; document.getElementById('image-input').value = "";
+            document.getElementById('image-status-text').textContent = tempImg ? "기존 사진 유지 📷" : "📷 사진은 선택 사항입니다.";
+            document.getElementById('image-status-text').style.color = tempImg ? "#2ecc71" : "#888";
+            document.getElementById('remove-img-btn').style.display = tempImg ? 'block' : 'none';
+            document.getElementById('custom-modal').style.display = 'flex';
+        }
+
+        function openAddModal(platform) {
+            editMode = false; currentPlatform = platform; tempImg = "";
+            document.getElementById('modal-title-label').textContent = "작품 추가"; document.getElementById('input-title').value = '';
+            document.getElementById('input-url').value = '';
+            document.getElementById('input-cycle-type').value = ''; document.getElementById('input-cycle-week').value = ''; toggleWeekInput(); document.getElementById('input-coin').value = '3'; document.getElementById('input-progress').value = '1화'; document.getElementById('input-day').value = (viewDay === '휴재' || viewDay === '완결') ? days[getWebtoonDate().getDay()] : viewDay; document.getElementById('input-status').value = (viewDay === '휴재' || viewDay === '완결') ? viewDay : '연재중';
+            document.getElementById('image-input').value = ""; document.getElementById('image-status-text').textContent = "📷 사진은 선택 사항입니다."; document.getElementById('image-status-text').style.color = "#888";
+            document.getElementById('remove-img-btn').style.display = 'none';
+            document.getElementById('custom-modal').style.display = 'flex';
+        }
+
+        function closeAddModal() { document.getElementById('custom-modal').style.display = 'none'; }
+
+        function saveWorkFinal() {
+            const title = document.getElementById('input-title').value;
+            const url = document.getElementById('input-url').value;
+            const cType = document.getElementById('input-cycle-type').value;
+            const cWeek = document.getElementById('input-cycle-week').value;
+            let cycleStr = "";
+
+            // 기존 함수 중간에 있는 이 덩어리를 이걸로 교체!
+            if (cType) {
+                if (cType === "10일 연재" || cType === "격주 연재") {
+                    cycleStr = cWeek ? `${cType} (${cWeek})` : cType;
+                } else if (cType === "매월 특정주 휴재") {
+                    // 👉 cWeek(주차 숫자)가 있으면 정상 저장, 만약 유저가 안 적었으면 타입 이름만 저장해서 에러 방지!
+                    cycleStr = cWeek ? `매월 ${cWeek}주차 휴재` : "매월 특정주 휴재";
+                } else if (cWeek) {
+                    cycleStr = `${cType} ${cWeek}주차`;
+                } else {
+                    cycleStr = cType;
+                }
+            }
+
+            const coin = parseInt(document.getElementById('input-coin').value) || 0;
+            const progress = document.getElementById('input-progress').value || "1화";
+            let targetDay = document.getElementById('input-day').value;
+            const targetStatus = document.getElementById('input-status').value;
+
+            if (cycleStr.includes("10일 연재")) {
+                targetDay = "10일 연재";
+            }
+
+            if (!title) return alert("제목을 입력해주세요!");
+
+            const workData = { title, url: url, cycle: cycleStr, coin, progress, status: targetStatus, img: tempImg };
+
+            if (editMode && actionOrigDay === targetDay) {
+
+                state[currentPlatform][targetDay][actionIdx] = workData;
+            } else {
+
+                if (editMode) state[currentPlatform][actionOrigDay].splice(actionIdx, 1);
+                state[currentPlatform][targetDay].push(workData);
+            }
+
+            saveData();
+            closeAddModal();
+        }
+
+
+
+        document.getElementById('image-input').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // 1. 처리 중이라는 안내 표시 (용량이 크면 시간이 걸릴 수 있음)
+            document.getElementById('image-status-text').textContent = "사진을 처리하는 중입니다...";
+            document.getElementById('image-status-text').style.color = "#f39c12";
+
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                const img = new Image();
+
+                // 2. 이미지가 정상적으로 불러와졌을 때 (성공)
+                img.onload = function () {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width, h = img.height;
+                        if (w > 300) { h *= 300 / w; w = 300; }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+                        tempImg = canvas.toDataURL('image/jpeg', 0.7);
+
+                        document.getElementById('image-status-text').textContent = "사진 선택 완료! ✅";
+                        document.getElementById('image-status-text').style.color = "#2ecc71";
+                        document.getElementById('remove-img-btn').style.display = 'block';
+                    } catch (err) {
+                        alert("사진 용량이 너무 크거나 처리할 수 없는 형식입니다.");
+                        document.getElementById('image-status-text').textContent = "📷 사진 처리에 실패했습니다.";
+                        document.getElementById('image-status-text').style.color = "#e60012";
+                    }
+                    // 입력창 초기화 (같은 사진 다시 고를 수 있게!)
+                    document.getElementById('image-input').value = "";
+                };
+
+                // 3. 브라우저가 못 그리는 이상한 형식일 때의 방어 로직 (먹통 방지!)
+                img.onerror = function () {
+                    alert("지원하지 않는 사진 형식입니다. 캡처본(스크린샷)을 이용해 주세요!");
+                    document.getElementById('image-status-text').textContent = "📷 지원하지 않는 사진입니다.";
+                    document.getElementById('image-status-text').style.color = "#e60012";
+                    document.getElementById('image-input').value = "";
+                };
+
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function updateCoin(plt) {
+            let val = prompt("지갑 잔액 수정 (충전/차감):");
+            if (val !== null) {
+                if (plt === 'lezhin') localStorage.setItem('lWallet', val || 0);
+                else if (plt === 'bomtoon') localStorage.setItem('bWallet', val || 0);
+                else if (plt === 'ridi') localStorage.setItem('rWallet', val || 0);
+                else if (plt === 'mrblue') localStorage.setItem('mWallet', val || 0);
+                saveData();
+            }
+        }
+        function checkStorage() { const used = encodeURIComponent(JSON.stringify(localStorage)).length; const limit = 5 * 1024 * 1024; const percent = Math.min(Math.round((used / limit) * 100), 100); const pEl = document.getElementById('storage-percent'); const fEl = document.getElementById('storage-bar-fill'); if (pEl) pEl.textContent = percent; if (fEl) fEl.style.width = percent + '%'; }
+        function exportDataToFile() { const d = localStorage.getItem(STORAGE_KEY); if (!d) return alert("백업할 데이터가 없습니다!"); const date = getKSTDate(); const dateString = date.getFullYear() + String(date.getMonth() + 1).padStart(2, '0') + String(date.getDate()).padStart(2, '0'); const fileName = `mobo_backup_${dateString}.txt`; const blob = new Blob([d], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = fileName; a.click(); URL.revokeObjectURL(url); localStorage.setItem('lastBackupDate', Date.now()); checkBackupStatus(); alert("✅ 백업 파일 다운로드 완료!"); }
+
+        function triggerImport() {
+            // 파일 선택창을 열기 전에 기존 기록을 지워서 브라우저가 무조건 인식하게 만들기!
+            document.getElementById('backup-file-input').value = '';
+            document.getElementById('backup-file-input').click();
+        }
+
+        // 브라우저가 절대 무시할 수 없는 가장 튼튼한 복구 함수!
+        function handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const content = e.target.result;
+                    const parsedData = JSON.parse(content);
+
+                    if (parsedData && parsedData.state) {
+                        localStorage.setItem(STORAGE_KEY, content);
+                        alert("🎉 데이터 복원 완료! 화면을 새로고침합니다.");
+                        location.reload();
+                    } else {
+                        throw new Error("잘못된 형식입니다.");
+                    }
+                } catch (err) {
+                    alert("❌ 잘못된 백업 파일이거나 손상되었습니다.\n(모보에서 다운로드한 파일이 맞는지 확인해주세요!)");
+                }
+                // 파일 읽기가 '완전히 끝난 후'에 초기화해야 모바일에서 안 튕김
+                document.getElementById('backup-file-input').value = '';
+            };
+
+            reader.readAsText(file);
+        }
+
+        function checkBackupStatus() { const lastBackup = localStorage.getItem('lastBackupDate'); const alertEl = document.getElementById('backup-alert'); if (!lastBackup || (Date.now() - parseInt(lastBackup)) / 86400000 >= 7) alertEl.style.display = 'block'; else alertEl.style.display = 'none'; }
+        function updateWeeklyStatUI() {
+            document.getElementById('weekly-spent-val').textContent = formatNum(localStorage.getItem('weeklySpent') || 0);
+        }
+        function addWeeklySpent(amount) { localStorage.setItem('weeklySpent', parseInt(localStorage.getItem('weeklySpent') || 0) + amount); updateWeeklyStatUI(); }
+        function initScroll() { document.querySelectorAll('.scroll-wrapper').forEach(wrapper => { const list = wrapper.querySelector('.webtoon-list'); wrapper.querySelector('.left-btn').onclick = () => list.scrollBy({ left: -160, behavior: 'smooth' }); wrapper.querySelector('.right-btn').onclick = () => list.scrollBy({ left: 160, behavior: 'smooth' }); }); }
+        function closeAttendWarning() { document.getElementById('attend-warning-modal').style.display = 'none'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        function deleteFromAction() { if (confirm("이 작품을 영구 삭제할까요?")) { state[actionPlt][actionOrigDay].splice(actionIdx, 1); saveData(); closeActionModal(); } }
+    </script>
+    <script>
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js');
+            });
+        }
+
+        // =========================================
+        // 작품 검색 기능 로직
+        // =========================================
+        function openSearchModal() {
+            closeNav();
+            document.getElementById('search-input').value = '';
+            document.getElementById('search-result-list').innerHTML = '<p style="text-align:center; color:#888; font-size:14px;">검색어를 입력해주세요.</p>';
+            document.getElementById('search-modal').style.display = 'flex';
+            setTimeout(() => document.getElementById('search-input').focus(), 100); // 창 열리면 키보드 바로 올라오게!
+        }
+
+        function closeSearchModal() {
+            document.getElementById('search-modal').style.display = 'none';
+        }
+
+        function performSearch() {
+            const query = document.getElementById('search-input').value.trim().toLowerCase();
+            const listEl = document.getElementById('search-result-list');
+            listEl.innerHTML = ''; // 기존 결과 지우기
+
+            if (!query) {
+                listEl.innerHTML = '<p style="text-align:center; color:#888; font-size:14px;">검색어를 입력해주세요.</p>';
+                return;
+            }
+
+            let foundWorks = [];
+            // 레진, 봄툰의 모든 요일을 싹 다 뒤집니다!
+            ['lezhin', 'bomtoon'].forEach(plt => {
+                Object.keys(state[plt]).forEach(day => {
+                    (state[plt][day] || []).forEach((work, idx) => {
+                        // 제목에 검색어가 포함되어 있으면 배열에 쏙!
+                        if (work.title.toLowerCase().includes(query)) {
+                            foundWorks.push({ plt, day, idx, work });
+                        }
+                    });
+                });
+            });
+
+            if (foundWorks.length === 0) {
+                listEl.innerHTML = '<p style="text-align:center; color:#888; font-size:14px;">검색 결과가 없습니다!</p>';
+                return;
+            }
+
+            // 찾은 작품들을 예쁘게 리스트로 그려주기
+            foundWorks.forEach(item => {
+                const pltName = item.plt === 'lezhin' ? '레진' : '봄툰';
+                const color = item.plt === 'lezhin' ? '#e60012' : '#ff69b4';
+                const div = document.createElement('div');
+                div.style.borderBottom = '1px solid #eee';
+                div.style.padding = '10px 0';
+                div.style.display = 'flex';
+                div.style.justifyContent = 'space-between';
+                div.style.alignItems = 'center';
+
+                div.innerHTML = `
+                    <div style="flex:1; overflow:hidden;">
+                        <div style="font-size:11px; color:#888;">[${pltName}] ${item.day}</div>
+                        <div style="font-size:14px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.work.title}</div>
+                    </div>
+                    <button onclick="closeSearchModal(); openActionModal('${item.plt}', '${item.day}', ${item.idx})" 
+                            style="background:${color}; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-size:12px; flex-shrink:0; margin-left:10px; font-weight:bold;">
+                        관리하기
+                    </button>
+                `;
+                listEl.appendChild(div);
+            });
+        }
+
+        function openLinkSettingModal() {
+            closeNav();
+
+            document.getElementById('bomtoonCustomLink').value = localStorage.getItem('bomtoonLink') || '';
+            document.getElementById('lezhinCustomLink').value = localStorage.getItem('lezhinLink') || '';
+            document.getElementById('link-setting-modal').style.display = 'flex';
+        }
+
+        function closeLinkSettingModal() {
+            document.getElementById('link-setting-modal').style.display = 'none';
+        }
+
+        function saveCustomLinks() {
+            const bLink = document.getElementById('bomtoonCustomLink').value.trim();
+            const lLink = document.getElementById('lezhinCustomLink').value.trim();
+
+            localStorage.setItem('bomtoonLink', bLink);
+            localStorage.setItem('lezhinLink', lLink);
+
+            alert('출석 링크가 성공적으로 저장되었습니다!');
+            closeLinkSettingModal();
+        }
+
+        function goToAttendance(plt) {
+
+            const defaultLinks = {
+                'bomtoon': 'https://www.bomtoon.com/play',
+                'lezhin': 'https://www.lezhin.com/ko/arcade/attendance',
+                'mrblue': 'https://www.mrblue.com/' // 미블 출석 링크 기본값
+            };
+
+
+            const customLink = localStorage.getItem(plt + 'Link');
+
+
+            const finalLink = customLink ? customLink : defaultLinks[plt];
+
+
+            window.open(finalLink, '_blank');
+
+
+            checkAttendance(plt);
+        }
+
+        // 🌟 지갑 스와이프 시 점 움직이는 함수
+        function updateWalletDots() {
+            const slider = document.getElementById('wallet-slider');
+            const dots = document.querySelectorAll('.wallet-pagination .dot');
+            if (!slider || dots.length === 0) return;
+
+            const scrollLeft = slider.scrollLeft;
+            const clientWidth = slider.clientWidth;
+            const index = Math.round(scrollLeft / clientWidth);
+
+            dots.forEach((dot, i) => {
+                if (i === index) dot.classList.add('active');
+                else dot.classList.remove('active');
+            });
+        }
+
+        // 🌟 신규 추가: 숫자 세탁기 (천 단위 쉼표 찍어주는 마법!)
+        function formatNum(num) {
+            return Number(num).toLocaleString();
+        }
+
+        // 상세 메뉴(점 세 개)에서 작동하는 플랫폼 이동
+        function moveFromAction() {
+            // 1. 어디로 이사갈지 물어보기
+            const moveChoice = prompt("어느 플랫폼으로 이동할까요?\n\n[1] 레진코믹스\n[2] 봄툰\n[3] 리디\n[4] 미스터블루\n\n해당하는 '숫자'만 입력해 주세요!");
+
+            if (!moveChoice) return; // 취소 버튼 누르면 얌전히 종료
+
+            let targetPlat = '';
+            if (moveChoice === '1') targetPlat = 'lezhin';
+            else if (moveChoice === '2') targetPlat = 'bomtoon';
+            else if (moveChoice === '3') targetPlat = 'ridi';
+            else if (moveChoice === '4') targetPlat = 'mrblue';
+            else {
+                alert("❌ 1~4 사이의 숫자만 입력해 주세요!");
+                return;
+            }
+
+            if (actionPlt === targetPlat) {
+                alert("이미 해당 플랫폼에 있는 작품입니다!");
+                return;
+            }
+
+            // 2. 진짜 이사할지 한 번 더 확인!
+            if (!confirm("선택하신 플랫폼으로 작품을 이동시킬까요? (기존 설정은 그대로 유지됩니다!)")) return;
+
+            // 3. 기존 플랫폼에서 작품 데이터 통째로 뽁! 뽑아내기
+            const workToMove = state[actionPlt][actionOrigDay].splice(actionIdx, 1)[0];
+
+            // 4. 새 플랫폼에 안전하게 밀어넣기
+            if (!state[targetPlat][actionOrigDay]) {
+                state[targetPlat][actionOrigDay] = [];
+            }
+            state[targetPlat][actionOrigDay].push(workToMove);
+
+
+            saveData();
+            closeActionModal(); // 점 세 개 팝업창 닫기
+
+            alert("플랫폼 이동이 완료되었습니다! 새 탭에서 확인해 보세요!");
+        }
+    </script>
+</body>
+
+
+</html>
