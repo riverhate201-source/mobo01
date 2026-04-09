@@ -1127,3 +1127,102 @@ body.dark-mode .card-thumbnail {
 .card-thumbnail {
     transition: filter 0.3s ease-in-out;
 }
+
+/* --- 코인 수정 모달창 라이트/다크모드 글씨 색상 --- */
+
+/* 1. 라이트 모드 (기본) */
+#coin-modal-title, 
+.dynamic-label {
+    color: #333;
+}
+#coin-update-modal input {
+    color: #333; /* 입력창 안의 글씨도 기본은 진하게! */
+}
+
+/* 2. 다크 모드 (body에 dark-mode 클래스가 있을 때) */
+body.dark-mode #coin-modal-title, 
+body.dark-mode .dynamic-label {
+    color: #f9f9f9;
+}
+body.dark-mode #coin-update-modal input {
+    color: #f9f9f9; 
+    background-color: #333; /* 다크모드일 땐 입력창 배경도 살짝 어둡게 (선택사항) */
+    border-color: #555;
+}
+
+/* --- 소멸 예정 박스 (라이트 모드 기본) --- */
+.expire-warning-box {
+    background-color: #fff0f0;
+    border: 1px dashed #ffcccc;
+}
+.expire-warning-box .expire-label {
+    color: #e60012;
+}
+.expire-warning-box .expire-input {
+    border: 1px solid #ff9999;
+}
+.expire-warning-box .expire-desc {
+    color: #d63031;
+}
+
+/* --- 소멸 예정 박스 (다크 모드) --- */
+body.dark-mode .expire-warning-box {
+    background-color: #2b1818; /* 눈이 편안한 어두운 와인/초콜릿색 */
+    border: 1px dashed #5c2b2b; /* 테두리도 차분하게 톤다운 */
+}
+body.dark-mode .expire-warning-box .expire-label {
+    color: #ff6b81; /* 다크모드에서 잘 보이면서 눈 안 아픈 파스텔톤 빨강 */
+}
+body.dark-mode .expire-warning-box .expire-input {
+    border: 1px solid #5c2b2b;
+    background-color: #222; /* 입력창 안쪽도 살짝 어둡게 */
+    color: #f9f9f9;
+}
+body.dark-mode .expire-warning-box .expire-desc {
+    color: #ff9999; /* 아래쪽 안내 글씨도 눈에 잘 띄는 연분홍으로 */
+}
+
+/* --- 🍞 토스트 팝업 스타일 --- */
+.toast {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #333; /* 다크그레이 배경 */
+    color: #fff;
+    text-align: left;
+    border-radius: 8px;
+    padding: 14px 20px;
+    position: fixed;
+    z-index: 9999;
+    left: 50%;
+    bottom: -50px; /* 처음에 화면 아래 숨어있음 */
+    transform: translateX(-50%);
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: bottom 0.4s ease, opacity 0.4s ease, visibility 0.4s;
+}
+
+/* 토스트가 화면에 나타날 때! */
+.toast.show {
+    visibility: visible;
+    opacity: 1;
+    bottom: 40px; /* 스르륵 위로 올라옴! */
+}
+
+/* 실행 취소 버튼 디자인 */
+#toast-undo-btn {
+    background: transparent;
+    color: #4d96ea; /* 예쁜 파란색 포인트 */
+    border: none;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 0 0 20px;
+}
+#toast-undo-btn:active {
+    color: #1a6cc2;
+}
+

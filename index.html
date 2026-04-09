@@ -9,14 +9,13 @@
     <title>모아보기mobo</title>
 
     <meta name="format-detection" content="telephone=no, date=no, email=no, address=no">
-    <link rel="stylesheet" href="./css/style.css">
-
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#f4f6f8">
     <link rel="apple-touch-icon" href="./icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 
 
@@ -56,6 +55,8 @@
                 <button onclick="deductToday()" class="menu-item"> 오늘 작품 당일 정산</button>
                 <button onclick="openLinkSettingModal()" class="menu-item"> 출석 링크 직접 설정</button>
             </div>
+
+            
 
             <div class="nav-section">
                 <h4>데이터 관리</h4>
@@ -296,7 +297,7 @@
             <h3 id="modal-title-label">작품 추가</h3>
             <input type="text" id="input-title" placeholder="작품 제목">
             <input type="text" id="input-url" placeholder="작품 바로가기 링크 (선택)" style="margin-top: 2px;">
-            <input type="text" id="input-time" placeholder="업로드 시간 (예: 오전 7시 / 웹소설의 경우에만! )" style="flex: 1;">
+            <input type="text" id="input-time" placeholder="업로드 시간 (예: 오전 7시 업로드 / 웹소설의 경우에만)" style="flex: 1;">
 
             <div style="display: flex; flex-direction: column; gap: 10px;">
 
@@ -336,10 +337,12 @@
                 <input type="text" id="input-cycle-week" placeholder="n주차 (숫자)" style="flex: 1; margin-bottom: 0;">
             </div>
 
-            <div style="display: flex; gap: 10px;">
-                <input type="number" id="input-coin" placeholder="코인" style="flex: 1;">
-                <input type="text" id="input-progress" placeholder="진도 (예: 1화)" style="flex: 2;">
-            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+    <input type="number" id="input-coin" placeholder="코인" 
+           style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+    <input type="text" id="input-progress" placeholder="진도 (예: 1화)" 
+           style="flex: 2; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+</div>
 
             <p id="image-status-text" style="text-align: center; font-size: 12px; margin-bottom: 5px;">📷 사진은 선택 사항입니다.
             </p>
@@ -409,7 +412,7 @@
                     style="margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
             </div>
             <div style="margin-bottom: 15px;">
-                <label id="calc-price-label" style="font-size: 13px; color: #666;">1화당 코인 (기본 3코인)</label>
+                <label id="calc-price-label" style="font-size: 13px; color: #666;">1화당 코인</label>
                 <input type="number" id="calc-price" placeholder="예: 3"
                     style="margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
             </div>
@@ -476,40 +479,46 @@
             <button onclick="saveCustomLinks()" class="save-btn" style="width: 100%; margin-bottom: 10px;">저장하기</button>
         </div>
     </div>
-
-    <div id="coin-update-modal" class="modal-overlay" style="display: none; z-index: 6000;">
+<div id="coin-update-modal" class="modal-overlay" style="display: none; z-index: 6000;">
         <div class="modal-content" style="max-width: 320px; text-align: center; position: relative;">
             <button onclick="closeCoinModal()"
                 style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; color: #888; cursor: pointer; line-height: 1;">×</button>
-            <h3 id="coin-modal-title" style="margin-top: 0; color: #1967d2;">지갑 잔액 수정</h3>
+            
+            <h3 id="coin-modal-title" style="margin-top: 0;">지갑 잔액 수정</h3>
 
-            <div style="margin-bottom: 15px; text-align: left;">
-                <label style="font-size: 13px; font-weight: bold; color: #333;">현재 잔액</label>
+            <div style="margin-bottom: 3px; text-align: left;">
+                <label class="dynamic-label" style="font-size: 13px; font-weight: 500;">현재 잔액</label>
                 <input type="number" id="coin-input-val"
                     style="width: 100%; padding: 10px; box-sizing: border-box; margin-top: 4px; border: 1px solid #ccc; border-radius: 8px;">
             </div>
 
-            <div
-                style="margin-bottom: 15px; text-align: left; background: #fff0f0; padding: 12px; border-radius: 8px; border: 1px dashed #ffcccc;">
-                <label id="expire-modal-label" style="font-size: 13px; font-weight: bold; color: #e60012;">🚨 소멸 예정 코인
-                    (선택)</label>
+            <div class="expire-warning-box" style="margin-bottom: 15px; text-align: left; padding: 12px; border-radius: 8px;">
+                <label id="expire-modal-label" class="expire-label" style="font-size: 13px; font-weight: bold;">🚨 소멸 예정 코인 (선택)</label>
                 <div style="display: flex; gap: 8px; margin-top: 8px;">
-                    <input type="number" id="expire-coin-val" placeholder="수량 (예: 15)"
-                        style="flex: 1; padding: 8px; border: 1px solid #ff9999; border-radius: 6px; box-sizing: border-box;">
-                    <input type="date" id="expire-date-val"
-                        style="flex: 1.2; padding: 8px; border: 1px solid #ff9999; border-radius: 6px; box-sizing: border-box;">
+                    <input type="number" id="expire-coin-val" class="expire-input" placeholder="수량 (예: 15)"
+                        style="flex: 1; padding: 8px; border-radius: 6px; box-sizing: border-box;">
+                    
+                    <input type="text" id="expire-date-val" class="expire-input" placeholder="예: 2023-03-12"
+                        onfocus="this.type='date'" onblur="if(!this.value) this.type='text'"
+                        style="flex: 1.2; padding: 8px; border-radius: 6px; box-sizing: border-box;">
                 </div>
-                <p style="margin: 6px 0 0 0; font-size: 11px; color: #d63031;">소멸 예정이 없다면 비워두세요!</p>
+                <p class="expire-desc" style="margin: 6px 0 0 0; font-size: 11px;">소멸 예정이 없다면 비워두세요!</p>
             </div>
 
             <button onclick="saveCoinUpdate()" class="save-btn" style="width: 100%;">저장하기</button>
         </div>
     </div>
+    
 </body>
 
 </html>
 
 <input type="file" id="image-input" accept="image/jpeg, image/png, image/webp, image/gif" style="display: none;">
+
+<div id="toast-popup" class="toast">
+        <span id="toast-message">작품이 서랍에서 삭제되었습니다.</span>
+        <button id="toast-undo-btn" onclick="undoDelete()">실행 취소</button>
+    </div>
 
 <script>
 
@@ -533,7 +542,7 @@
         updateDarkModeBtn();
     }
 
-    // 2. 💡 보너스: 폰 화면 켜둔 채로 제어센터에서 다크 모드 껐다 켰을 때, 새로고침 없이 즉시 반응하게 만들기!
+    // 2. 폰 화면 켜둔 채로 제어센터에서 다크 모드 껐다 켰을 때, 새로고침 없이 즉시 반응하게 만들기!
     // (이 코드를 applyTheme 함수 바로 밑이나 window.onload 근처에 붙여넣어 주세요)
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
         // 유저가 앱 내 버튼으로 강제 고정해둔 상태가 아닐 때만 폰 설정을 따라갑니다.
@@ -658,11 +667,13 @@
     let platformOrder = JSON.parse(localStorage.getItem('platformOrder')) || ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
 
     window.onload = function () {
+        requestNotificationPermission(); // 1. 권한 확인
         loadAllData(); checkSaleDays(); checkAttendanceReset();
         checkAndShowAttendPopup();
         askForDeduction();
         viewDay = days[getWebtoonDate().getDay()];
         renderAll(); initScroll(); checkStorage(); checkBackupStatus(); updatePlatformOrder();
+        checkRemoteUpdate(); // 2. 업데이트 소식 체크
     };
 
 
@@ -690,7 +701,7 @@
         closeNav();
     }
 
-    // 🌟 1. 온오프 & 순서 변경 기능 (1개~4개 내 맘대로 입력!)
+    // 온오프 & 순서 변경 기능 (1개~4개 내 맘대로 입력!)
     function changePlatformOrder() {
         const input = prompt("사용할 플랫폼과 순서를 정해주세요!\n\n[1] 레진 [2] 봄툰 [3] 리디 [4] 미블\n\n사용할 플랫폼의 숫자만 원하는 순서대로 입력하세요.\n(예: 레진, 리디만 쓰면 👉 13)");
 
@@ -731,7 +742,7 @@
 
         document.getElementById('calc-total').value = '';
         document.getElementById('calc-current').value = '';
-        document.getElementById('calc-price').value = '3';
+        document.getElementById('calc-price').value = '';
 
         // 코인백 초기화
         document.getElementById('calc-coinback-toggle').checked = false;
@@ -814,7 +825,7 @@
         document.getElementById('calc-result-box').style.display = 'block';
     }
 
-    // 🌟 [통합 정산 시스템] 4개 플랫폼 담을 바구니 완벽 준비!
+    // [통합 정산 시스템] 4개 플랫폼 담을 바구니 완벽 준비!
     let pendingDeductions = { lezhin: [], bomtoon: [], ridi: [], mrblue: [] };
     let pendingDaysStr = "";
     let isTodayDeduction = false;
@@ -836,7 +847,7 @@
         const todayObj = getWebtoonDate();
         const d = days[todayObj.getDay()];
 
-        // 🎯 [핵심] platformOrder(사용자가 켠 플랫폼)만 순회합니다!
+        // [핵심] platformOrder(사용자가 켠 플랫폼)만 순회합니다!
         platformOrder.forEach(plt => {
             (state[plt][d] || []).forEach((w, i) => { if (!isWorkOnBreak(w)) pendingDeductions[plt].push({ day: d, idx: i, work: w }); });
             (state[plt]["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)) pendingDeductions[plt].push({ day: "10일 연재", idx: i, work: w }); });
@@ -870,7 +881,7 @@
             while (formatDate(check) < nowStr) {
                 let d = days[check.getDay()]; if (!ds.includes(d)) ds.push(d);
 
-                // 🎯 [핵심] 여기서도 켠 플랫폼만 밀린 정산 체크!
+                // [핵심] 여기서도 켠 플랫폼만 밀린 정산 체크!
                 platformOrder.forEach(plt => {
                     (state[plt][d] || []).forEach((w, i) => { if (!isWorkOnBreak(w)) pendingDeductions[plt].push({ day: d, idx: i, work: w }); });
                     (state[plt]["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, check)) pendingDeductions[plt].push({ day: "10일 연재", idx: i, work: w }); });
@@ -898,7 +909,7 @@
         if (todayDate === 22 && platformOrder.includes('bomtoon')) popupMsg += `<br><span style="color:#ff69b4; font-size:12px; font-weight:bold;">(💡앗! 오늘 봄툰 22일 할인 날이에요!)</span>`;
         document.getElementById('deduction-msg').innerHTML = popupMsg;
 
-        // 🎯 [핵심] 정산 팝업 리스트도 켠 플랫폼만!
+        // [핵심] 정산 팝업 리스트도 켠 플랫폼만!
         platformOrder.forEach(plt => {
             pendingDeductions[plt].forEach((item, i) => {
                 let pltName = '', color = '', unit = 'C';
@@ -923,7 +934,7 @@
 
     function processDeduction() {
         let tL = 0, tB = 0, tR = 0, tM = 0;
-        // 🎯 [핵심] 실제 정산 계산도 켠 플랫폼만!
+        // [핵심] 실제 정산 계산도 켠 플랫폼만!
         platformOrder.forEach(plt => {
             pendingDeductions[plt].forEach((item, i) => {
                 const chk = document.getElementById(`deduct-chk-${plt}-${i}`);
@@ -948,7 +959,7 @@
 
             saveData();
 
-            let msg = "🎉 성공적으로 정산되었습니다!\n";
+            let msg = "성공적으로 정산되었습니다!\n";
             if (tL + tB > 0) msg += `- 코인 차감: ${tL + tB} C\n`;
             if (tR > 0) msg += `- 리디 차감: ${tR} 캐시\n`;
             if (tM > 0) msg += `- 미블 차감: ${tM} 원\n`;
@@ -961,12 +972,12 @@
     }
 
     function skipDeduction() {
-        if (confirm("정말 오늘의 정산을 모두 건너뛰시겠습니까? (클릭하면 오늘 모든 작품 코인이 정산되지 않습니다.)")) {
+        if (confirm("정말 오늘의 정산을 모두 건너뛰시겠습니까?")) {
             finishDeduction();
         }
     }
 
-    // 🌟 정산 모달창의 'X' 버튼을 눌렀을 때 창을 닫아주는 함수!
+    // 정산 모달창의 'X' 버튼을 눌렀을 때 창을 닫아주는 함수!
     function closeDeductionModal() {
         document.getElementById('deduction-modal').style.display = 'none';
         isTodayDeduction = false; // 정산 모드 초기화
@@ -1026,7 +1037,7 @@
         if (date >= 1 && date <= 3) {
             hiddenEvents.push('미블 메가 블루데이');
             if (mBadge) {
-                mBadge.textContent = "메가 블루데이!"; // 👈 추가된 부분!
+                mBadge.textContent = "메가 블루데이!";
                 mBadge.style.display = 'inline-block';
             }
         } else {
@@ -1054,7 +1065,7 @@
             const p = JSON.parse(data);
             state = p.state || state;
 
-            let migratedCount = 0; // 👻 성불시킨 유령 수 체크
+            let migratedCount = 0; 
 
             ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
                 if (!state[plt]) state[plt] = { "월요일": [], "화요일": [], "수요일": [], "목요일": [], "금요일": [], "토요일": [], "일요일": [], "10일 연재": [] };
@@ -1062,7 +1073,7 @@
 
                 Object.keys(state[plt]).forEach(d => {
                     state[plt][d] = state[plt][d].map((w, idx) => {
-                        // 🌟 [핵심] ID가 없는 작품에 고유 주민번호 부여!
+                        // [핵심] ID가 없는 작품에 고유 주민번호 부여!
                         if (!w.id) {
                             w.id = Date.now().toString() + "_" + Math.random().toString(36).substr(2, 5);
                             migratedCount++;
@@ -1192,16 +1203,16 @@
 
             // 1. 상태 뱃지 (휴재/완결) - 그림자 추가 & absolute 속성 제거!
             if (viewDay !== '휴재' && viewDay !== '완결') {
-                if (work.status === '휴재') statusBadge = `<span style="background: #e67e22; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">[휴재]</span>`;
-                else if (work.status === '완결') statusBadge = `<span style="background: #7f8c8d; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">[완결]</span>`;
-                else if (isBreak) statusBadge = `<span style="background: #e67e22; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">[자동휴재]</span>`;
+                if (work.status === '휴재') statusBadge = `<span style="background: #e67e22; color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 12px; font-weight: 500;">[휴재]</span>`;
+                else if (work.status === '완결') statusBadge = `<span style="background: #7f8c8d; color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 12px; font-weight: 500;">[완결]</span>`;
+                else if (isBreak) statusBadge = `<span style="background: #e67e22; color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 12px; font-weight: 500; ">[자동휴재]</span>`;
             }
 
             // 2. 연재 주기 뱃지 (사진 안으로 이사!) - 배경을 살짝 투명하게 해서 예쁘게!
-            const cycleTag = work.cycle ? `<span style="background: rgba(232, 240, 254, 0.95); color: #1967d2; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">🔄 ${work.cycle}</span>` : '';
+            const cycleTag = work.cycle ? `<span style="background: rgba(232, 240, 254, 0.95); color: #1967d2; padding: 6px 6px; border-radius: 4px; font-size: 12px; font-weight: 500;">🔄 ${work.cycle}</span>` : '';
 
             // 3. 시간 뱃지 (제일 밑에 쌓임!)
-            const timeBadge = work.time ? `<span style="background: #f9f9f9; color: #333; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">⏰ ${work.time}</span>` : '';
+            const timeBadge = work.time ? `<span style="background: #f9f9f9; color: #333; padding: 4px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">${work.time}</span>` : '';
 
             const card = document.createElement('div'); card.className = `webtoon-card-link ${platform}-card`;
 
@@ -1220,6 +1231,8 @@
             const imgOnClick = hasUrl ? `onclick="window.open('${work.url}', '_blank')"` : "";
             const cursorStyle = hasUrl ? "cursor: pointer;" : "";
 
+
+            
             card.innerHTML = `
     <div class="card-thumbnail" ${imgOnClick} style="background-image: url('${work.img || ''}'); ${cursorStyle}; position: relative;">
         
@@ -1239,6 +1252,7 @@
         </div>
         
         <p class="title" style="margin-top: 0;">${work.title}</p>
+
         
         <div class="card-bottom-row">
             <p class="coin" style="${isStrike ? 'text-decoration: line-through; color: #ccc;' : ''}; margin-bottom:0;">${work.coin} ${unit}</p>
@@ -1254,7 +1268,31 @@
     }
 
     function handleDragStart(e) { draggedIdx = parseInt(this.dataset.idx); draggedPlt = this.dataset.plt; draggedDay = this.dataset.day; this.style.opacity = '0.4'; }
-    function handleDragOver(e) { e.preventDefault(); }
+    // 카드를 들고 움직일 때(Drag Over) 스크롤을 자동으로 밀어주는 마법!
+function handleDragOver(e) { 
+    e.preventDefault(); 
+
+    // [핵심 원인 해결] 껍데기가 아니라 진짜 스크롤되는 알맹이(.webtoon-list)를 찾습니다!
+    const scrollContainer = this.closest('.webtoon-list');
+    if (!scrollContainer) return;
+
+    // 2. 현재 내 마우스(손가락)의 X 좌표와 스크롤 영역의 위치 계산
+    const clientX = e.clientX || e.touches?.[0]?.clientX; // (모바일 터치까지 방어!)
+    const containerRect = scrollContainer.getBoundingClientRect();
+    
+    // 3. 민감도 상향! (화면 끝에서 80px 이내로 다가오면 발동)
+    const edgeSize = 80; 
+    const scrollSpeed = 20; // 스르륵 밀리는 속도도 살짝 올렸습니다!
+
+    // 왼쪽 끝에 닿았을 때 -> 왼쪽으로 밀기
+    if (clientX - containerRect.left < edgeSize) {
+        scrollContainer.scrollLeft -= scrollSpeed; 
+    } 
+    // 오른쪽 끝에 닿았을 때 -> 오른쪽으로 밀기
+    else if (containerRect.right - clientX < edgeSize) {
+        scrollContainer.scrollLeft += scrollSpeed;
+    }
+}
     function handleDragEnter(e) { e.preventDefault(); this.style.transform = 'scale(1.03)'; this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)'; }
     function handleDragLeave(e) { this.style.transform = 'scale(1)'; this.style.boxShadow = 'none'; }
     function handleDrop(e) { e.stopPropagation(); this.style.transform = 'scale(1)'; this.style.boxShadow = 'none'; const targetIdx = parseInt(this.dataset.idx); const targetPlt = this.dataset.plt; const targetDay = this.dataset.day; if (draggedPlt === targetPlt && draggedDay === targetDay && draggedIdx !== targetIdx) { const arr = state[draggedPlt][draggedDay]; const draggedItem = arr.splice(draggedIdx, 1)[0]; arr.splice(targetIdx, 0, draggedItem); saveData(); } }
@@ -1378,7 +1416,7 @@
             const diffDays = Math.ceil((expD.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
             let unit = (plt === 'ridi') ? '캐시' : (plt === 'mrblue' ? '원' : 'C');
 
-            // 🚨 [핵심!] formatNum 함수를 써서 숫자에 예쁘게 쉼표(,)를 찍어줍니다!
+            // formatNum 함수를 써서 숫자에 예쁘게 쉼표(,)를 찍어줍니다!
             let formattedAmt = formatNum(expireData.amount);
 
             if (diffDays < 0) {
@@ -1456,6 +1494,7 @@
 
         document.getElementById('input-coin').value = work.coin; document.getElementById('input-progress').value = work.progress;
 
+
         // [신규 추가] 저장해둔 시간(알람 뱃지) 불러오기!
         document.getElementById('input-time').value = work.time || '';
         document.getElementById('input-status').value = work.status || '연재중';
@@ -1473,7 +1512,7 @@
             chk.checked = activeDays.includes(chk.value);
         });
 
-        tempImg = work.img || ""; document.getElementById('image-input').value = ""; document.getElementById('image-status-text').textContent = tempImg ? "기존 사진 유지 📷" : "📷 사진은 선택 사항입니다."; document.getElementById('image-status-text').style.color = tempImg ? "#2ecc71" : "#888"; document.getElementById('remove-img-btn').style.display = tempImg ? 'block' : 'none'; document.getElementById('custom-modal').style.display = 'flex';
+        tempImg = work.img || ""; document.getElementById('image-input').value = ""; document.getElementById('image-status-text').textContent = tempImg ? "기존 사진 유지" : "📷 사진은 선택 사항입니다."; document.getElementById('image-status-text').style.color = tempImg ? "#2ecc71" : "#888"; document.getElementById('remove-img-btn').style.display = tempImg ? 'block' : 'none'; document.getElementById('custom-modal').style.display = 'flex';
     }
 
 
@@ -1491,16 +1530,18 @@
         const coinInput = document.getElementById('input-coin');
         if (platform === 'ridi') {
             coinInput.placeholder = "예: 600 (캐시)";
-            document.getElementById('input-coin').value = '300';
+            document.getElementById('input-coin').value = '';
         } else if (platform === 'mrblue') {
             coinInput.placeholder = "예: 500 (머니)";
-            document.getElementById('input-coin').value = '300'; // 미블은 원 단위라 300 기본 입력 센스!
+            document.getElementById('input-coin').value = ''; // 미블은 원 단위라 500 기본 입력 센스!
         } else {
             coinInput.placeholder = "예: 3 (코인)";
-            document.getElementById('input-coin').value = '3';
+            document.getElementById('input-coin').value = '';
         }
 
         document.getElementById('input-progress').value = '1화';
+
+        
 
         // [신규 추가] 알람 뱃지용 시간 입력칸도 창 열 때마다 깨끗하게 비워주기!
         document.getElementById('input-time').value = '';
@@ -1765,7 +1806,7 @@
 
                 if (parsedData && parsedData.state) {
                     localStorage.setItem(STORAGE_KEY, content);
-                    alert("🎉 데이터 복원 완료! 화면을 새로고침합니다.");
+                    alert("데이터 복원 완료! 화면을 새로고침합니다.");
                     location.reload();
                 } else {
                     throw new Error("잘못된 형식입니다.");
@@ -1790,7 +1831,7 @@
         const el = document.getElementById('weekly-spent-val');
         if (el) {
 
-            el.innerHTML = `<span style="color:#004e9a; font-weight:bold;">${coinSpent} C</span> <span style="color:#ccc; margin:0 6px;">|</span> <span style="color:#004e9a; font-weight:bold;">${wonSpent} 원</span>`;
+            el.innerHTML = `<span style="color:#4d96ea; font-weight:bold;">${coinSpent} C</span> <span style="color:#ccc; margin:0 6px;">|</span> <span style="color:#4d96ea; font-weight:bold;">${wonSpent} 원</span>`;
         }
     }
 
@@ -1804,20 +1845,70 @@
     function initScroll() { document.querySelectorAll('.scroll-wrapper').forEach(wrapper => { const list = wrapper.querySelector('.webtoon-list'); wrapper.querySelector('.left-btn').onclick = () => list.scrollBy({ left: -160, behavior: 'smooth' }); wrapper.querySelector('.right-btn').onclick = () => list.scrollBy({ left: 160, behavior: 'smooth' }); }); }
     function closeAttendWarning() { document.getElementById('attend-warning-modal').style.display = 'none'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
-    function deleteFromAction() {
-        if (confirm("이 작품을 영구 삭제할까요? (다른 요일에 있는 같은 작품도 모두 삭제됩니다!)")) {
-            let work = state[actionPlt][actionOrigDay][actionIdx];
-            // [동기화 삭제]
-            if (work.id) {
-                Object.keys(state[actionPlt]).forEach(d => {
-                    state[actionPlt][d] = state[actionPlt][d].filter(w => w.id !== work.id);
-                });
-            } else {
-                state[actionPlt][actionOrigDay].splice(actionIdx, 1);
-            }
-            saveData(); closeActionModal();
+    // ==========================================
+// 🍞 토스트 팝업 & 실행 취소 세트 (여기서부터)
+// ==========================================
+
+// 1. 백업용 변수 (반드시 함수들 바깥에 있어야 합니다!)
+let stateBackupForUndo = null;
+let toastTimeout = null;
+
+// 2. 삭제 함수 (확인 창 + 토스트 호출)
+function deleteFromAction() {
+    if (confirm("이 작품을 영구 삭제할까요? (다른 요일에 있는 같은 작품도 모두 삭제됩니다!)")) {
+        
+        stateBackupForUndo = JSON.stringify(state);
+
+        let work = state[actionPlt][actionOrigDay][actionIdx];
+        
+        if (work.id) {
+            Object.keys(state[actionPlt]).forEach(d => {
+                state[actionPlt][d] = state[actionPlt][d].filter(w => w.id !== work.id);
+            });
+        } else {
+            state[actionPlt][actionOrigDay].splice(actionIdx, 1);
         }
+        
+        saveData(); 
+        closeActionModal();
+
+        // 🚨 여기서 아래에 있는 showToast 함수를 불러냅니다!
+        showToast("작품이 삭제되었습니다.");
     }
+}
+
+// 3. 토스트 팝업 띄우기 함수 (이게 꼭 있어야 팝업이 나타나요!)
+function showToast(msg) {
+    const toast = document.getElementById("toast-popup");
+    if (!toast) return; // 혹시 HTML에 팝업창이 없으면 에러 안 나게 방어!
+
+    document.getElementById("toast-message").textContent = msg;
+    toast.classList.add("show");
+
+    if (toastTimeout) clearTimeout(toastTimeout);
+
+    toastTimeout = setTimeout(() => {
+        toast.classList.remove("show");
+        stateBackupForUndo = null; 
+    }, 3500);
+}
+
+// 4. 실행 취소 함수 (이것도 같이 있어야 합니다!)
+function undoDelete() {
+    if (!stateBackupForUndo) return; 
+    
+    state = JSON.parse(stateBackupForUndo);
+    saveData(); 
+    
+    const toast = document.getElementById("toast-popup");
+    toast.classList.remove("show");
+    if (toastTimeout) clearTimeout(toastTimeout);
+    stateBackupForUndo = null;
+}
+
+// ==========================================
+// 🍞 토스트 팝업 & 실행 취소 세트 (여기까지!)
+// ==========================================
 
 
     if ('serviceWorker' in navigator) {
@@ -2020,7 +2111,52 @@
             closeNav(); // 기존에 만들어둔 메뉴 닫기 함수 호출!
         }
     };
+
+    // 🚨 [1] 알림 권한 요청 (앱 켤 때 한 번 물어봅니다)
+function requestNotificationPermission() {
+    if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+    }
+}
+
+// 넷리파이 서버에서 업데이트 정보 가져오기
+async function checkRemoteUpdate() {
+   
+    const UPDATE_URL = "https://resplendent-medovik-85b508.netlify.app/"; 
+
+    try {
+        const response = await fetch(UPDATE_URL);
+        if (!response.ok) return; // 파일이 없거나 에러면 중단
+        
+        const data = await response.json();
+        const lastSeenUpdate = localStorage.getItem('lastSeenUpdateId') || 0;
+
+        // 파일의 ID가 내 폰에 저장된 ID보다 크면 = "새로운 소식 발견!"
+        if (data.updateId > lastSeenUpdate) {
+            if (Notification.permission === "granted") {
+                const notif = new Notification(data.title, {
+                    body: data.message,
+                    icon: "./icon.png" // 앱 아이콘 경로
+                });
+
+                // 알림 클릭 시 링크(트위터/포스타입) 열기
+                notif.onclick = () => {
+                    window.open(data.link, '_blank');
+                    notif.close();
+                };
+
+                // 확인한 업데이트 ID 저장 (다시 안 뜨게 함)
+                localStorage.setItem('lastSeenUpdateId', data.updateId);
+            }
+        }
+    } catch (error) {
+        console.error("업데이트 체크 중 오류:", error);
+    }
+}
+
+    
 </script>
+
 </body>
 
 
