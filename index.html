@@ -498,10 +498,7 @@
                     <input type="number" id="expire-coin-val" class="expire-input" placeholder="수량 (예: 15)"
                         style="flex: 1; padding: 8px; border-radius: 6px; box-sizing: border-box;">
                     
-                    <input type="text" id="expire-date-val" class="expire-input" placeholder="예: 2023-03-12"
-                        onmousedown="this.type='date';" 
-       onclick="try { this.showPicker(); } catch(e) {}" 
-       onblur="if(!this.value) this.type='text'"
+                    <input type="date" id="expire-date-val" class="expire-input"
                         style="flex: 1.2; padding: 8px; border-radius: 6px; box-sizing: border-box;">
                 </div>
                 <p class="expire-desc" style="margin: 6px 0 0 0; font-size: 11px;">소멸 예정이 없다면 비워두세요!</p>
