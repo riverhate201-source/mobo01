@@ -681,7 +681,7 @@ body.dark-mode .weekly-stat-container {
 
 body.dark-mode .weekly-highlight {
     color: #e0ebfd;
-    
+
 }
 
 .action-btns-container {
@@ -1038,12 +1038,13 @@ body.dark-mode .highlight-result-mrblue {
 
 .move-btn {
     background-color: #ffdbb8 !important;
-    color: #ff9d5b !important; /* rgb(255, 157, 91)을 예쁘게 코드로 바꿨습니다 */
+    color: #ff9d5b !important;
+    /* rgb(255, 157, 91)을 예쁘게 코드로 바꿨습니다 */
 }
 
 /* 다크 모드 - 눈이 편안하고 고급스러운 다크 오렌지 컬러! */
 .dark-mode .move-btn {
-    background-color: #4a2e1b !important; 
+    background-color: #4a2e1b !important;
     color: #ffb880 !important;
 }
 
@@ -1054,19 +1055,20 @@ body.dark-mode .highlight-result-mrblue {
     display: flex;
     align-items: center;
     gap: 6px;
-    
+
     /* 1. 다른 입력창과 똑같은 배경 & 테두리 */
-    background: #ffffff !important; 
+    background: #ffffff !important;
     border: 1px solid #ccc !important;
     color: #333 !important;
-    
+
     /* 2. 다른 입력창과 높이 맞추기 (패딩 조절) */
-    padding: 10px 12px; 
-    border-radius: 8px; /* 입력창 모서리 둥글기와 맞춤 */
-    
+    padding: 10px 12px;
+    border-radius: 8px;
+    /* 입력창 모서리 둥글기와 맞춤 */
+
     box-sizing: border-box;
     transition: border-color 0.2s;
-    
+
     /* 슬림하게 한 줄로 흐르는 디자인 */
     flex: 0 1 auto;
 }
@@ -1076,32 +1078,41 @@ body.dark-mode .highlight-result-mrblue {
     width: 15px !important;
     height: 15px !important;
     margin: 0;
-    accent-color: #1967d2; /* 체크했을 때만 포인트 색상 */
+    accent-color: #1967d2;
+    /* 체크했을 때만 포인트 색상 */
 }
 
 /* "색상 대비" 제거 - 체크해도 배경색 안 바뀜 */
 .chk-label:has(input:checked) {
-    background: #ffffff !important; /* 라이트모드에선 계속 흰색 */
-    border-color: #1967d2 !important; /* 테두리만 살짝 포인트 */
-    color: #333 !important; /* 글씨색 유지 */
+    background: #ffffff !important;
+    /* 라이트모드에선 계속 흰색 */
+    border-color: #1967d2 !important;
+    /* 테두리만 살짝 포인트 */
+    color: #333 !important;
+    /* 글씨색 유지 */
 }
 
 /* 3. 다크 모드 - 다른 입력창의 다크모드 스타일과 동기화 */
-body.dark-mode .chk-label, .dark-mode .chk-label {
-    background: #2c2c2c !important; /* 일반 다크 입력창 배경색 */
+body.dark-mode .chk-label,
+.dark-mode .chk-label {
+    background: #2c2c2c !important;
+    /* 일반 다크 입력창 배경색 */
     border-color: #555 !important;
     color: #e8eaed !important;
 }
 
 /* 다크모드 체크 시 */
-body.dark-mode .chk-label:has(input:checked), .dark-mode .chk-label:has(input:checked) {
-    background: #2c2c2c !important; /* 배경색 그대로 유지 */
-    border-color: #8ab4f8 !important; /* 테두리만 강조 */
+body.dark-mode .chk-label:has(input:checked),
+.dark-mode .chk-label:has(input:checked) {
+    background: #2c2c2c !important;
+    /* 배경색 그대로 유지 */
+    border-color: #8ab4f8 !important;
+    /* 테두리만 강조 */
     color: #e8eaed !important;
 }
 
 /* 요일 묶음 상자 배경도 투명하게 처리해서 이질감 제거 */
-#day-selection-area > div {
+#day-selection-area>div {
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
