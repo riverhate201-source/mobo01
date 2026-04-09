@@ -1225,22 +1225,3 @@ body.dark-mode .expire-warning-box .expire-desc {
 #toast-undo-btn:active {
     color: #1a6cc2;
 }
-
-/* --- 달력 예시 글자 UX 개선 마법 --- */
-
-/* 1. PC에서 기본으로 나오는 글자(yyyy.mm.dd)를 투명하게 만들어서 안 겹치게 함 */
-#expire-date-val:invalid::-webkit-datetime-edit {
-    color: transparent;
-}
-
-/* 2. 터치하거나 날짜를 입력하면, 숨겼던 진짜 날짜 글자색을 원래대로 복구! */
-#expire-date-val:focus::-webkit-datetime-edit,
-#expire-date-val:valid::-webkit-datetime-edit {
-    color: inherit;
-}
-
-/* 3. 터치하거나 날짜를 입력하면, 우리가 만든 예시 글자(가면)는 스르륵 숨김! */
-#expire-date-val:focus + .fake-placeholder,
-#expire-date-val:valid + .fake-placeholder {
-    display: none;
-}
