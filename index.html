@@ -1277,21 +1277,22 @@
         }
 
         function handleDragStart(e) { draggedIdx = parseInt(this.dataset.idx); draggedPlt = this.dataset.plt; draggedDay = this.dataset.day; this.style.opacity = '0.4'; }
-        // 카드를 들고 움직일 때(Drag Over) 스크롤을 자동으로 밀어주는 마법!
+        // 카드를 들고 움직일 때 스크롤을 자동으로 밀어주는 마법! (모바일 부스터 장착)
         function handleDragOver(e) {
             e.preventDefault();
 
-            // [핵심 원인 해결] 껍데기가 아니라 진짜 스크롤되는 알맹이(.webtoon-list)를 찾습니다!
             const scrollContainer = this.closest('.webtoon-list');
             if (!scrollContainer) return;
 
-            // 2. 현재 내 마우스(손가락)의 X 좌표와 스크롤 영역의 위치 계산
-            const clientX = e.clientX || e.touches?.[0]?.clientX; // (모바일 터치까지 방어!)
+            const clientX = e.clientX || e.touches?.[0]?.clientX;
             const containerRect = scrollContainer.getBoundingClientRect();
 
-            // 3. 민감도 상향! (화면 끝에서 80px 이내로 다가오면 발동)
-            const edgeSize = 80;
-            const scrollSpeed = 20; // 스르륵 밀리는 속도도 살짝 올렸습니다!
+            // 현재 화면이 모바일(가로 768px 이하)인지 확인합니다.
+            const isMobile = window.innerWidth <= 768;
+
+            // 모바일이면 터치 민감도(edgeSize)와 스크롤 속도(scrollSpeed)를 확! 올립니다!
+            const edgeSize = isMobile ? 100 : 80;    // 모바일은 화면 끝에서 좀 더 일찍 반응하게!
+            const scrollSpeed = isMobile ? 50 : 20;  // 모바일은 스크롤 속도를 2.5배 뻥튀기!
 
             // 왼쪽 끝에 닿았을 때 -> 왼쪽으로 밀기
             if (clientX - containerRect.left < edgeSize) {
@@ -1302,6 +1303,7 @@
                 scrollContainer.scrollLeft += scrollSpeed;
             }
         }
+
         function handleDragEnter(e) { e.preventDefault(); this.style.transform = 'scale(1.03)'; this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)'; }
         function handleDragLeave(e) { this.style.transform = 'scale(1)'; this.style.boxShadow = 'none'; }
         function handleDrop(e) { e.stopPropagation(); this.style.transform = 'scale(1)'; this.style.boxShadow = 'none'; const targetIdx = parseInt(this.dataset.idx); const targetPlt = this.dataset.plt; const targetDay = this.dataset.day; if (draggedPlt === targetPlt && draggedDay === targetDay && draggedIdx !== targetIdx) { const arr = state[draggedPlt][draggedDay]; const draggedItem = arr.splice(draggedIdx, 1)[0]; arr.splice(targetIdx, 0, draggedItem); saveData(); } }
