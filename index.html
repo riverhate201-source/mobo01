@@ -967,7 +967,7 @@
                 let msg = "성공적으로 정산되었습니다!\n";
                 if (tL + tB > 0) msg += `- 코인 차감: ${tL + tB} C\n`;
                 if (tR > 0) msg += `- 리디 차감: ${tR} 캐시\n`;
-                if (tM > 0) msg += `- 미블 차감: ${tM} 원\n`;
+                if (tM > 0) msg += `- 미블 차감: ${tM} 머니\n`;
 
                 alert(msg);
             } else {
@@ -1432,7 +1432,7 @@
                 expD.setHours(0, 0, 0, 0);
 
                 const diffDays = Math.ceil((expD.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                let unit = (plt === 'ridi') ? '캐시' : (plt === 'mrblue' ? '원' : 'C');
+                let unit = (plt === 'ridi') ? '캐시' : (plt === 'mrblue' ? '머니' : 'C');
 
                 // formatNum 함수를 써서 숫자에 예쁘게 쉼표(,)를 찍어줍니다!
                 let formattedAmt = formatNum(expireData.amount);
