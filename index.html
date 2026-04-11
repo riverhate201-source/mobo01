@@ -121,7 +121,7 @@
 
                     <div
                         style="display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 18px; margin-top: -15px; margin-bottom: 8px; width: 100%;">
-                        <div id="bomtoon-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">22일 할인!
+                        <div id="bomtoon-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">22일 코인 할인!
                         </div>
                         <div id="bomtoon-expire-badge"
                             style="display:none; color:#e60012; font-size:11px; font-weight:bold; background:#ffebee; padding:2px 8px; border-radius:12px;">
@@ -143,7 +143,7 @@
 
                     <div
                         style="display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 18px; margin-top: -15px; margin-bottom: 8px; width: 100%;">
-                        <div id="lezhin-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">20일 할인!
+                        <div id="lezhin-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">20일 코인 할인!
                         </div>
                         <div id="lezhin-expire-badge"
                             style="display:none; color:#e60012; font-size:11px; font-weight:bold; background:#ffebee; padding:2px 8px; border-radius:12px;">
@@ -595,6 +595,7 @@
         function getWebtoonDate() { const kst = getKSTDate(); if (kst.getHours() >= 22) kst.setDate(kst.getDate() + 1); return kst; }
         function formatDate(dateObj) { return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`; }
 
+
         function isWorkOnBreak(work) {
             if (work.status === '휴재' || work.status === '완결') return true;
 
@@ -909,8 +910,8 @@
             let popupMsg = isTodayDeduction ? `오늘(${pendingDaysStr}) 볼 작품을 미리 정산할까요?` : `어제(${pendingDaysStr}) 본 작품 정산을 진행할까요?`;
             const todayDate = getKSTDate().getDate();
             // 할인일 알림도 켠 플랫폼만 뜨게 예외 처리!
-            if (todayDate === 20 && platformOrder.includes('lezhin')) popupMsg += `<br><span style="color:#e60012; font-size:12px; font-weight:bold;">(💡앗! 오늘 레진 20일 할인 날이에요!)</span>`;
-            if (todayDate === 22 && platformOrder.includes('bomtoon')) popupMsg += `<br><span style="color:#ff69b4; font-size:12px; font-weight:bold;">(💡앗! 오늘 봄툰 22일 할인 날이에요!)</span>`;
+            if (todayDate === 20 && platformOrder.includes('lezhin')) popupMsg += `<br><span style="color:#e60012; font-size:12px; font-weight:bold;">(오늘 레진 20일 코인 할인 날이에요!)</span>`;
+            if (todayDate === 22 && platformOrder.includes('bomtoon')) popupMsg += `<br><span style="color:#ff69b4; font-size:12px; font-weight:bold;">(오늘 봄툰 22일 코인 할인 날이에요!)</span>`;
             document.getElementById('deduction-msg').innerHTML = popupMsg;
 
             // [핵심] 정산 팝업 리스트도 켠 플랫폼만!
@@ -1272,7 +1273,13 @@
             </div>
         </div>
     </div>`;
-                listEl.appendChild(card);
+                if (work.isToday10Day) {
+    // [갈림길 1] 10일 연재작인가요? -> 맨 앞으로 가세요! (새치기)
+    listEl.prepend(card); 
+} else {
+    // [갈림길 2] 일반 웹툰인가요? -> 원래 하던 대로 맨 뒤에 서세요!
+    listEl.appendChild(card);
+}
             });
         }
 
