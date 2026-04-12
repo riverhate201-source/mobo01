@@ -732,6 +732,8 @@
             localStorage.setItem('platformOrder', JSON.stringify(newOrder));
             platformOrder = newOrder;
 
+            saveData();
+
             // 바뀐 설정으로 화면 즉시 새로고침!
             updatePlatformOrder();
             renderAll();
@@ -1126,8 +1128,20 @@
                 weeklySpent: localStorage.getItem('weeklySpent') || 0,
                 weeklySpentWon: localStorage.getItem('weeklySpentWon') || 0
             };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-            renderAll(); checkStorage();
+            
+            // ⭕ [신규] 용량 초과 방어막 (try-catch)
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+                renderAll(); 
+                checkStorage();
+            } catch (error) {
+                // 저장소 용량이 꽉 찼을 때 발생하는 에러를 잡아냅니다!
+                if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                    alert("모보의 저장 공간(5MB)이 꽉 찼습니다!\n새로운 내용을 저장하려면 기존 작품의 '사진'을 몇 개 삭제해 주세요.");
+                } else {
+                    alert("데이터 저장 중 알 수 없는 오류가 발생했습니다.");
+                }
+            }
         }
 
         function toggleDarkMode() { const isDark = document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); updateDarkModeBtn(); saveData(); }
