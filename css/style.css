@@ -32,11 +32,62 @@ body.dark-mode {
 }
 
 
+/* 상단 유틸리티 바 (햄버거 버튼 감싸는 영역) */
 .top-util-bar {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    z-index: 999;
+    /* 1. 위치 고정 */
+    position: fixed;
+    top: 12px;
+    /* 위쪽 여백 */
+    right: 15px;
+    /* 오른쪽 여백 */
+    z-index: 2100;
+    /* 사이드바(2000)보다 위에 뜨도록 설정 */
+
+    /* 글라스모피즘 효과 (라이트 모드 기본) */
+    background: rgba(255, 255, 255, 0.4);
+    /* 반투명 하얀 배경 */
+    backdrop-filter: blur(10px);
+    /* 뒤 배경 흐리게 */
+    -webkit-backdrop-filter: blur(10px);
+    /* 아이폰/사파리 대응 */
+
+    /* 3. 테두리 및 둥글기 */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    /* 아주 얇은 유리 테두리 */
+    border-radius: 12px;
+    /* 버튼 주변을 살짝 둥글게 */
+    padding: 4px 5px;
+    /* 버튼과 테두리 사이 여백 */
+
+    /* 4. 그림자 및 레이아웃 */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    /* 은은한 그림자 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    /* 모드 전환 시 부드럽게 변경 */
+}
+
+
+body.dark-mode .top-util-bar {
+    background: rgba(44, 44, 46, 0.5);
+    /* 어두운 반투명 배경 */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* 테두리를 더 흐릿하게 */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    /* 그림자를 좀 더 진하게 */
+}
+
+/* 🍔 햄버거 버튼 자체 스타일 정리 */
+.menu-btn {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 32px;
+    line-height: 1;
+    cursor: pointer;
 }
 
 .menu-btn {
@@ -63,7 +114,7 @@ body.dark-mode .menu-btn {
     bottom: 0;
     left: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 2000;
+    z-index: 3000;
     display: flex;
     justify-content: flex-end;
     backdrop-filter: blur(2px);
@@ -530,7 +581,7 @@ body.dark-mode .scroll-btn {
     display: none;
     justify-content: center;
     align-items: center;
-    z-index: 3000;
+    z-index: 4000;
 }
 
 .modal-content {
@@ -1244,4 +1295,101 @@ body.dark-mode .expire-warning-box .expire-desc {
 
 #toast-undo-btn:active {
     color: #1a6cc2;
+}
+
+/* ==========================================
+   🧾 월말정산 영수증 스타일
+   ========================================== */
+.report-modal-content {
+    padding: 0 !important;
+    overflow: hidden;
+    background: #fdfdfd;
+    max-width: 320px;
+}
+
+.report-header {
+    background: #333;
+    color: #fff;
+    padding: 22px 20px;
+    text-align: center;
+}
+
+body.dark-mode .report-header {
+    background: #1a1a1b;
+}
+
+.report-header h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.report-subtitle {
+    margin: 6px 0 0 0;
+    font-size: 12px;
+    color: #aaa;
+}
+
+.report-body {
+    padding: 20px;
+    max-height: 55vh;
+    overflow-y: auto;
+    background: #fff;
+}
+
+body.dark-mode .report-body {
+    background: #2c2c2e;
+}
+
+.report-body::-webkit-scrollbar {
+    display: none;
+}
+
+.report-plt-section {
+    margin-bottom: 25px;
+}
+
+.report-plt-title {
+    font-weight: 900;
+    font-size: 15px;
+    border-bottom: 2px solid;
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+}
+
+.report-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13.5px;
+    color: #555;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+body.dark-mode .report-item {
+    color: #ccc;
+}
+
+.report-total {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 900;
+    font-size: 15px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed #ddd;
+}
+
+body.dark-mode .report-total {
+    border-top-color: #444;
+}
+
+.report-footer {
+    padding: 15px 20px;
+    background: #fdfdfd;
+    border-top: 1px solid #eee;
+}
+
+body.dark-mode .report-footer {
+    background: #2c2c2e;
+    border-top-color: #333;
 }

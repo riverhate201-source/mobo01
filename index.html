@@ -39,6 +39,7 @@
                 <button onclick="handleMenuAction('toggleOrder')" class="menu-item">플랫폼 순서 변경</button>
                 <button onclick="handleMenuAction('darkMode')" id="menu-dark-mode-btn" class="menu-item">다크
                     모드</button>
+                <button onclick="openLinkSettingModal()" class="menu-item">출석 링크 직접 설정</button>
             </div>
 
             <div class="nav-section">
@@ -46,6 +47,9 @@
                 <button onclick="handleMenuAction('day', '10일 연재')" class="menu-item"> 10일 연재 작품</button>
                 <button onclick="handleMenuAction('day', '휴재')" class="menu-item"> 휴재 중인 작품</button>
                 <button onclick="handleMenuAction('day', '완결')" class="menu-item"> 완결된 작품</button>
+                <button id="menu-biweekly" onclick="handleMenuAction('day', '격주 연재')" class="menu-item"
+                    style="display: none;"> 격주 연재
+                    작품</button>
             </div>
 
             <div class="nav-section">
@@ -55,7 +59,7 @@
                 <button onclick="deductToday()" class="menu-item">오늘 작품 당일 정산</button>
                 <button class="menu-item" onclick="showMonthlyReport()">이번 달 월말정산 보기
                 </button>
-                <button onclick="openLinkSettingModal()" class="menu-item">출석 링크 직접 설정</button>
+
             </div>
 
 
@@ -519,6 +523,22 @@
 
     <input type="file" id="image-input" accept="image/jpeg, image/png, image/webp, image/gif" style="display: none;">
 
+    <div class="modal-overlay" id="monthly-report-modal" style="display: none; z-index: 6000;"
+        onclick="closeMonthlyReport()">
+        <div class="modal-content report-modal-content" onclick="event.stopPropagation()">
+            <div class="report-header">
+                <h2 id="report-month-title">4월 모보 정산서</h2>
+                <p class="report-subtitle">이번 달도 즐거운 감상 하셨나요?</p>
+            </div>
+            <div class="report-body" id="report-body-content">
+            </div>
+            <div class="report-footer">
+                <button class="save-btn" style="width: 100%; border-radius: 12px;" onclick="closeMonthlyReport()">확인
+                    완료</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast-popup" class="toast">
         <span id="toast-message">작품이 서랍에서 삭제되었습니다.</span>
         <button id="toast-undo-btn" onclick="undoDelete()">실행 취소</button>
@@ -657,6 +677,40 @@
 
         function isDateMatch(cycleStr, dateObj) { if (!cycleStr || !cycleStr.includes("10일 연재")) return false; let match = cycleStr.match(/\((.*?)\)/); if (!match) return false; let daysArr = match[1].split('/').map(Number); let todayDate = dateObj.getDate(); let lastDayOfMonth = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0).getDate(); for (let targetDay of daysArr) { if (todayDate === targetDay || (targetDay > lastDayOfMonth && todayDate === lastDayOfMonth)) return true; } return false; }
 
+        // 다음 격주 연재일 계산기 (개발자님의 getKSTDate 활용!)
+        function getNextBiweeklyDate(startDateStr) {
+            const today = getKSTDate();
+            today.setHours(0, 0, 0, 0);
+
+            let nextDate = new Date(startDateStr);
+            nextDate.setHours(0, 0, 0, 0);
+
+            // 기준일이 과거면 14일씩 더해서 다음 연재일 찾기
+            while (nextDate < today) {
+                nextDate.setDate(nextDate.getDate() + 14);
+            }
+            return nextDate;
+        }
+
+        // 격주 연재 작품이 있는지 확인해서 메뉴 띄우기
+        function updateBiweeklyMenuVisibility() {
+            let hasBiweekly = false;
+            ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
+                Object.keys(state[plt]).forEach(day => {
+                    state[plt][day].forEach(work => {
+                        if (work.cycle && work.cycle.includes('격주 연재')) {
+                            hasBiweekly = true;
+                        }
+                    });
+                });
+            });
+
+            const biweeklyMenuBtn = document.getElementById('menu-biweekly');
+            if (biweeklyMenuBtn) {
+                biweeklyMenuBtn.style.display = hasBiweekly ? 'block' : 'none';
+            }
+        }
+
         const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
         let viewDay = days[getWebtoonDate().getDay()];
         let currentPlatform = ''; let tempImg = ""; let editMode = false; let actionPlt = ''; let actionOrigDay = ''; let actionIdx = -1;
@@ -698,8 +752,23 @@
         }
 
 
-        function openNav() { checkStorage(); document.getElementById("side-nav").style.display = "flex"; }
-        function closeNav() { document.getElementById("side-nav").style.display = "none"; }
+        function openNav() {
+            checkStorage();
+            updateBiweeklyMenuVisibility();
+            document.getElementById("side-nav").style.display = "flex";
+
+            // 햄버거 버튼 뒤로 숨기기 (글라스모피즘 겹침 방지)
+            const topBar = document.querySelector('.top-util-bar');
+            if (topBar) topBar.style.opacity = '0';
+        }
+
+        function closeNav() {
+            document.getElementById("side-nav").style.display = "none";
+
+            // 햄버거 버튼 다시 나타나게 하기
+            const topBar = document.querySelector('.top-util-bar');
+            if (topBar) topBar.style.opacity = '1';
+        }
 
         function handleMenuAction(type, value) {
             if (type === 'toggleOrder') {
@@ -1256,7 +1325,19 @@
                         if (work.status === viewDay || (viewDay === '휴재' && isWorkOnBreak(work) && work.status !== '완결')) displayWorks.push({ ...work, origDay: d, origIdx: idx });
                     });
                 });
-            } else if (viewDay === '10일 연재') {
+            }
+
+            else if (viewDay === '격주 연재') {
+                Object.keys(state[platform]).forEach(d => {
+                    (state[platform][d] || []).forEach((work, idx) => {
+                        if (work.cycle && work.cycle.includes('격주 연재')) {
+                            displayWorks.push({ ...work, origDay: d, origIdx: idx });
+                        }
+                    });
+                });
+            }
+
+            else if (viewDay === '10일 연재') {
                 (state[platform]["10일 연재"] || []).forEach((work, idx) => { displayWorks.push({ ...work, origDay: "10일 연재", origIdx: idx }); });
             } else {
                 (state[platform][viewDay] || []).forEach((work, idx) => { displayWorks.push({ ...work, origDay: viewDay, origIdx: idx }); });
@@ -1292,8 +1373,20 @@
                     else if (isBreak) statusBadge = `<span style="background: #e67e22; color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 12px; font-weight: 500; ">[자동휴재]</span>`;
                 }
 
-                // 2. 연재 주기 뱃지 (사진 안으로 이사!) - 배경을 살짝 투명하게 해서 예쁘게!
-                const cycleTag = work.cycle ? `<span style="background: rgba(232, 240, 254, 0.95); color: #1967d2; padding: 6px 6px; border-radius: 4px; font-size: 12px; font-weight: 500; display: inline-block; white-space: nowrap;">🔄 ${work.cycle}</span>` : '';
+
+                // 2. 연재 주기 뱃지 (사진 안으로 이사!) - 날짜 포맷팅 & 배경 반투명
+                let displayCycle = work.cycle;
+                if (work.cycle && work.cycle.includes('격주 연재')) {
+                    let match = work.cycle.match(/\((.*?)\)/); // 괄호 안의 날짜(예: 2026-04-12) 추출
+                    if (match) {
+                        const nextDate = getNextBiweeklyDate(match[1]);
+                        const m = nextDate.getMonth() + 1;
+                        const d = nextDate.getDate();
+                        const dayName = ['일', '월', '화', '수', '목', '금', '토'][nextDate.getDay()];
+                        displayCycle = `격주연재 (${m}/${d} ${dayName})`; // 포맷 변경 완료!
+                    }
+                }
+                const cycleTag = displayCycle ? `<span style="background: rgba(232, 240, 254, 0.95); color: #1967d2; padding: 6px 6px; border-radius: 4px; font-size: 12px; font-weight: 500; display: inline-block; white-space: nowrap;">🔄 ${displayCycle}</span>` : '';
 
                 // 3. 시간 뱃지 (제일 밑에 쌓임!)
                 const timeBadge = work.time ? `<span style="background: #f9f9f9; color: #333; padding: 4px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">${work.time}</span>` : '';
@@ -1460,7 +1553,7 @@
             let lT = 0, bT = 0, rT = 0, mT = 0; let lCount = 0, bCount = 0, rCount = 0, mCount = 0;
             const todayObj = getWebtoonDate();
 
-            if (viewDay !== '휴재' && viewDay !== '완결') {
+            if (viewDay !== '휴재' && viewDay !== '완결' && viewDay !== '격주 연재') {
                 const lezhinWorks = state.lezhin[viewDay] || []; const bomtoonWorks = state.bomtoon[viewDay] || [];
                 const ridiWorks = state.ridi[viewDay] || []; const mrblueWorks = state.mrblue[viewDay] || [];
                 lCount = lezhinWorks.length; bCount = bomtoonWorks.length; rCount = ridiWorks.length; mCount = mrblueWorks.length;
@@ -1470,7 +1563,9 @@
                     bT = bomtoonWorks.filter(w => !isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
                     rT = ridiWorks.filter(w => !isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
                     mT = mrblueWorks.filter(w => !isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
-                } else {
+                }
+
+                else {
                     lT = lezhinWorks.filter(w => !isWorkOnBreak(w)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
                     bT = bomtoonWorks.filter(w => !isWorkOnBreak(w)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
                     rT = ridiWorks.filter(w => !isWorkOnBreak(w)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
@@ -1484,7 +1579,11 @@
                     (state.ridi["10일 연재"] || []).forEach(w => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)) rT += (parseInt(w.coin) || 0); });
                     (state.mrblue["10일 연재"] || []).forEach(w => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)) mT += (parseInt(w.coin) || 0); });
                 }
-            } else {
+            }
+
+            else {
+                const checkMatch = (w) => (viewDay === '격주 연재') ? (w.cycle && w.cycle.includes('격주 연재')) : (w.status === viewDay);
+
                 Object.keys(state.lezhin).forEach(d => { (state.lezhin[d] || []).forEach(w => { if (w.status === viewDay) lCount++; }); });
                 Object.keys(state.bomtoon).forEach(d => { (state.bomtoon[d] || []).forEach(w => { if (w.status === viewDay) bCount++; }); });
                 Object.keys(state.ridi).forEach(d => { (state.ridi[d] || []).forEach(w => { if (w.status === viewDay) rCount++; }); });
@@ -2283,8 +2382,10 @@
             checkRemoteUpdate();
         }, 30 * 60 * 1000); // 30분 * 60초 * 1000밀리초
 
-        // [신규 기능] 이번 달 월말정산 영수증 보여주기!
+        // [신규 기능] 이번 달 월말정산 예쁜 영수증 띄우기!
         function showMonthlyReport() {
+            closeNav(); // 사이드 메뉴 닫기
+
             const todayKST = getKSTDate();
             const monthKey = `${todayKST.getFullYear()}-${String(todayKST.getMonth() + 1).padStart(2, '0')}`;
             const monthlyHistory = JSON.parse(localStorage.getItem('monthlyHistory')) || {};
@@ -2296,27 +2397,50 @@
                 return;
             }
 
-            let reportMsg = `[${todayKST.getMonth() + 1}월 모보 월말정산]\n\n`;
             let isUsed = false;
+            let htmlContent = '';
 
-            const pltNames = { lezhin: '레진', bomtoon: '봄툰', ridi: '리디', mrblue: '미블' };
-            const pltUnits = { lezhin: 'C', bomtoon: 'C', ridi: '캐시', mrblue: '머니' };
+            const isDark = document.body.classList.contains('dark-mode');
+            const pltInfo = {
+                lezhin: { name: '레진', unit: 'C', color: isDark ? '#ff6b76' : '#e60012' },
+                bomtoon: { name: '봄툰', unit: 'C', color: isDark ? '#ff85c0' : '#e84393' },
+                ridi: { name: '리디', unit: '캐시', color: isDark ? '#5dade2' : '#1e90ff' },
+                mrblue: { name: '미블', unit: '머니', color: isDark ? '#8ab4f8' : '#004e9a' }
+            };
 
             platformOrder.forEach(plt => {
                 const works = thisMonthData[plt];
+                if (!works) return;
+
                 const workTitles = Object.keys(works);
 
                 if (workTitles.length > 0) {
                     isUsed = true;
-                    reportMsg += `[${pltNames[plt]}]\n`;
                     let totalPltSpent = 0;
+                    const info = pltInfo[plt];
+
+                    htmlContent += `
+                    <div class="report-plt-section">
+                        <div class="report-plt-title" style="color: ${info.color}; border-bottom-color: ${info.color}40;">
+                            ${info.name}
+                        </div>`;
 
                     workTitles.forEach(title => {
                         const spent = works[title];
                         totalPltSpent += spent;
-                        reportMsg += ` - ${title} : ${formatNum(spent)}${pltUnits[plt]}\n`;
+                        htmlContent += `
+                        <div class="report-item">
+                            <span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-right:10px;">${title}</span>
+                            <span>${formatNum(spent)}<span style="font-size:11px; margin-left:3px;">${info.unit}</span></span>
+                        </div>`;
                     });
-                    reportMsg += `총합 : ${formatNum(totalPltSpent)}${pltUnits[plt]}\n\n`;
+
+                    htmlContent += `
+                        <div class="report-total">
+                            <span>소계</span>
+                            <span style="color: ${info.color};">${formatNum(totalPltSpent)} ${info.unit}</span>
+                        </div>
+                    </div>`;
                 }
             });
 
@@ -2325,9 +2449,17 @@
                 return;
             }
 
-            reportMsg += `\n이번 달도 즐거운 감상 되셨나요?`;
-            alert(reportMsg); // 깔끔하게 알림창으로 영수증 출력!
+            document.getElementById('report-month-title').textContent = `${todayKST.getMonth() + 1}월 모보 정산서`;
+            document.getElementById('report-body-content').innerHTML = htmlContent;
+            document.getElementById('monthly-report-modal').style.display = 'flex';
         }
+
+        // 영수증 닫기 함수
+        function closeMonthlyReport() {
+            document.getElementById('monthly-report-modal').style.display = 'none';
+        }
+
+        // 🌟 [자동 데이터 이사] 과거 기록을 4월 장부로 1회 한정 영끌해주는 함수! (이 아래는 기존 코드 유지)
 
         // 🌟 [자동 데이터 이사] 과거 기록을 4월 장부로 1회 한정 영끌해주는 함수!
         function migratePastDataToMonthly() {
