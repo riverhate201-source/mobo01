@@ -50,10 +50,12 @@
 
             <div class="nav-section">
                 <h4>편의 기능</h4>
-                <button onclick="openSearchModal()" class="menu-item"> 작품 검색하기</button>
-                <button onclick="openCalcModal()" class="menu-item"> 정주행 코인 및 페이 계산기</button>
-                <button onclick="deductToday()" class="menu-item"> 오늘 작품 당일 정산</button>
-                <button onclick="openLinkSettingModal()" class="menu-item"> 출석 링크 직접 설정</button>
+                <button onclick="openSearchModal()" class="menu-item">작품 검색하기</button>
+                <button onclick="openCalcModal()" class="menu-item">정주행 코인 및 페이 계산기</button>
+                <button onclick="deductToday()" class="menu-item">오늘 작품 당일 정산</button>
+                <button class="menu-item" onclick="showMonthlyReport()">이번 달 월말정산 보기
+                </button>
+                <button onclick="openLinkSettingModal()" class="menu-item">출석 링크 직접 설정</button>
             </div>
 
 
@@ -121,7 +123,8 @@
 
                     <div
                         style="display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 18px; margin-top: -15px; margin-bottom: 8px; width: 100%;">
-                        <div id="bomtoon-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">22일 코인 할인!
+                        <div id="bomtoon-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">22일 코인
+                            할인!
                         </div>
                         <div id="bomtoon-expire-badge"
                             style="display:none; color:#e60012; font-size:11px; font-weight:bold; background:#ffebee; padding:2px 8px; border-radius:12px;">
@@ -799,10 +802,23 @@
             const remainEp = total - current;
             const needCoin = remainEp * price;
 
+            const isDark = document.body.classList.contains('dark-mode');
+
             // 플랫폼별 단위와 맞춤 색상 세팅
-            let unit = 'C'; let color = '#e60012'; // 레진, 봄툰 (기본 빨강)
-            if (plt === 'cash') { unit = '캐시'; color = '#1e90ff'; } // 리디 (블루)
-            else if (plt === 'won') { unit = '머니'; color = '#004e9a'; } // 미블 (네이비)
+            let unit = 'C';
+            let color = '';
+
+            if (isDark) {
+                // 🌙 다크모드일 때: 까만 배경에서 눈에 확 띄고 예쁜 파스텔톤!
+                if (plt === 'cash') { unit = '캐시'; color = '#74b9ff'; } // 리디 (밝은 하늘색)
+                else if (plt === 'won') { unit = '머니'; color = '#82ccdd'; } // 미블 (밝은 청록/회파랑)
+                else { color = '#ff7675'; } // 레진, 봄툰 (밝은 코랄/핑크)
+            } else {
+                // ☀️ 라이트모드일 때: 하얀 배경에서 뚜렷하게 보이는 원래 색상!
+                if (plt === 'cash') { unit = '캐시'; color = '#1e90ff'; } // 리디 (블루)
+                else if (plt === 'won') { unit = '머니'; color = '#004e9a'; } // 미블 (네이비)
+                else { color = '#e60012'; } // 레진, 봄툰 (기본 빨강)
+            }
 
             // 결과 적용 (쉼표 포맷팅 + 맞춤 단위 글씨 + 맞춤 색상)
             document.getElementById('calc-remain-ep').textContent = formatNum(remainEp);
@@ -824,6 +840,7 @@
                 // 코인백 결과에도 쉼표와 맞춤 단위 적용!
                 document.getElementById('calc-back-coin').textContent = formatNum(backCoin) + ' ' + unit;
                 document.getElementById('calc-extra-ep').textContent = formatNum(extraEp);
+                document.getElementById('calc-extra-ep').style.color = color;
                 coinbackResultArea.style.display = 'block';
             } else {
                 coinbackResultArea.style.display = 'none';
@@ -941,16 +958,35 @@
 
         function processDeduction() {
             let tL = 0, tB = 0, tR = 0, tM = 0;
+
+            // 🌟 [신규] 월말정산용 가계부 꺼내기
+            const todayKST = getKSTDate();
+            const monthKey = `${todayKST.getFullYear()}-${String(todayKST.getMonth() + 1).padStart(2, '0')}`;
+            let monthlyHistory = JSON.parse(localStorage.getItem('monthlyHistory')) || {};
+
+            if (!monthlyHistory[monthKey]) {
+                monthlyHistory[monthKey] = { lezhin: {}, bomtoon: {}, ridi: {}, mrblue: {} };
+            }
+
             // [핵심] 실제 정산 계산도 켠 플랫폼만!
             platformOrder.forEach(plt => {
                 pendingDeductions[plt].forEach((item, i) => {
                     const chk = document.getElementById(`deduct-chk-${plt}-${i}`);
+
+
                     if (chk && chk.checked) {
-                        const coinVal = parseInt(item.work.coin) || 0;
-                        if (plt === 'lezhin') tL += coinVal;
-                        else if (plt === 'bomtoon') tB += coinVal;
-                        else if (plt === 'ridi') tR += coinVal;
-                        else if (plt === 'mrblue') tM += coinVal;
+                        const costVal = parseInt(item.work.coin) || 0;
+
+                        if (plt === 'lezhin') tL += costVal;
+                        else if (plt === 'bomtoon') tB += costVal;
+                        else if (plt === 'ridi') tR += costVal;
+                        else if (plt === 'mrblue') tM += costVal;
+
+                        //영수증에 기록할 때도 costVal 사용!
+                        if (!monthlyHistory[monthKey][plt][item.work.title]) {
+                            monthlyHistory[monthKey][plt][item.work.title] = 0;
+                        }
+                        monthlyHistory[monthKey][plt][item.work.title] += costVal;
                     }
                 });
             });
@@ -963,6 +999,9 @@
 
                 const addedWon = tR + tM;
                 addWeeklySpent(tL + tB, addedWon);
+
+                //다 적은 가계부를 금고에 안전하게 저장!
+                localStorage.setItem('monthlyHistory', JSON.stringify(monthlyHistory));
 
                 saveData();
 
@@ -1112,8 +1151,19 @@
                 }
                 if (p.weeklySpent !== undefined) localStorage.setItem('weeklySpent', p.weeklySpent);
                 if (p.weeklySpentWon !== undefined) localStorage.setItem('weeklySpentWon', p.weeklySpentWon);
+
+
+                if (p.monthlyHistory) localStorage.setItem('monthlyHistory', JSON.stringify(p.monthlyHistory));
+                if (p.bomtoonLink) localStorage.setItem('bomtoonLink', p.bomtoonLink);
+                if (p.lezhinLink) localStorage.setItem('lezhinLink', p.lezhinLink);
+                if (p.lezhinExpire) localStorage.setItem('lezhinExpire', JSON.stringify(p.lezhinExpire));
+                if (p.bomtoonExpire) localStorage.setItem('bomtoonExpire', JSON.stringify(p.bomtoonExpire));
+                if (p.ridiExpire) localStorage.setItem('ridiExpire', JSON.stringify(p.ridiExpire));
+                if (p.mrblueExpire) localStorage.setItem('mrblueExpire', JSON.stringify(p.mrblueExpire));
             }
         }
+
+
 
         // 2. 데이터 저장하기 (새로운 데이터들도 봉투에 쏙!)
         function saveData() {
@@ -1126,13 +1176,22 @@
                 theme: localStorage.getItem('theme') || 'light',
                 platformOrder: platformOrder,
                 weeklySpent: localStorage.getItem('weeklySpent') || 0,
-                weeklySpentWon: localStorage.getItem('weeklySpentWon') || 0
+                weeklySpentWon: localStorage.getItem('weeklySpentWon') || 0,
+
+                // 백업할 때 이것들도 무조건 같이 싸야 합니다!
+                monthlyHistory: JSON.parse(localStorage.getItem('monthlyHistory')) || {},
+                bomtoonLink: localStorage.getItem('bomtoonLink') || '',
+                lezhinLink: localStorage.getItem('lezhinLink') || '',
+                lezhinExpire: JSON.parse(localStorage.getItem('lezhinExpire')) || null,
+                bomtoonExpire: JSON.parse(localStorage.getItem('bomtoonExpire')) || null,
+                ridiExpire: JSON.parse(localStorage.getItem('ridiExpire')) || null,
+                mrblueExpire: JSON.parse(localStorage.getItem('mrblueExpire')) || null
             };
-            
+
             // ⭕ [신규] 용량 초과 방어막 (try-catch)
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-                renderAll(); 
+                renderAll();
                 checkStorage();
             } catch (error) {
                 // 저장소 용량이 꽉 찼을 때 발생하는 에러를 잡아냅니다!
@@ -1233,7 +1292,7 @@
                 }
 
                 // 2. 연재 주기 뱃지 (사진 안으로 이사!) - 배경을 살짝 투명하게 해서 예쁘게!
-                const cycleTag = work.cycle ? `<span style="background: rgba(232, 240, 254, 0.95); color: #1967d2; padding: 6px 6px; border-radius: 4px; font-size: 12px; font-weight: 500;">🔄 ${work.cycle}</span>` : '';
+                const cycleTag = work.cycle ? `<span style="background: rgba(232, 240, 254, 0.95); color: #1967d2; padding: 6px 6px; border-radius: 4px; font-size: 12px; font-weight: 500; display: inline-block; white-space: nowrap;">🔄 ${work.cycle}</span>` : '';
 
                 // 3. 시간 뱃지 (제일 밑에 쌓임!)
                 const timeBadge = work.time ? `<span style="background: #f9f9f9; color: #333; padding: 4px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">${work.time}</span>` : '';
@@ -1241,7 +1300,27 @@
                 const card = document.createElement('div'); card.className = `webtoon-card-link ${platform}-card`;
 
                 if (work.isToday10Day || (viewDay === '10일 연재' && isDateMatch(work.cycle, todayObj))) {
-                    const borderColor = platform === 'lezhin' ? '#ff9999' : '#ffb3d9'; card.style.border = `2px solid ${borderColor}`;
+
+                    const isDark = document.body.classList.contains('dark-mode');
+                    let borderColor = '';
+
+                    if (isDark) {
+
+                        if (platform === 'lezhin') borderColor = '#cc5a5a'; // 차분한 딥 레드
+                        else if (platform === 'bomtoon') borderColor = '#c45b83'; // 차분한 인디 핑크
+                        else if (platform === 'ridi') borderColor = '#5a8ebf'; // 차분한 뮤트 블루
+                        else if (platform === 'mrblue') borderColor = '#6379a6'; // 차분한 딥 네이비
+                        else borderColor = '#c45b83';
+                    } else {
+                        // 라이트모드용 색상: 기존의 화사한 파스텔톤!
+                        if (platform === 'lezhin') borderColor = '#ff9999';
+                        else if (platform === 'bomtoon') borderColor = '#ffb3d9';
+                        else if (platform === 'ridi') borderColor = '#99ccff';
+                        else if (platform === 'mrblue') borderColor = '#99b3e6';
+                        else borderColor = '#ffb3d9';
+                    }
+
+                    card.style.border = `2px solid ${borderColor}`;
                 }
 
                 if (viewDay !== '휴재' && viewDay !== '완결') { card.draggable = true; card.dataset.idx = work.origIdx; card.dataset.plt = platform; card.dataset.day = work.origDay; card.addEventListener('dragstart', handleDragStart); card.addEventListener('dragover', handleDragOver); card.addEventListener('dragenter', handleDragEnter); card.addEventListener('dragleave', handleDragLeave); card.addEventListener('drop', handleDrop); card.addEventListener('dragend', handleDragEnd); }
@@ -1288,12 +1367,12 @@
         </div>
     </div>`;
                 if (work.isToday10Day) {
-    // [갈림길 1] 10일 연재작인가요? -> 맨 앞으로 가세요! (새치기)
-    listEl.prepend(card); 
-} else {
-    // [갈림길 2] 일반 웹툰인가요? -> 원래 하던 대로 맨 뒤에 서세요!
-    listEl.appendChild(card);
-}
+                    // [갈림길 1] 10일 연재작인가요? -> 맨 앞으로 가세요! (새치기)
+                    listEl.prepend(card);
+                } else {
+                    // [갈림길 2] 일반 웹툰인가요? -> 원래 하던 대로 맨 뒤에 서세요!
+                    listEl.appendChild(card);
+                }
             });
         }
 
@@ -2202,6 +2281,52 @@
         setInterval(() => {
             checkRemoteUpdate();
         }, 30 * 60 * 1000); // 30분 * 60초 * 1000밀리초
+
+        // [신규 기능] 이번 달 월말정산 영수증 보여주기!
+        function showMonthlyReport() {
+            const todayKST = getKSTDate();
+            const monthKey = `${todayKST.getFullYear()}-${String(todayKST.getMonth() + 1).padStart(2, '0')}`;
+            const monthlyHistory = JSON.parse(localStorage.getItem('monthlyHistory')) || {};
+
+            const thisMonthData = monthlyHistory[monthKey];
+
+            if (!thisMonthData) {
+                alert(`결제 내역이 없습니다!\n(${todayKST.getMonth() + 1}월에는 아직 정산된 작품이 없어요.)`);
+                return;
+            }
+
+            let reportMsg = `[${todayKST.getMonth() + 1}월 모보 월말정산]\n\n`;
+            let isUsed = false;
+
+            const pltNames = { lezhin: '레진', bomtoon: '봄툰', ridi: '리디', mrblue: '미블' };
+            const pltUnits = { lezhin: 'C', bomtoon: 'C', ridi: '캐시', mrblue: '머니' };
+
+            platformOrder.forEach(plt => {
+                const works = thisMonthData[plt];
+                const workTitles = Object.keys(works);
+
+                if (workTitles.length > 0) {
+                    isUsed = true;
+                    reportMsg += `[${pltNames[plt]}]\n`;
+                    let totalPltSpent = 0;
+
+                    workTitles.forEach(title => {
+                        const spent = works[title];
+                        totalPltSpent += spent;
+                        reportMsg += ` - ${title} : ${formatNum(spent)}${pltUnits[plt]}\n`;
+                    });
+                    reportMsg += `총합 : ${formatNum(totalPltSpent)}${pltUnits[plt]}\n\n`;
+                }
+            });
+
+            if (!isUsed) {
+                alert(`결제 내역이 없습니다!\n(${todayKST.getMonth() + 1}월에는 아직 정산된 작품이 없어요.)`);
+                return;
+            }
+
+            reportMsg += `\n이번 달도 즐거운 감상 되셨나요?`;
+            alert(reportMsg); // 깔끔하게 알림창으로 영수증 출력!
+        }
 
     </script>
 
