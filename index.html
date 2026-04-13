@@ -674,6 +674,7 @@
         window.onload = function () {
             requestNotificationPermission(); // 1. 권한 확인
             loadAllData();
+            migratePastDataToMonthly();
             applyTheme();
             checkSaleDays();
             checkAttendanceReset();
@@ -2326,6 +2327,47 @@
 
             reportMsg += `\n이번 달도 즐거운 감상 되셨나요?`;
             alert(reportMsg); // 깔끔하게 알림창으로 영수증 출력!
+        }
+
+        // 🌟 [자동 데이터 이사] 과거 기록을 4월 장부로 1회 한정 영끌해주는 함수!
+        function migratePastDataToMonthly() {
+            // 1. 이미 영끌을 완료한 유저라면? 뒤도 안 돌아보고 바로 퇴근! (무한 증식 방지 자물쇠)
+            if (localStorage.getItem('isPastDataMigrated') === 'true') return;
+
+            const todayKST = getKSTDate();
+            const monthKey = `${todayKST.getFullYear()}-${String(todayKST.getMonth() + 1).padStart(2, '0')}`;
+            let monthlyHistory = JSON.parse(localStorage.getItem('monthlyHistory')) || {};
+
+            if (!monthlyHistory[monthKey]) {
+                monthlyHistory[monthKey] = { lezhin: {}, bomtoon: {}, ridi: {}, mrblue: {} };
+            }
+
+            let isMigrated = false;
+
+            // 2. 서랍 다 뒤져서 진도 x 코인값 영끌하기
+            ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
+                Object.keys(state[plt]).forEach(day => {
+                    state[plt][day].forEach(work => {
+                        let match = String(work.progress).match(/(\d+)/);
+                        let progNum = match ? parseInt(match[0]) : 0;
+                        let cost = parseInt(work.coin) || 0;
+
+                        if (progNum > 0 && cost > 0) {
+                            monthlyHistory[monthKey][plt][work.title] = progNum * cost;
+                            isMigrated = true;
+                        }
+                    });
+                });
+            });
+
+            // 3. 금고에 넣고 자물쇠 채우기!
+            if (isMigrated) {
+                localStorage.setItem('monthlyHistory', JSON.stringify(monthlyHistory));
+            }
+
+            // 영끌 끝났다는 증명서 발급! (다음번에 앱 켤 땐 이 함수가 작동 안 함)
+            localStorage.setItem('isPastDataMigrated', 'true');
+            console.log("과거 데이터 마이그레이션(영끌)이 안전하게 완료되었습니다!");
         }
 
     </script>
