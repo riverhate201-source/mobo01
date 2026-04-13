@@ -742,7 +742,7 @@
         window.onload = function () {
             requestNotificationPermission(); // 1. 권한 확인
             loadAllData();
-            cleanupIncorrectHistory();
+            cleanupIncorrectHistoryV2();
             applyTheme();
             checkSaleDays();
             checkAttendanceReset();
@@ -2545,21 +2545,28 @@
             });
         }
 
-        //  유저들의 폰에 있는 가짜 장부를 딱 한 번만 싹 불태워주는 자동 청소기!
-        function cleanupIncorrectHistory() {
-            // 1. 이미 청소를 완료한 유저의 폰이라면? 뒤도 안 돌아보고 퇴근! (안 그러면 정산할 때마다 다 날아가요!)
-            if (localStorage.getItem('isHistoryCleanedV1') === 'true') return;
 
-            // 2. 아직 청소를 안 한 유저라면? 가짜 장부를 통째로 불태웁니다.
+        // 숨어있는 좀비 장부까지 완벽하게 불태우는 강력한 청소기!
+        function cleanupIncorrectHistoryV2() {
+            // 이번엔 V2 도장으로 확인합니다!
+            if (localStorage.getItem('isHistoryCleanedV2') === 'true') return;
+
+            // 1. 밖에 나와 있는 가짜 장부 태우기
             localStorage.removeItem('monthlyHistory');
 
-            // 3. 청소 완료 도장 쾅! (다시는 이 코드가 실행되지 않도록 자물쇠를 채웁니다)
-            localStorage.setItem('isHistoryCleanedV1', 'true');
+            // 2. 통합 금고(STORAGE_KEY) 안에 몰래 숨어있던 좀비 백업본 찾아내서 태우기!
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                let p = JSON.parse(data);
+                p.monthlyHistory = {}; // 금고 안의 장부도 완전 텅 빈 상태로 덮어쓰기!
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+            }
 
-            // 혹시 모르니 이전 영끌 함수의 자물쇠도 같이 채워버립니다.
-            localStorage.setItem('isPastDataMigrated', 'true');
+            // 3. 청소 완료 도장 V2 쾅!
+            localStorage.setItem('isHistoryCleanedV2', 'true');
+            localStorage.setItem('isPastDataMigrated', 'true'); // 예전 영끌 자물쇠도 확실히 채움
 
-            console.log("유저의 폰에서 가짜 장부 청소가 완료되었습니다!");
+            console.log("숨어있던 좀비 장부까지 완벽하게 박멸했습니다! 🧟‍♂️🔥");
         }
 
     </script>
