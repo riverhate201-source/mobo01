@@ -1393,3 +1393,13 @@ body.dark-mode .report-footer {
     background: #2c2c2e;
     border-top-color: #333;
 }
+
+/* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
+a[x-apple-data-detectors] {
+    color: inherit !important;
+    text-decoration: none !important;
+    font-size: inherit !important;
+    font-family: inherit !important;
+    font-weight: inherit !important;
+    line-height: inherit !important;
+}
