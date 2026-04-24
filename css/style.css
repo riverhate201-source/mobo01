@@ -79,7 +79,6 @@ body.dark-mode .menu-btn {
     color: #eee; /* 다크모드에선 햄버거 아이콘(글씨)이 잘 보이게 밝은 색으로! */
 }
 
-
 .menu-btn:active {
     transform: scale(0.9);
 }
@@ -1369,6 +1368,16 @@ body.dark-mode .report-total {
 body.dark-mode .report-footer {
     background: #2c2c2e;
     border-top-color: #333;
+}
+
+/* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
+a[x-apple-data-detectors] {
+    color: inherit !important;
+    text-decoration: none !important;
+    font-size: inherit !important;
+    font-family: inherit !important;
+    font-weight: inherit !important;
+    line-height: inherit !important;
 }
 
 /* 아이폰 홈 화면(PWA) 키보드 증발 방지 방어막 */

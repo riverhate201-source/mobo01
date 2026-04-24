@@ -17,6 +17,17 @@
     <meta name="apple-mobile-web-app-title" content="mobo">
     <link rel="stylesheet" href="./css/style.css">
 
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-DGKBKMNPYF"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-DGKBKMNPYF');
+    </script>
+
+
 </head>
 
 
@@ -2337,35 +2348,42 @@
             }
         }
 
-        // 넷리파이 서버에서 업데이트 정보 가져오기
+        // 넷리파이 서버에서 업데이트 정보 가져오기 (플랜 B 장착 버전!)
         async function checkRemoteUpdate() {
-
             const UPDATE_URL = "https://resplendent-medovik-85b508.netlify.app/update.json";
 
             try {
                 const response = await fetch(UPDATE_URL);
-                if (!response.ok) return; // 파일이 없거나 에러면 중단
+                if (!response.ok) return;
 
                 const data = await response.json();
                 const lastSeenUpdate = localStorage.getItem('lastSeenUpdateId') || 0;
 
-                // 파일의 ID가 내 폰에 저장된 ID보다 크면 = "새로운 소식 발견!"
+                // 새로운 소식 발견!
                 if (data.updateId > lastSeenUpdate) {
+
                     if (Notification.permission === "granted") {
+                        // 👉 [플랜 A] 알림 허용한 유저: 멋진 폰 자체 푸시 알림!
                         const notif = new Notification(data.title, {
                             body: data.message,
-                            icon: "./icon.png" // 앱 아이콘 경로
+                            icon: "./icon.png"
                         });
 
-                        // 알림 클릭 시 링크(트위터/포스타입) 열기
                         notif.onclick = () => {
                             window.open(data.link, '_blank');
                             notif.close();
                         };
-
-                        // 확인한 업데이트 ID 저장 (다시 안 뜨게 함)
-                        localStorage.setItem('lastSeenUpdateId', data.updateId);
+                    } else {
+                        // 🚨 [플랜 B] 알림 거부한 유저: 앱 화면 가운데에 강제 팝업창 띄우기!
+                        setTimeout(() => {
+                            if (confirm(`🎉 [모보 새 소식]\n\n${data.title}\n${data.message}\n\n지금 확인하러 가시겠어요?`)) {
+                                window.open(data.link, '_blank');
+                            }
+                        }, 1000); // 앱 켜지고 1초 뒤에 자연스럽게 짠!
                     }
+
+                    // A든 B든 소식을 보여줬으니 도장 쾅! (다시 안 뜨게)
+                    localStorage.setItem('lastSeenUpdateId', data.updateId);
                 }
             } catch (error) {
                 console.error("업데이트 체크 중 오류:", error);
