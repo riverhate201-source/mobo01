@@ -69,6 +69,12 @@ body.dark-mode {
     cursor: pointer;
 }
 
+.menu-btn i {
+    width: 30px;         /* 아이콘 크기 조절 */
+    height: 30px;
+    stroke-width: 2px;   /* 선 굵기 조절 (기본 2) */
+}
+
 /* 다크모드 햄버거 버튼(알약) 디자인 */
 body.dark-mode .menu-btn {
     background: rgba(44, 44, 46, 0.5);
