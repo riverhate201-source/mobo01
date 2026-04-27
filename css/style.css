@@ -57,6 +57,7 @@ body.dark-mode {
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 12px;
+    color: #333 !important;
 
     /* 🌟 중요: 아이콘을 정중앙에 똭! 박아넣는 마법 */
     display: flex !important;
@@ -81,6 +82,7 @@ body.dark-mode {
     /* 불필요한 하단 공백 제거 */
     flex-shrink: 0;
     /* 찌그러짐 방지 */
+    stroke: #333 !important;
 }
 
 /* 다크모드 햄버거 버튼(알약) 디자인 */
