@@ -49,30 +49,38 @@ body.dark-mode {
     /* 투명한 상자 통과해서 뒤에 클릭 되게 하기 */
 }
 
-/* 햄버거 버튼(알약) 자체의 디자인 복구 (중복 제거 통합본) */
+/* 1. 햄버거 버튼 (알약 모양 배경) */
 .menu-btn {
     pointer-events: auto;
-    /* 버튼 부분만 클릭 가능하게! */
     background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 12px;
 
-    /* 원래 쓰시던 여백 초기화 대신 알약 모양 여백 적용 */
-    padding: 4px 4px;
-    margin: 0;
+    /* 🌟 중요: 아이콘을 정중앙에 똭! 박아넣는 마법 */
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
 
+    padding: 6px !important;
+    /* 아이콘이 30px로 커졌으니 여백도 살짝 더 줬어요 */
+    margin: 0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
-    /* transform 0.2s 대신 전체적으로 부드럽게 */
     cursor: pointer;
 }
 
-.menu-btn i {
-    width: 30px;         /* 아이콘 크기 조절 */
-    height: 30px;
-    stroke-width: 2px;   /* 선 굵기 조절 (기본 2) */
+/* 2. 루시드 아이콘 (i와 svg 둘 다 기강 잡기) */
+.menu-btn i,
+.menu-btn svg {
+    width: 28px !important;
+    /* 🌟 !important로 절대 권력 행사 */
+    height: 28px !important;
+    display: block;
+    /* 불필요한 하단 공백 제거 */
+    flex-shrink: 0;
+    /* 찌그러짐 방지 */
 }
 
 /* 다크모드 햄버거 버튼(알약) 디자인 */
