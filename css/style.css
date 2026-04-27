@@ -42,46 +42,50 @@ body.dark-mode {
     max-width: 480px;
     width: 100%;
     display: flex;
-    justify-content: flex-end; 
-    padding-right: 15px; 
+    justify-content: flex-end;
+    padding-right: 15px;
     z-index: 2100;
-    pointer-events: none; /* 투명한 상자 통과해서 뒤에 클릭 되게 하기 */
+    pointer-events: none;
+    /* 투명한 상자 통과해서 뒤에 클릭 되게 하기 */
 }
 
 /* 햄버거 버튼(알약) 자체의 디자인 복구 (중복 제거 통합본) */
 .menu-btn {
-    pointer-events: auto; /* 버튼 부분만 클릭 가능하게! */
+    pointer-events: auto;
+    /* 버튼 부분만 클릭 가능하게! */
     background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 12px;
-    
+
     /* 원래 쓰시던 여백 초기화 대신 알약 모양 여백 적용 */
-    padding: 4px 4px; 
-    margin: 0; 
-    
+    padding: 4px 4px;
+    margin: 0;
+
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease; /* transform 0.2s 대신 전체적으로 부드럽게 */
+    transition: all 0.3s ease;
+    /* transform 0.2s 대신 전체적으로 부드럽게 */
     cursor: pointer;
-    
-    /* 원래 쓰시던 폰트 설정 살리기 */
-    font-size: 32px; 
-    line-height: 1;
-    color: #333; 
 }
 
 /* 다크모드 햄버거 버튼(알약) 디자인 */
 body.dark-mode .menu-btn {
-    background: rgba(44, 44, 46, 0.5); /* 어두운 반투명 배경 */
-    border: 1px solid rgba(255, 255, 255, 0.1); /* 테두리를 더 흐릿하게 */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* 그림자를 좀 더 진하게 */
-    color: #eee; /* 다크모드에선 햄버거 아이콘(글씨)이 잘 보이게 밝은 색으로! */
+    background: rgba(44, 44, 46, 0.5);
+    /* 어두운 반투명 배경 */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* 테두리를 더 흐릿하게 */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    /* 그림자를 좀 더 진하게 */
+    color: #eee;
+    /* 다크모드에선 햄버거 아이콘(글씨)이 잘 보이게 밝은 색으로! */
 }
 
 .menu-btn:active {
     transform: scale(0.9);
 }
+
+
 
 .nav-overlay {
     position: fixed;
@@ -212,43 +216,130 @@ body.dark-mode .mini-bar {
 }
 
 
+/* ==========================================
+
+   🌟 요일 탭: 지갑처럼 가로 스와이프 + 가운데 정렬 마법
+
+   ========================================== */
+
 .day-nav {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    /* 🚨 절대 두 줄 꺾임 금지! */
+    overflow-x: auto !important;
+    /* 넘치면 가로 스와이프 허용 */
+
+    /* 🌟 화면이 넓으면 가운데 정렬, 좁으면 알아서 스크롤 되게 하는 마법 */
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto 20px auto;
+
     gap: 8px;
-    margin-bottom: 30px;
-    padding: 0 10px;
+    padding: 5px 10px;
+    /* 양끝에서 짤리지 않게 여백 넉넉히 */
+    box-sizing: border-box;
+
+
+
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
 }
+
+
+
+.day-nav::-webkit-scrollbar {
+
+    display: none;
+    /* 투박한 스크롤바 싹 숨기기 */
+
+}
+
+
+
+/* ==========================================
+
+   🌟 요일 탭 버튼 디자인 (찌그러짐 방지 철벽)
+
+   ========================================== */
 
 .day-btn {
+
     background: #fff;
+
     border: 1px solid #ddd;
-    width: 38px;
-    height: 38px;
+
+    width: 42px !important;
+    /* '전체' 글씨가 예쁘게 들어가도록 아주 살짝만 키움 */
+
+    height: 42px !important;
+
     border-radius: 50%;
+
+    color: #333;
+
     cursor: pointer;
-    font-size: 14px;
+
+    font-size: 13px;
+
+    font-weight: normal;
+
     transition: 0.2s;
+
+
+
+    /* 🚨 스와이프할 때 동그라미가 찌그러지거나 글씨가 꺾이는 것 방지 */
+
+    flex-shrink: 0 !important;
+
+    display: flex !important;
+
+    justify-content: center !important;
+
+    align-items: center !important;
+
+    white-space: nowrap !important;
+
 }
+
+
 
 body.dark-mode .day-btn {
+
     background: #2c2c2e;
+
     border-color: #444;
+
     color: #eee;
+
 }
+
+
 
 .day-btn.active {
+
     background: #333 !important;
+
     color: #fff !important;
+
     border-color: #333 !important;
+
 }
 
+
+
 body.dark-mode .day-btn.active {
+
     background: #fff !important;
+
     color: #333 !important;
+
     border-color: #fff !important;
+
 }
+
+
 
 .wide-btn {
     width: auto !important;
@@ -350,6 +441,8 @@ body.dark-mode .add-work-btn {
     font-size: 17px;
     color: #444;
 }
+
+
 
 body.dark-mode .total-coin-banner {
     background: #3d3521;
@@ -483,32 +576,54 @@ body.dark-mode .bomtoon-card .no-img-title {
 .card-bottom-row {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-top: 8px;
+    align-items: flex-end;
+    margin-top: auto;
+    /* 🌟 바닥에서 2px 정도만 띄워주는 안전 마진! */
+    margin-bottom: 2px !important;
+    gap: 4px;
 }
 
 .card-info .coin {
     color: #999;
-    font-size: 13px;
+    font-size: 11px !important;
     margin: 0;
+    /* 🌟 글자가 바닥 선에 너무 붙지 않게 미세 조정 */
+    padding-bottom: 5px;
+    white-space: nowrap;
+    flex-shrink: 1;
 }
 
+/* 3. 버튼 그룹 (버튼들끼리 안 겹치게) */
 .quick-btn-group {
     display: flex;
-    gap: 5px;
+    gap: 4px;
+    flex-shrink: 0;
+    /* 🚨 버튼 바구니는 절대 찌그러지지 마! */
 }
 
+/* 4. 버튼 디자인 (가로/세로 크기 박제!) */
 .quick-btn {
     background: #f1f1f1;
     border: 1px solid #ddd;
     color: #666;
-    border-radius: 8px;
-    padding: 4px 8px;
-    font-size: 11px;
+    border-radius: 6px;
+
+    /* 🌟 여기가 핵심! 크기를 숫자로 딱 정해줍니다 (이제 안 늘어남) */
+    width: 34px !important;
+    height: 24px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0 !important;
+    /* 안쪽 여백 때문에 커지는 것 방지 */
+
+    font-size: 10px;
     font-weight: bold;
     cursor: pointer;
+    flex-shrink: 0;
 }
 
+/* 다크모드 버튼 색상 유지 */
 body.dark-mode .quick-btn {
     background: #444;
     border-color: #555;
@@ -1368,6 +1483,208 @@ body.dark-mode .report-total {
 body.dark-mode .report-footer {
     background: #2c2c2e;
     border-top-color: #333;
+}
+
+
+/* ==========================================
+   🌟 서랍 모달창 전용: 모던 카드(박스) 그룹화 디자인
+   ========================================== */
+.drawer-day-group {
+    margin-bottom: 18px;
+}
+
+/* 1. 요일 타이틀 (스티키 유지, 선 없애고 심플하게) */
+.drawer-day-header {
+    position: sticky;
+    top: -5px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    padding: 8px 0;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 5;
+}
+
+body.dark-mode .drawer-day-header {
+    background: rgba(44, 44, 46, 0.95);
+}
+
+.day-badge {
+    background: #f0f4ff;
+    color: #1967d2;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+body.dark-mode .day-badge {
+    background: #1a233a;
+    color: #8ab4f8;
+}
+
+.day-count {
+    font-size: 14px;
+    color: #aaa;
+    font-weight: normal;
+}
+
+/* 2. 작품들을 담는 둥근 상자 (iOS 설정창 느낌!) */
+.drawer-items-box {
+    background: #f8f9fa;
+    border-radius: 14px;
+    padding: 0 14px;
+    border: 1px solid #eee;
+}
+
+body.dark-mode .drawer-items-box {
+    background: #333;
+    border-color: #444;
+}
+
+/* 3. 개별 작품 리스트 (마지막 줄은 선 없애기) */
+.drawer-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #eaeaea;
+    transition: opacity 0.2s;
+}
+
+body.dark-mode .drawer-item {
+    border-bottom-color: #444;
+}
+
+.drawer-item:last-child {
+    border-bottom: none;
+    /* 상자 안의 마지막 줄은 선이 없어야 깔끔해요! */
+}
+
+.drawer-item:active {
+    opacity: 0.5;
+}
+
+.drawer-item-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    color: #333;
+    font-weight: normal;
+}
+
+body.dark-mode .drawer-item-title {
+    color: #eee;
+}
+
+/* 상태 뱃지 */
+.drawer-badge {
+    font-size: 11px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    margin-left: 8px;
+    font-weight: normal;
+    white-space: nowrap;
+}
+
+.badge-break {
+    background: #e67e22;
+    color: #fff;
+}
+
+.badge-end {
+    background: #7f8c8d;
+    color: #fff;
+}
+
+/* ==========================================
+   🌟 서랍 모달창: 투박한 스크롤바 완벽 숨기기 (앱 화면처럼!)
+   ========================================== */
+#drawer-list {
+    -ms-overflow-style: none;
+    /* 인터넷 익스플로러, 엣지 방어 */
+    scrollbar-width: none;
+    /* 파이어폭스 방어 */
+}
+
+#drawer-list::-webkit-scrollbar {
+    display: none;
+    /* 크롬, 사파리, 아이폰/갤럭시 기본 브라우저 스크롤바 완전 삭제! */
+}
+
+/* ==========================================
+   🌟 서랍 모달창: 요일별 그룹 타이틀 (스티키 헤더)
+   ========================================== */
+.drawer-day-header {
+    position: sticky;
+    /* 스크롤 시 화면 위에 착! 달라붙음 */
+    top: 0;
+    background: rgba(255, 255, 255, 0.95);
+    /* 살짝 투명해서 뒤에 글씨가 은은하게 비침 */
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    padding: 8px 5px 8px 5px;
+    margin-top: 5px;
+    font-size: 15px;
+    font-weight: normal;
+    color: #1967d2;
+    /* 타이틀 강조색 */
+
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    z-index: 5;
+}
+
+/* 🌟 다크모드 요일 타이틀 */
+body.dark-mode .drawer-day-header {
+    background: rgba(44, 44, 46, 0.95);
+    color: #8ab4f8;
+    border-bottom-color: #444;
+}
+
+/* ==========================================
+   🌟 통합 서랍장 전용: 상단 플랫폼 탭 디자인
+   ========================================== */
+.global-drawer-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 15px;
+    position: sticky;
+    top: -5px;
+    /* 모달창 천장에 딱 붙게 */
+    background: #fff;
+    padding-top: 5px;
+    padding-bottom: 10px;
+    z-index: 20;
+    /* 스크롤할 때 제일 위에 뜨도록 */
+    border-bottom: 1px solid #eee;
+}
+
+body.dark-mode .global-drawer-tabs {
+    background: #2c2c2e;
+    /* 다크모드 모달 배경색과 동일하게 */
+    border-bottom-color: #444;
+}
+
+.global-tab-btn {
+    flex: 1;
+    padding: 8px 0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: normal;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.global-tab-btn:active {
+    transform: scale(0.95);
+    /* 누를 때 살짝 눌리는 애니메이션 */
 }
 
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */

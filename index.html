@@ -15,7 +15,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
-    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/style.css?v=1.1">
+
+
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-DGKBKMNPYF"></script>
@@ -26,6 +28,7 @@
 
         gtag('config', 'G-DGKBKMNPYF');
     </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 
 
 </head>
@@ -36,7 +39,9 @@
     <h1 class="main-page-title">모아보기 mobo<br>나의 웹툰 스케줄러</h1>
 
     <div class="top-util-bar">
-        <button onclick="openNav()" class="menu-btn">☰</button>
+        <button onclick="openNav()" class="menu-btn">
+            <i data-lucide="menu"></i>
+        </button>
     </div>
 
     <div id="side-nav" class="nav-overlay" style="display:none;">
@@ -56,6 +61,7 @@
 
             <div class="nav-section">
                 <h4>특별 분류</h4>
+
                 <button onclick="handleMenuAction('day', '10일 연재')" class="menu-item"> 10일 연재 작품</button>
                 <button onclick="handleMenuAction('day', '휴재')" class="menu-item"> 휴재 중인 작품</button>
                 <button onclick="handleMenuAction('day', '완결')" class="menu-item"> 완결된 작품</button>
@@ -231,6 +237,7 @@
 
 
     <div class="day-nav">
+        <button onclick="changeDay('전체')" class="day-btn" data-day="전체">전체</button>
         <button onclick="changeDay('월요일')" class="day-btn" data-day="월요일">월</button>
         <button onclick="changeDay('화요일')" class="day-btn" data-day="화요일">화</button>
         <button onclick="changeDay('수요일')" class="day-btn" data-day="수요일">수</button>
@@ -248,6 +255,7 @@
             </div>
             <div class="total-coin-banner">오늘의 필요 코인: <span id="lezhin-needed-val">0</span>개 <span id="lezhin-count-val"
                     class="work-count-text">(작품 총 0개)</span></div>
+
             <div class="balance-info">정산 후 <span id="lezhin-result" class="highlight-result-lezhin">0</span>C 남아요</div>
             <div class="scroll-wrapper">
                 <button class="scroll-btn left-btn">◀</button>
@@ -263,6 +271,7 @@
             </div>
             <div class="total-coin-banner">오늘의 필요 코인: <span id="bomtoon-needed-val">0</span>개 <span
                     id="bomtoon-count-val" class="work-count-text">(작품 총 0개)</span></div>
+
             <div class="balance-info">정산 후 <span id="bomtoon-result" class="highlight-result-bomtoon">0</span>C 남아요
             </div>
             <div class="scroll-wrapper">
@@ -279,6 +288,7 @@
             </div>
             <div class="total-coin-banner">오늘의 필요 캐시: <span id="ridi-needed-val">0</span>원 <span id="ridi-count-val"
                     class="work-count-text">(작품 총 0개)</span></div>
+
             <div class="balance-info">정산 후 <span id="ridi-result" class="highlight-result-ridi">0</span>원 남아요</div>
             <div class="scroll-wrapper">
                 <button class="scroll-btn left-btn">◀</button>
@@ -294,6 +304,7 @@
             </div>
             <div class="total-coin-banner">오늘의 필요 머니: <span id="mrblue-needed-val">0</span>원 <span id="mrblue-count-val"
                     class="work-count-text">(작품 총 0개)</span></div>
+
             <div class="balance-info">정산 후 <span id="mrblue-result" class="highlight-result-mrblue">0</span>원 남아요</div>
             <div class="scroll-wrapper">
                 <button class="scroll-btn left-btn">◀</button>
@@ -307,7 +318,8 @@
         이번 주 누적 소비: <span class="weekly-highlight" id="weekly-spent-val" style="margin-left: 8px;">0</span>
     </div>
 
-    <footer style=" text-align: center; color: #aaa; font-size: 13px; font-weight: bold; margin-bottom: 20px;">&copy;
+    <footer style=" text-align: center; color: #aaa; font-size: 13px; font-weight: bold; margin-bottom: 20px;">
+        &copy;
         2026 우니 @s_euni_
     </footer>
 
@@ -330,7 +342,8 @@
                         <label class="chk-label"><input type="checkbox" name="day-chk" value="금요일">금</label>
                         <label class="chk-label"><input type="checkbox" name="day-chk" value="토요일">토</label>
                         <label class="chk-label"><input type="checkbox" name="day-chk" value="일요일">일</label>
-                        <label class="chk-label"><input type="checkbox" name="day-chk" value="10일 연재">10일 지정석</label>
+                        <label class="chk-label"><input type="checkbox" name="day-chk" value="10일 연재">10일
+                            지정석</label>
                     </div>
                 </div> <select id="input-status" class="modal-select"
                     style="width: 100%; margin-top: 4px; margin-bottom: 0;">
@@ -363,7 +376,10 @@
                     style="flex: 2; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
             </div>
 
-            <p id="image-status-text" style="text-align: center; font-size: 12px; margin-bottom: 5px;">📷 사진은 선택 사항입니다.
+            <p id="image-status-text" style="text-align: center; font-size: 12px; margin-bottom: 5px;">
+                📷
+                사진은 선택
+                사항입니다.
             </p>
 
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
@@ -464,8 +480,10 @@
                     style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ccc;">
                     <p style="margin: 0; font-size: 13px; color: #e84393;">돌려받는 금액: <span id="calc-back-coin"
                             style="font-weight: bold;">0</span></p>
-                    <p style="margin: 5px 0 0 0; font-size: 15px; font-weight: bold; color: #1967d2;">👉 <span
-                            id="calc-extra-ep" style="color:#e60012; font-size:18px;">0</span>화 더 볼 수 있어요!</p>
+                    <p style="margin: 5px 0 0 0; font-size: 15px; font-weight: bold; color: #1967d2;">👉
+                        <span id="calc-extra-ep" style="color:#e60012; font-size:18px;">0</span>화 더 볼 수
+                        있어요!
+                    </p>
                 </div>
             </div>
 
@@ -516,7 +534,8 @@
 
             <div class="expire-warning-box"
                 style="margin-bottom: 15px; text-align: left; padding: 12px; border-radius: 8px;">
-                <label id="expire-modal-label" class="expire-label" style="font-size: 13px; font-weight: bold;">🚨 소멸 예정
+                <label id="expire-modal-label" class="expire-label" style="font-size: 13px; font-weight: bold;">🚨
+                    소멸 예정
                     코인 (선택)</label>
                 <div style="display: flex; gap: 8px; margin-top: 8px;">
                     <input type="number" id="expire-coin-val" class="expire-input" placeholder="수량 (예: 15)"
@@ -555,6 +574,21 @@
         <span id="toast-message">작품이 서랍에서 삭제되었습니다.</span>
         <button id="toast-undo-btn" onclick="undoDelete()">실행 취소</button>
     </div>
+
+    <div id="drawer-modal" class="modal-overlay" style="display: none; z-index: 5500;">
+        <div class="modal-content"
+            style="max-width: 320px; position: relative; max-height: 75vh; display: flex; flex-direction: column; padding: 25px 20px;">
+            <button onclick="closeDrawerModal()"
+                style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
+            <h3 id="drawer-title" style="margin-top: 0; text-align: center; padding-bottom: 2px;">요일 전체 작품 서랍
+            </h3>
+
+            <div id="drawer-list" style="overflow-y: auto; flex: 1; padding-right: 5px;">
+            </div>
+        </div>
+    </div>
+
+
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
@@ -744,6 +778,7 @@
             loadAllData();
             cleanupIncorrectHistoryV2();
             applyTheme();
+            lucide.createIcons();
             checkSaleDays();
             checkAttendanceReset();
             checkAndShowAttendPopup();
@@ -1187,7 +1222,21 @@
 
         function checkAttendanceReset() { const kst = getKSTDate(); const todayStr = `${kst.getFullYear()}-${kst.getMonth() + 1}-${kst.getDate()}`; if (localStorage.getItem('lastAttendDate') !== todayStr) { localStorage.setItem('lastAttendDate', todayStr); localStorage.setItem('lezhinAttend', 'false'); localStorage.setItem('bomtoonAttend', 'false'); } updateAttendUI(); }
         function updateAttendUI() { const lAttend = localStorage.getItem('lezhinAttend') === 'true'; const bAttend = localStorage.getItem('bomtoonAttend') === 'true'; const lBtn = document.getElementById('lezhin-attend-btn'); const bBtn = document.getElementById('bomtoon-attend-btn'); if (lAttend) { lBtn.classList.add('done'); lBtn.textContent = ' 출석완료'; } else { lBtn.classList.remove('done'); lBtn.textContent = '레진 출석 전'; } if (bAttend) { bBtn.classList.add('done'); bBtn.textContent = ' 출석완료'; } else { bBtn.classList.remove('done'); bBtn.textContent = '봄툰 출석 전'; } }
-        function checkAttendance(plt) { localStorage.setItem(plt + 'Attend', 'true'); updateAttendUI(); }
+
+        // [교체] 출석 확인 및 레진 코인 자동 적립 로직
+        function checkAttendance(plt) {
+            // 1. 기존: 출석 도장 쾅!
+            localStorage.setItem(plt + 'Attend', 'true');
+
+            // 🌟 신규: 만약 출석한 곳이 '레진'이라면? 지갑에 +1 코인 넣어주기!
+            if (plt === 'lezhin') {
+                const currentWallet = parseInt(localStorage.getItem('lWallet') || 0);
+                localStorage.setItem('lWallet', currentWallet + 1); // 기존 잔액 + 1 저장
+                refreshBalance(); // 🌟 돈이 들어왔으니 화면 지갑 잔액도 즉시 업데이트!
+            }
+
+            updateAttendUI();
+        }
 
         function loadAllData() {
             const data = localStorage.getItem(STORAGE_KEY);
@@ -1290,7 +1339,25 @@
         function toggleDarkMode() { const isDark = document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); updateDarkModeBtn(); saveData(); }
 
         function updateDarkModeBtn() { const isDark = document.body.classList.contains('dark-mode'); const btn = document.getElementById('menu-dark-mode-btn'); if (btn) btn.textContent = isDark ? "라이트 모드" : "다크 모드"; }
-        function changeDay(day) { viewDay = day; renderAll(); }
+        function changeDay(day) {
+            // 🌟 [전체] 버튼을 눌렀을 때는 메인 화면은 놔두고 모달창만 띄우기!
+            if (day === '전체') {
+                // 모든 요일 버튼 까만색 빼기
+                document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
+
+                // '전체' 버튼만 까맣게 칠하기
+                const allBtn = document.querySelector('.day-btn[data-day="전체"]');
+                if (allBtn) allBtn.classList.add('active');
+
+                // 통합 서랍 모달 띄우기
+                openGlobalDrawerModal();
+                return; // 여기서 스톱!
+            }
+
+            // 🌟 월~일 버튼을 눌렀을 때는 기존처럼 메인 화면 리스트 바꾸기!
+            viewDay = day;
+            renderAll();
+        }
 
         function updatePlatformOrder() {
             const container = document.getElementById('main-content-area');
@@ -2541,6 +2608,194 @@
             localStorage.setItem('isPastDataMigrated', 'true'); // 예전 영끌 자물쇠도 확실히 채움
 
             console.log("숨어있던 좀비 장부까지 완벽하게 박멸했습니다! 🧟‍♂️🔥");
+        }
+
+        // ==========================================
+        // 🌟 [최종 수정] 격주만 하단 서랍, 나머지는 요일 내 주기 뱃지 표시
+        // ==========================================
+        function openGlobalDrawerModal(activePlt) {
+            if (typeof activePlt !== 'string') {
+                activePlt = platformOrder[0];
+            }
+
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('drawer-title').textContent = '요일 전체 작품';
+            document.getElementById('drawer-title').style.color = isDark ? '#eee' : '#333';
+
+            const listEl = document.getElementById('drawer-list');
+            listEl.innerHTML = '';
+
+            const pltNames = { lezhin: '레진', bomtoon: '봄툰', ridi: '리디', mrblue: '미블' };
+            const pltColors = { lezhin: '#e60012', bomtoon: '#ff69b4', ridi: '#1e90ff', mrblue: '#004e9a' };
+
+            // 1. 상단 플랫폼 탭
+            const tabsContainer = document.createElement('div');
+            tabsContainer.className = 'global-drawer-tabs';
+
+            platformOrder.forEach(plt => {
+                const btn = document.createElement('button');
+                btn.className = 'global-tab-btn';
+                btn.textContent = pltNames[plt];
+
+                if (plt === activePlt) {
+                    btn.style.backgroundColor = pltColors[plt];
+                    btn.style.color = '#fff';
+                    btn.style.borderColor = pltColors[plt];
+                } else {
+                    btn.style.backgroundColor = isDark ? '#333' : '#f8f9fa';
+                    btn.style.color = isDark ? '#888' : '#888';
+                    btn.style.borderColor = isDark ? '#444' : '#eee';
+                }
+
+                btn.onclick = () => openGlobalDrawerModal(plt);
+                tabsContainer.appendChild(btn);
+            });
+            listEl.appendChild(tabsContainer);
+
+            // 2. 그룹 분리 (격주와 휴재/완결만 별도 관리)
+            const groups = {
+                '월요일': [], '화요일': [], '수요일': [], '목요일': [], '금요일': [], '토요일': [], '일요일': [],
+                '10일 연재': [],
+                '격주 연재': [],
+                '휴재 및 완결': []
+            };
+
+            let totalWorksCount = 0;
+
+            Object.keys(state[activePlt]).forEach(day => {
+                (state[activePlt][day] || []).forEach((work, idx) => {
+                    const workData = { ...work, origDay: day, origIdx: idx };
+                    totalWorksCount++;
+
+                    if (work.status === '휴재' || work.status === '완결') {
+                        groups['휴재 및 완결'].push(workData);
+                    }
+                    else if (work.cycle && work.cycle.includes('격주 연재')) {
+                        groups['격주 연재'].push(workData);
+                    }
+                    else if (day === '10일 연재') {
+                        groups['10일 연재'].push(workData);
+                    }
+                    else {
+                        // 🌟 '특정 주 휴재'가 포함된 일반 작품들도 모두 해당 요일 그룹으로!
+                        groups[day].push(workData);
+                    }
+                });
+            });
+
+            const displayOrder = [
+                '월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일',
+                '10일 연재', '격주 연재', '휴재 및 완결'
+            ];
+
+            displayOrder.forEach(groupName => {
+                const works = groups[groupName];
+
+                if (works.length > 0) {
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'drawer-day-group';
+
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = 'drawer-day-header';
+                    headerDiv.style.top = '45px';
+
+                    let badgeStyle = '';
+                    if (groupName === '10일 연재') badgeStyle = 'background: #e8f5e9; color: #27ae60;';
+                    else if (groupName === '격주 연재') badgeStyle = 'background: #fdf2e9; color: #e67e22;';
+                    else if (groupName === '휴재 및 완결') badgeStyle = 'background: #f2f4f4; color: #7f8c8d;';
+
+                    headerDiv.innerHTML = `<span class="day-badge" style="${badgeStyle}">${groupName}</span> <span class="day-count">${works.length}개</span>`;
+                    groupDiv.appendChild(headerDiv);
+
+                    const itemsBox = document.createElement('div');
+                    itemsBox.className = 'drawer-items-box';
+
+                    works.forEach((work) => {
+                        let badgeHtml = '';
+                        let isBreak = isWorkOnBreak(work);
+                        if (work.status === '휴재') badgeHtml = `<span class="drawer-badge badge-break">휴재</span>`;
+                        else if (work.status === '완결') badgeHtml = `<span class="drawer-badge badge-end">완결</span>`;
+                        else if (isBreak) badgeHtml = `<span class="drawer-badge badge-break">자동휴재</span>`;
+
+                        // 🌟 주기 뱃지 로직
+                        let cycleBadge = '';
+                        if (work.cycle && work.cycle.trim() !== '') {
+                            let displayCycle = work.cycle;
+
+                            if (work.cycle.includes('격주 연재')) {
+                                let match = work.cycle.match(/\((.*?)\)/);
+                                if (match) {
+                                    const nextDate = getNextBiweeklyDate(match[1]);
+                                    const m = nextDate.getMonth() + 1;
+                                    const d = nextDate.getDate();
+                                    displayCycle = `격주(${m}/${d})`;
+                                }
+                            } else if (work.cycle.includes('10일 연재')) {
+                                displayCycle = displayCycle.replace('10일 연재', '10일');
+                            }
+
+                            const badgeBg = isDark ? '#1a233a' : '#e8f0fe';
+                            const badgeColor = isDark ? '#8ab4f8' : '#1967d2';
+
+                            cycleBadge = `<span style="font-size: 11px; color: ${badgeColor}; background: ${badgeBg}; padding: 2px 6px; border-radius: 4px; margin-left: 6px; white-space: nowrap; font-weight: bold;">🔄 ${displayCycle}</span>`;
+                        }
+
+                        // 요일 프리픽스 (특수 그룹에만 표시)
+                        let dayPrefixHtml = '';
+                        const regularDays = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
+                        if (!regularDays.includes(groupName)) {
+                            let shortDay = work.origDay.replace('요일', '');
+                            if (shortDay === '10일 연재') shortDay = '10일';
+                            dayPrefixHtml = `<span style="color: #aaa; font-weight: bold; margin-right: 8px; font-size: 13px; min-width: 24px;">[${shortDay}]</span>`;
+                        }
+
+                        const div = document.createElement('div');
+                        div.className = 'drawer-item';
+                        div.style.cursor = 'pointer';
+
+                        div.onclick = () => {
+                            closeDrawerModal();
+                            openActionModal(activePlt, work.origDay, work.origIdx);
+                        };
+
+                        div.innerHTML = `
+                            ${dayPrefixHtml}
+                            <span class="drawer-item-title">${work.title}</span>
+                            ${cycleBadge}
+                            ${badgeHtml}
+                        `;
+                        itemsBox.appendChild(div);
+                    });
+
+                    groupDiv.appendChild(itemsBox);
+                    listEl.appendChild(groupDiv);
+                }
+            });
+
+            if (totalWorksCount === 0) {
+                const emptyMsg = document.createElement('p');
+                emptyMsg.style.textAlign = 'center';
+                emptyMsg.style.color = '#888';
+                emptyMsg.style.marginTop = '40px';
+                emptyMsg.style.fontSize = '14px';
+                emptyMsg.textContent = '이 플랫폼에는 저장된 작품이 없습니다!';
+                listEl.appendChild(emptyMsg);
+            }
+
+            document.getElementById('drawer-modal').style.display = 'flex';
+        }
+
+        function closeDrawerModal() {
+            document.getElementById('drawer-modal').style.display = 'none';
+
+            // 🌟 모달 닫을 때 버튼 색상 원상복구
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                if (btn.dataset.day === viewDay) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
         }
 
     </script>
