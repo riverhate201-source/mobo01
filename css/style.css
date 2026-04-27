@@ -93,8 +93,12 @@ body.dark-mode .menu-btn {
     /* 테두리를 더 흐릿하게 */
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     /* 그림자를 좀 더 진하게 */
-    color: #eee;
+    color: #eee !important;
     /* 다크모드에선 햄버거 아이콘(글씨)이 잘 보이게 밝은 색으로! */
+}
+
+body.dark-mode .menu-btn svg {
+    stroke: #eee !important;
 }
 
 .menu-btn:active {
