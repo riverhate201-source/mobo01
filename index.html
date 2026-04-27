@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
-    <link rel="stylesheet" href="./css/style.css?v=1.3">
+    <link rel="stylesheet" href="./css/style.css?v=1.4">
 
 
 
@@ -369,12 +369,18 @@
                 <input type="text" id="input-cycle-week" placeholder="n주차 (숫자)" style="flex: 1; margin-bottom: 0;">
             </div>
 
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <div style="display: flex; gap: 10px;">
                 <input type="number" id="input-coin" placeholder="코인"
                     style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
                 <input type="text" id="input-progress" placeholder="진도 (예: 1화)"
                     style="flex: 2; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
             </div>
+
+            <label id="add-deduct-label"
+                style="display:flex; align-items:center; gap:8px;  margin-bottom:10px; border: 1px solid #ddd; font-size:13px; color:#555; cursor:pointer; background: #f8f9fa; padding: 10px; border-radius: 8px;">
+                <input type="checkbox" id="add-deduct-chk" style="width:16px; height:16px; margin:0;">
+                <span style="font-weight: bold;">구매한 화수만큼 지갑에서 차감하기</span>
+            </label>
 
             <p id="image-status-text" style="text-align: center; font-size: 12px; margin-bottom: 5px;">
                 📷
@@ -389,6 +395,8 @@
                     style="margin-bottom: 0; display: none; flex: 1; background: #ffebee; color: #d32f2f;">사진
                     삭제</button>
             </div>
+
+
 
             <div class="modal-btns">
                 <button onclick="closeAddModal()" class="cancel-btn">취소</button>
@@ -485,6 +493,10 @@
                         있어요!
                     </p>
                 </div>
+                <button id="calc-deduct-btn" onclick="deductFromCalculator()"
+                    style="margin-top: 15px; width: 100%; padding: 12px; background: #e74c3c; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px;">
+                    지갑에서 바로 차감하기
+                </button>
             </div>
 
             <button onclick="closeCalcModal()" class="cancel-btn" style="width: 100%; margin-top: 15px;">닫기</button>
@@ -906,6 +918,8 @@
             else priceLabel.textContent = '1화당 코인 (레진/봄툰)';
         }
 
+        let currentCalcCoin = 0;
+
         // 수정: 계산기 로직 (선택한 플랫폼에 맞게 쉼표 + 단위 + 색상 싹 다 적용!)
         function calculateCoins() {
             const total = parseInt(document.getElementById('calc-total').value) || 0;
@@ -920,6 +934,7 @@
 
             const remainEp = total - current;
             const needCoin = remainEp * price;
+            currentCalcCoin = needCoin;
 
             const isDark = document.body.classList.contains('dark-mode');
 
@@ -968,6 +983,74 @@
             document.getElementById('calc-result-box').style.display = 'block';
         }
 
+
+        // 🌟 [통합 결제 시스템] 지갑 차감 + 가계부 작성 + 통계 업데이트를 한 번에!
+        function executeDeduction(plt, title, amount) {
+            if (amount <= 0) return;
+
+            // 1. 지갑 잔액 깎기
+            const prefix = plt.charAt(0); // l, b, r, m
+            let currentWallet = parseInt(localStorage.getItem(prefix + 'Wallet') || 0);
+            localStorage.setItem(prefix + 'Wallet', currentWallet - amount);
+
+            // 2. 이번 달 가계부(영수증)에 내역 적기
+            const todayKST = getKSTDate();
+            const monthKey = `${todayKST.getFullYear()}-${String(todayKST.getMonth() + 1).padStart(2, '0')}`;
+            let monthlyHistory = JSON.parse(localStorage.getItem('monthlyHistory')) || {};
+            if (!monthlyHistory[monthKey]) monthlyHistory[monthKey] = { lezhin: {}, bomtoon: {}, ridi: {}, mrblue: {} };
+            if (!monthlyHistory[monthKey][plt][title]) monthlyHistory[monthKey][plt][title] = 0;
+
+            monthlyHistory[monthKey][plt][title] += amount;
+            localStorage.setItem('monthlyHistory', JSON.stringify(monthlyHistory));
+
+            // 3. 주간 통계(홈 화면)에 누적하기
+            if (plt === 'ridi' || plt === 'mrblue') {
+                addWeeklySpent(0, amount); // 원/캐시는 뒤쪽으로
+            } else {
+                addWeeklySpent(amount, 0); // 코인은 앞쪽으로
+            }
+
+            // 마무리 저장 및 갱신
+            saveData();
+            refreshBalance();
+
+            let unitStr = '코인';
+            if (plt === 'ridi') unitStr = '캐시';
+            else if (plt === 'mrblue') unitStr = '머니';
+            alert(`성공! [${title}] 작품에 ${formatNum(amount)} 만큼 지갑에서 차감되고 영수증에 기록되었습니다!`);
+        }
+
+        // 🌟 [신규] 계산기에서 바로 차감 버튼 눌렀을 때 작동하는 함수
+        function deductFromCalculator() {
+            if (currentCalcCoin <= 0) return alert("차감할 금액이 없습니다!");
+
+            let targetPlt = document.getElementById('calc-platform').value;
+            let exactPlt = '';
+
+            // 계산기엔 레진/봄툰이 'coin'으로 묶여 있어서 한번 물어봅니다!
+            if (targetPlt === 'cash') exactPlt = 'ridi';
+            else if (targetPlt === 'won') exactPlt = 'mrblue';
+            else {
+                let choice = prompt("어느 플랫폼 지갑에서 뺄까요?\n[1] 레진  [2] 봄툰");
+                if (choice === '1') exactPlt = 'lezhin';
+                else if (choice === '2') exactPlt = 'bomtoon';
+                else return alert("차감이 취소되었습니다.");
+            }
+
+            // 🌟 [신규 로직] 선택된 플랫폼에 맞춰서 진짜 단위를 꺼내옵니다!
+            let unitStr = '코인';
+            if (exactPlt === 'ridi') unitStr = '캐시';
+            else if (exactPlt === 'mrblue') unitStr = '머니';
+
+            // 🌟 [수정] '원' 대신 진짜 단위(unitStr)를 넣어서 자연스럽게 물어보기!
+            const workTitle = prompt(`총 ${formatNum(currentCalcCoin)} ${unitStr} 차감됩니다.\n영수증에 기록될 '작품 이름'을 적어주세요!`);
+
+            if (!workTitle) return alert("작품 이름이 없어 차감이 취소되었습니다.");
+
+            executeDeduction(exactPlt, workTitle, currentCalcCoin);
+            closeCalcModal();
+        }
+
         // [통합 정산 시스템] 4개 플랫폼 담을 바구니 완벽 준비!
         let pendingDeductions = { lezhin: [], bomtoon: [], ridi: [], mrblue: [] };
         let pendingDaysStr = "";
@@ -979,10 +1062,8 @@
             const nowStr = formatDate(webtoonDate);
             let last = localStorage.getItem('lastCheckDate');
 
-            if (last && last > nowStr) {
-                alert("이미 당일 정산을 완료했습니다! 내일 다시 만나요!");
-                return;
-            }
+            // 🌟 [추가] 아까 '당일 정산'을 눌러서 완료한 적이 있는지 확인
+            let alreadyFinishedToday = (last && last > nowStr);
 
             isTodayDeduction = true;
             pendingDeductions = { lezhin: [], bomtoon: [], ridi: [], mrblue: [] };
@@ -990,17 +1071,41 @@
             const todayObj = getWebtoonDate();
             const d = days[todayObj.getDay()];
 
+            let hasUnpaidWorks = false; // 🌟 결제 안 한 작품이 남아있는지 체크용
+
             // [핵심] platformOrder(사용자가 켠 플랫폼)만 순회합니다!
             platformOrder.forEach(plt => {
-                (state[plt][d] || []).forEach((w, i) => { if (!isWorkOnBreak(w)) pendingDeductions[plt].push({ day: d, idx: i, work: w }); });
-                (state[plt]["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj)) pendingDeductions[plt].push({ day: "10일 연재", idx: i, work: w }); });
+                (state[plt][d] || []).forEach((w, i) => {
+                    // 🌟 오늘 이미 정산 도장(lastDeductDate)이 찍힌 작품은 빼고 가져옵니다!
+                    if (!isWorkOnBreak(w) && w.lastDeductDate !== nowStr) {
+                        pendingDeductions[plt].push({ day: d, idx: i, work: w });
+                        hasUnpaidWorks = true;
+                    }
+                });
+                (state[plt]["10일 연재"] || []).forEach((w, i) => {
+                    if (!isWorkOnBreak(w) && isDateMatch(w.cycle, todayObj) && w.lastDeductDate !== nowStr) {
+                        pendingDeductions[plt].push({ day: "10일 연재", idx: i, work: w });
+                        hasUnpaidWorks = true;
+                    }
+                });
             });
 
-            // 켠 플랫폼 중에 오늘 볼 작품이 하나도 없으면 알림
-            const hasWorks = platformOrder.some(plt => pendingDeductions[plt].length > 0);
-            if (!hasWorks) {
-                alert("오늘은 정산할 연재 작품이 없습니다! 편안히 쉬세요!"); isTodayDeduction = false; return;
+            // 1. 아예 오늘 볼 게 없거나 남은 걸 전부 결제했을 때
+            if (!hasUnpaidWorks) {
+                alert("오늘은 더 이상 정산할 연재 작품이 없습니다! 편안히 쉬세요!");
+                isTodayDeduction = false;
+                return;
             }
+
+            // 2. 남은 게 있는데, 아까 '당일 정산'을 완료했던 상태일 때 (경고창 띄우기)
+            if (alreadyFinishedToday) {
+                if (!confirm("이미 오늘 정산을 완료하셨습니다.\n새로 추가되거나 누락된 작품을 마저 정산하시겠습니까?")) {
+                    isTodayDeduction = false;
+                    return;
+                }
+            }
+
+            // 3. 정상적으로 정산 모달 띄우기
             showDeductionModal();
         }
 
@@ -1077,9 +1182,12 @@
 
         function processDeduction() {
             let tL = 0, tB = 0, tR = 0, tM = 0;
+            let checkedCount = 0; // 🌟 [신규] 돈이 안 나가더라도 체크했는지 확인하는 카운터!
 
-            // 🌟 [신규] 월말정산용 가계부 꺼내기
             const todayKST = getKSTDate();
+            const webtoonDate = getWebtoonDate();
+            const nowStr = formatDate(webtoonDate);
+
             const monthKey = `${todayKST.getFullYear()}-${String(todayKST.getMonth() + 1).padStart(2, '0')}`;
             let monthlyHistory = JSON.parse(localStorage.getItem('monthlyHistory')) || {};
 
@@ -1087,59 +1195,75 @@
                 monthlyHistory[monthKey] = { lezhin: {}, bomtoon: {}, ridi: {}, mrblue: {} };
             }
 
-            // [핵심] 실제 정산 계산도 켠 플랫폼만!
+            // [핵심] 실제 정산 계산
             platformOrder.forEach(plt => {
                 pendingDeductions[plt].forEach((item, i) => {
                     const chk = document.getElementById(`deduct-chk-${plt}-${i}`);
 
-
+                    // ✅ 체크박스에 체크를 했다면?!
                     if (chk && chk.checked) {
+                        checkedCount++; // 체크 개수 1개 추가!
                         const costVal = parseInt(item.work.coin) || 0;
 
+                        // 1. 돈 계산
                         if (plt === 'lezhin') tL += costVal;
                         else if (plt === 'bomtoon') tB += costVal;
                         else if (plt === 'ridi') tR += costVal;
                         else if (plt === 'mrblue') tM += costVal;
 
-                        //영수증에 기록할 때도 costVal 사용!
-                        if (!monthlyHistory[monthKey][plt][item.work.title]) {
-                            monthlyHistory[monthKey][plt][item.work.title] = 0;
+                        // 2. 가계부에 돈 쓴 내역 추가 (돈을 썼을 때만!)
+                        if (costVal > 0) {
+                            if (!monthlyHistory[monthKey][plt][item.work.title]) {
+                                monthlyHistory[monthKey][plt][item.work.title] = 0;
+                            }
+                            monthlyHistory[monthKey][plt][item.work.title] += costVal;
                         }
-                        monthlyHistory[monthKey][plt][item.work.title] += costVal;
+
+                        // 🌟 3. [핵심] 돈을 0원 썼든 100원 썼든 체크했으면 무조건 영구 도장 쾅!
+                        if (item.work.id) {
+                            Object.keys(state[plt]).forEach(d => {
+                                state[plt][d].forEach(w => {
+                                    if (w.id === item.work.id) w.lastDeductDate = nowStr;
+                                });
+                            });
+                        } else {
+                            item.work.lastDeductDate = nowStr;
+                        }
                     }
                 });
             });
 
-            if (tL > 0 || tB > 0 || tR > 0 || tM > 0) {
-                localStorage.setItem('lWallet', parseInt(localStorage.getItem('lWallet') || 0) - tL);
-                localStorage.setItem('bWallet', parseInt(localStorage.getItem('bWallet') || 0) - tB);
-                localStorage.setItem('rWallet', parseInt(localStorage.getItem('rWallet') || 0) - tR);
-                localStorage.setItem('mWallet', parseInt(localStorage.getItem('mWallet') || 0) - tM);
+            // 🌟 [최종 보스 방어막] 하나라도 체크를 했다면 무조건 저장해라!
+            if (checkedCount > 0) {
+                // 돈을 썼을 때만 지갑 잔액 깎기
+                if (tL > 0 || tB > 0 || tR > 0 || tM > 0) {
+                    localStorage.setItem('lWallet', parseInt(localStorage.getItem('lWallet') || 0) - tL);
+                    localStorage.setItem('bWallet', parseInt(localStorage.getItem('bWallet') || 0) - tB);
+                    localStorage.setItem('rWallet', parseInt(localStorage.getItem('rWallet') || 0) - tR);
+                    localStorage.setItem('mWallet', parseInt(localStorage.getItem('mWallet') || 0) - tM);
 
-                const addedWon = tR + tM;
-                addWeeklySpent(tL + tB, addedWon);
+                    const addedWon = tR + tM;
+                    addWeeklySpent(tL + tB, addedWon);
+                    localStorage.setItem('monthlyHistory', JSON.stringify(monthlyHistory));
+                }
 
-                //다 적은 가계부를 금고에 안전하게 저장!
-                localStorage.setItem('monthlyHistory', JSON.stringify(monthlyHistory));
-
-                saveData();
+                saveData(); // 🚨 어떤 일이 있어도 금고(saveData)에 저장하도록 밖으로 뺐습니다!
 
                 let msg = "성공적으로 정산되었습니다!\n";
                 if (tL + tB > 0) msg += `- 코인 차감: ${tL + tB} C\n`;
                 if (tR > 0) msg += `- 리디 차감: ${tR} 캐시\n`;
                 if (tM > 0) msg += `- 미블 차감: ${tM} 머니\n`;
 
+                // 0원으로 정산했을 때 안내 멘트 추가
+                if (tL === 0 && tB === 0 && tR === 0 && tM === 0) {
+                    msg += "(무료 감상 등 0원 정산 완료!)";
+                }
+
                 alert(msg);
             } else {
                 alert("선택된 작품이 없어 정산되지 않았습니다.");
             }
             finishDeduction();
-        }
-
-        function skipDeduction() {
-            if (confirm("정말 오늘의 정산을 모두 건너뛰시겠습니까?")) {
-                finishDeduction();
-            }
         }
 
         // 정산 모달창의 'X' 버튼을 눌렀을 때 창을 닫아주는 함수!
@@ -1236,6 +1360,7 @@
             }
 
             updateAttendUI();
+            saveData();
         }
 
         function loadAllData() {
@@ -1786,6 +1911,12 @@
 
             document.getElementById('input-coin').value = work.coin; document.getElementById('input-progress').value = work.progress;
 
+            // 🌟 [수정] 수정 창에서도 체크박스가 보이도록 살렸습니다! 단, 실수 방지를 위해 항상 '체크 해제' 상태로 띄웁니다.
+            const deductLabel = document.getElementById('add-deduct-label');
+            if (deductLabel) {
+                deductLabel.style.display = 'flex';
+                document.getElementById('add-deduct-chk').checked = false;
+            }
 
             // [신규 추가] 저장해둔 시간(알람 뱃지) 불러오기!
             document.getElementById('input-time').value = work.time || '';
@@ -1833,7 +1964,11 @@
 
             document.getElementById('input-progress').value = '1화';
 
-
+            const deductLabel = document.getElementById('add-deduct-label');
+            if (deductLabel) {
+                deductLabel.style.display = 'flex'; // 추가 창에선 보이게!
+                document.getElementById('add-deduct-chk').checked = false; // 기본은 체크 해제
+            }
 
             // [신규 추가] 알람 뱃지용 시간 입력칸도 창 열 때마다 깨끗하게 비워주기!
             document.getElementById('input-time').value = '';
@@ -1931,6 +2066,33 @@
                 selectedDays.forEach(day => {
                     state[currentPlatform][day].push({ ...workData });
                 });
+            }
+
+            // 🌟 [수정된 결제 로직] saveData(); 바로 위쪽에 껴주세요!
+            const deductChk = document.getElementById('add-deduct-chk');
+            if (deductChk && deductChk.checked) {
+
+                // 플랫폼별 맞춤 글씨 준비
+                let unitStr = '코인';
+                if (currentPlatform === 'ridi') unitStr = '캐시';
+                else if (currentPlatform === 'mrblue') unitStr = '머니';
+
+                // 1차: 구매 화수 묻기
+                let buyCount = prompt(`[${title}]\n이번에 새로 결제하신 건 몇 화 분량인가요?\n(1화당 ${formatNum(coin)}${unitStr} 차감)`);
+
+                let parsedBuy = parseInt(buyCount) || 0;
+                let cost = parsedBuy * coin;
+
+                if (cost > 0) {
+                    // 🌟 2차: [신규 추가] 돈 빼기 직전에 한 번 더 물어보기!
+                    if (confirm(`총 ${formatNum(cost)} ${unitStr}이(가) 차감됩니다.\n정말 지갑에서 차감하시겠습니까?`)) {
+                        executeDeduction(currentPlatform, title, cost);
+                    } else {
+                        alert("지갑 차감이 취소되었습니다.\n(작품 내용은 서랍에 정상적으로 저장됩니다!)");
+                    }
+                } else {
+                    alert("결제 화수가 입력되지 않아 지갑 차감은 취소되었습니다.");
+                }
             }
 
             saveData();
@@ -2302,6 +2464,8 @@
             localStorage.setItem('bomtoonLink', bLink);
             localStorage.setItem('lezhinLink', lLink);
 
+            saveData();
+
             alert('출석 링크가 성공적으로 저장되었습니다!');
             closeLinkSettingModal();
         }
@@ -2393,7 +2557,14 @@
         window.onclick = function (event) {
             // 1. 일반 모달창들 (작품추가, 정산, 검색, 계산기 등)
             if (event.target.classList.contains('modal-overlay')) {
-                event.target.style.display = 'none';
+
+                // 🌟 [신규 방어막] '전체 요일(서랍)' 모달 배경을 눌렀을 땐 전용 닫기 함수를 실행해서 버튼 색상까지 완벽하게 원상복구!
+                if (event.target.id === 'drawer-modal') {
+                    closeDrawerModal();
+                } else {
+                    event.target.style.display = 'none';
+                }
+
 
                 // 정산 모달인 경우 '오늘 정산' 스위치 초기화
                 if (event.target.id === 'deduction-modal') {
