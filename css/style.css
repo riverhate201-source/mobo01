@@ -1707,6 +1707,44 @@ body.dark-mode .global-drawer-tabs {
     /* 누를 때 살짝 눌리는 애니메이션 */
 }
 
+
+
+/* =========================================
+   🌟 작품 추가창 3단 콤보 UI 전용 스타일 🌟
+   ========================================= */
+
+
+
+/* 2. 10일 연재, 격주 연재 등 '특수 버튼'만 살짝 다르게 꾸미기 (다크모드 대응 포함!) */
+body.dark-mode #day-selection-area .chk-label[style*="background: #e8f5e9"] {
+    background: #1a2f1c !important; /* 다크모드용 진한 초록 */
+    border-color: #2d4f30 !important;
+    color: #81c784 !important;
+}
+
+body.dark-mode #day-selection-area .chk-label[style*="background: #fdf2e9"] {
+    background: #362210 !important; /* 다크모드용 진한 오렌지/브라운 */
+    border-color: #523418 !important;
+    color: #ffb74d !important;
+}
+
+/* 3. 다크모드일 때 입력칸(달력, 숫자 등) 색상 안 보이던 현상 방지 */
+body.dark-mode #input-10day-dates,
+body.dark-mode #input-biweekly-date,
+body.dark-mode #input-cycle-week {
+    background: #2c2c2e;
+    color: #eee;
+    border: 1px solid #444;
+}
+
+/* 4. 3단 콤보의 각 영역(박스) 다크모드 대응 */
+body.dark-mode .modal-content > div[style*="background: #f8f9fa"] {
+    background: #1c1c1e !important;
+    border-color: #333 !important;
+}
+
+
+
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
 a[x-apple-data-detectors] {
     color: inherit !important;
