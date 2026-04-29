@@ -434,7 +434,7 @@ body.dark-mode .webtoon-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+
 }
 
 .add-work-btn {
@@ -457,7 +457,7 @@ body.dark-mode .add-work-btn {
     border-radius: 15px;
     text-align: center;
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 9px;
     font-size: 17px;
     color: #444;
 }
@@ -654,7 +654,7 @@ body.dark-mode .quick-btn {
 .scroll-btn {
     position: absolute;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-140%);
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -663,7 +663,7 @@ body.dark-mode .quick-btn {
     z-index: 10;
     cursor: pointer;
     display: flex;
-    justify-content: center;
+
     align-items: center;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
@@ -1717,13 +1717,15 @@ body.dark-mode .global-drawer-tabs {
 
 /* 2. 10일 연재, 격주 연재 등 '특수 버튼'만 살짝 다르게 꾸미기 (다크모드 대응 포함!) */
 body.dark-mode #day-selection-area .chk-label[style*="background: #e8f5e9"] {
-    background: #1a2f1c !important; /* 다크모드용 진한 초록 */
+    background: #1a2f1c !important;
+    /* 다크모드용 진한 초록 */
     border-color: #2d4f30 !important;
     color: #81c784 !important;
 }
 
 body.dark-mode #day-selection-area .chk-label[style*="background: #fdf2e9"] {
-    background: #362210 !important; /* 다크모드용 진한 오렌지/브라운 */
+    background: #362210 !important;
+    /* 다크모드용 진한 오렌지/브라운 */
     border-color: #523418 !important;
     color: #ffb74d !important;
 }
@@ -1738,7 +1740,7 @@ body.dark-mode #input-cycle-week {
 }
 
 /* 4. 3단 콤보의 각 영역(박스) 다크모드 대응 */
-body.dark-mode .modal-content > div[style*="background: #f8f9fa"] {
+body.dark-mode .modal-content>div[style*="background: #f8f9fa"] {
     background: #1c1c1e !important;
     border-color: #333 !important;
 }

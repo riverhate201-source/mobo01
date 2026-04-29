@@ -259,9 +259,9 @@
 
             <div class="balance-info">정산 후 <span id="lezhin-result" class="highlight-result-lezhin">0</span>C 남아요</div>
             <div class="scroll-wrapper">
-                <button class="scroll-btn left-btn">◀</button>
+                <button class="scroll-btn left-btn"><i data-lucide="chevrons-left"></i></button>
                 <div class="webtoon-list" id="lezhin-list"></div>
-                <button class="scroll-btn right-btn">▶</button>
+                <button class="scroll-btn right-btn"><i data-lucide="chevrons-right"></i></button>
             </div>
         </div>
 
@@ -276,9 +276,9 @@
             <div class="balance-info">정산 후 <span id="bomtoon-result" class="highlight-result-bomtoon">0</span>C 남아요
             </div>
             <div class="scroll-wrapper">
-                <button class="scroll-btn left-btn">◀</button>
+                <button class="scroll-btn left-btn"><i data-lucide="chevrons-left"></i></button>
                 <div class="webtoon-list" id="bomtoon-list"></div>
-                <button class="scroll-btn right-btn">▶</button>
+                <button class="scroll-btn right-btn"><i data-lucide="chevrons-right"></i></button>
             </div>
         </div>
 
@@ -292,9 +292,9 @@
 
             <div class="balance-info">정산 후 <span id="ridi-result" class="highlight-result-ridi">0</span>원 남아요</div>
             <div class="scroll-wrapper">
-                <button class="scroll-btn left-btn">◀</button>
+                <button class="scroll-btn left-btn"><i data-lucide="chevrons-left"></i></button>
                 <div class="webtoon-list" id="ridi-list"></div>
-                <button class="scroll-btn right-btn">▶</button>
+                <button class="scroll-btn right-btn"><i data-lucide="chevrons-right"></i></button>
             </div>
         </div>
 
@@ -308,9 +308,9 @@
 
             <div class="balance-info">정산 후 <span id="mrblue-result" class="highlight-result-mrblue">0</span>원 남아요</div>
             <div class="scroll-wrapper">
-                <button class="scroll-btn left-btn">◀</button>
+                <button class="scroll-btn left-btn"><i data-lucide="chevrons-left"></i></button>
                 <div class="webtoon-list" id="mrblue-list"></div>
-                <button class="scroll-btn right-btn">▶</button>
+                <button class="scroll-btn right-btn"><i data-lucide="chevrons-right"></i></button>
             </div>
         </div>
     </div>
@@ -1515,7 +1515,13 @@
             if (isTodayDeduction) dateToSave.setDate(dateToSave.getDate() + 1);
             localStorage.setItem('lastCheckDate', formatDate(dateToSave));
             isTodayDeduction = false;
-            updateWeeklyStatUI(); refreshBalance();
+
+            // 🌟 [추가] 정산이 끝나자마자 격주 날짜 넘길 게 있는지 바로 검사!
+            autoUpdatePastBiweeklyDates();
+
+            updateWeeklyStatUI();
+            refreshBalance();
+            renderAll(); // 🌟 화면 새로고침
         }
 
 
@@ -1538,12 +1544,21 @@
 
             let hiddenEvents = [];
 
-            // 2. 리디 이벤트 체크 (십오야와 화요일이 겹칠 때를 계산!)
-            const isSibo = (date >= 14 && date <= 21); // 십오야 기간인가?
+            // 🌟 2. 리디 이벤트 체크 (123 더블 적립 추가!)
+            const isDoublePoint = (date >= 1 && date <= 3); // 1~3일 더블 적립
+            const isSibo = (date >= 14 && date <= 21); // 십오야 기간
             const isWeekly = (day === 2);              // 오늘이 화요일인가?
 
-            if (isSibo && isWeekly) {
-                // 둘 다 겹치는 대박날!
+            if (isDoublePoint && isWeekly) {
+                // 1~3일인데 화요일이기까지 한 대박날!
+                hiddenEvents.push('리디 1·2·3 더블적립 및 화요 위클리');
+                if (rBadge) { rBadge.textContent = "1·2·3 더블 & 위클리!"; rBadge.style.display = 'inline-block'; }
+            } else if (isDoublePoint) {
+                // 1~3일 이벤트만 진행 중
+                hiddenEvents.push('리디 1·2·3 더블적립');
+                if (rBadge) { rBadge.textContent = "1·2·3 더블적립!"; rBadge.style.display = 'inline-block'; }
+            } else if (isSibo && isWeekly) {
+                // 십오야 + 화요일 겹치는 날
                 hiddenEvents.push('리디 십오야 및 위클리');
                 if (rBadge) { rBadge.textContent = "십오야 & 위클리!"; rBadge.style.display = 'inline-block'; }
             } else if (isSibo) {
@@ -1845,7 +1860,7 @@
             // [추가] 만약 오늘 볼 작품이 0개라면? 안내 문구 띄우기!
             if (displayWorks.length === 0) {
                 listEl.innerHTML = `
-        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; width: 100%; padding: 40px 0;">
+        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; padding: 40px 0;">
     <p style="margin: 0; font-size: 15px; font-weight: bold; color: #555;">오늘은 연재 작품이 없어요!</p>
     <p style="margin: 5px 0 0 0; font-size: 13px; color: #aaa;">여유롭게 정주행은 어떠신가요?</p>
 </div>
@@ -2542,6 +2557,10 @@
             }
 
             saveData();
+
+            // 🌟 [핵심 추가] 작품을 저장하자마자 즉시 격주 날짜 갱신 및 화면 새로고침!
+            autoUpdatePastBiweeklyDates();
+            renderAll();
             closeAddModal();
         }
 
@@ -3034,7 +3053,7 @@
 
         // 넷리파이 서버에서 업데이트 정보 가져오기 (플랜 B 장착 버전!)
         async function checkRemoteUpdate() {
-            const UPDATE_URL = "https://resplendent-medovik-85b508.netlify.app/update.json";
+            const UPDATE_URL = "https://resplendent-medovik-85b508.netlify.app/update.json?v=" + Date.now();
 
             try {
                 const response = await fetch(UPDATE_URL);
