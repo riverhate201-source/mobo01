@@ -3051,8 +3051,9 @@
             }
         }
 
-        // 넷리파이 서버에서 업데이트 정보 가져오기 (플랜 B 장착 버전!)
+        // 넷리파이 서버에서 업데이트 정보 가져오기 (확실한 팝업 + 애널리틱스 + 캐시 킬러 통합본!)
         async function checkRemoteUpdate() {
+            // 🌟 1. 모바일 캐시를 박살 내는 강력한 캐시 킬러!
             const UPDATE_URL = "https://resplendent-medovik-85b508.netlify.app/update.json?v=" + Date.now();
 
             try {
@@ -3065,27 +3066,23 @@
                 // 새로운 소식 발견!
                 if (data.updateId > lastSeenUpdate) {
 
-                    if (Notification.permission === "granted") {
-                        // 👉 [플랜 A] 알림 허용한 유저: 멋진 폰 자체 푸시 알림!
-                        const notif = new Notification(data.title, {
-                            body: data.message,
-                            icon: "./icon.png"
-                        });
-
-                        notif.onclick = () => {
-                            window.open(data.link, '_blank');
-                            notif.close();
-                        };
-                    } else {
-                        // 🚨 [플랜 B] 알림 거부한 유저: 앱 화면 가운데에 강제 팝업창 띄우기!
-                        setTimeout(() => {
-                            if (confirm(`🎉 [모보 새 소식]\n\n${data.title}\n${data.message}\n\n지금 확인하러 가시겠어요?`)) {
-                                window.open(data.link, '_blank');
-                            }
-                        }, 1000); // 앱 켜지고 1초 뒤에 자연스럽게 짠!
+                    // 🌟 2. 팝업이 뜨는 순간 구글 애널리틱스에 '조회' 기록!
+                    if (typeof gtag === 'function') {
+                        gtag('event', 'popup_view', { 'event_category': 'notice', 'event_label': data.title });
                     }
 
-                    // A든 B든 소식을 보여줬으니 도장 쾅! (다시 안 뜨게)
+                    // 🌟 3. 에러 많던 푸시 알림(Notification) 로직은 버리고, 무조건 뜨는 중앙 팝업으로 통일!
+                    setTimeout(() => {
+                        if (confirm(`[모보 새 소식]\n\n${data.title}\n${data.message}\n\n지금 확인하러 가시겠어요?`)) {
+                            // 🌟 4. 확인 버튼을 누르면 애널리틱스에 '클릭' 기록 후 이동!
+                            if (typeof gtag === 'function') {
+                                gtag('event', 'popup_click', { 'event_category': 'notice', 'event_label': 'confirm' });
+                            }
+                            window.open(data.link, '_blank');
+                        }
+                    }, 500); // 앱 켜지고 0.5초 뒤에 짠!
+
+                    // 🌟 5. 한 번 띄웠으니 도장 쾅! (무한 팝업 방지)
                     localStorage.setItem('lastSeenUpdateId', data.updateId);
                 }
             } catch (error) {
