@@ -452,6 +452,7 @@ body.dark-mode .add-work-btn {
 }
 
 .total-coin-banner {
+    position: relative;
     background: #fff4d1;
     padding: 14px;
     border-radius: 15px;
@@ -463,10 +464,156 @@ body.dark-mode .add-work-btn {
 }
 
 
-
 body.dark-mode .total-coin-banner {
     background: #3d3521;
     color: #d4c18d;
+}
+
+
+/* 🚨 여기서부터 빠져있던 핵심 뼈대들입니다! 🚨 */
+
+/* 🌑 모달 배경 (z-index 9999로 화면 덮기!) */
+.filter-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ⬜ 모달 하얀색 알맹이 박스 */
+.filter-modal-content {
+    background-color: #ffffff;
+    width: 85%;
+    max-width: 340px;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 🔘 모달 안 옵션 버튼들 (순서 편집, 숨기기 버튼) */
+.filter-option-btn {
+    width: 100%;
+    padding: 16px;
+    margin-bottom: 10px;
+    background-color: #f8f9fa;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-align: center;
+}
+
+.filter-option-btn:hover {
+    background-color: #f1f3f5;
+}
+
+.filter-option-btn span {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* 🎛️ 리스트 필터(정렬/숨기기) 버튼 스타일 */
+.filter-btn {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #8b8b8b;
+    /* 우니님이 선택하신 찰떡 회색! */
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 📝 헤더 영역 (제목 한가운데 정렬) */
+.filter-modal-header {
+    display: flex;
+    justify-content: center;
+    /* 🌟 양끝 정렬에서 한가운데 정렬로 변경! */
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.filter-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+    font-weight: bold;
+    /* (선택) 제목을 조금 더 또렷하게 보이고 싶다면 추가! */
+}
+
+
+/* ❌ 맨 아래 닫기 버튼 스타일 */
+.filter-close-bottom-btn {
+    width: 100%;
+    padding: 0;
+    margin-top: 10px;
+    /* 위 버튼들과 살짝 떨어뜨려서 구분감 주기 */
+    background-color: transparent;
+    /* 배경은 투명하게 */
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+
+.filter-close-bottom-btn span {
+    font-size: 15px;
+    font-weight: bold;
+    color: #888888;
+    /* 메인 옵션들과 구분되도록 연한 회색 텍스트 사용 */
+}
+
+/* =========================================
+   🌙 다크모드: 작품 순서 설정 모달창 (무채색 에디션)
+   ========================================= */
+
+/* ⬛ 모달 바탕 박스 (어두운 진회색 & 그림자 진하게) */
+body.dark-mode .filter-modal-content {
+    background-color: #2a2a2a;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* 🔘 모달 안 옵션 버튼들 (바탕보다 살짝 밝은 회색) */
+body.dark-mode .filter-option-btn {
+    background-color: #3a3a3a;
+}
+
+/* 👆 버튼 호버 시 (누를 때 살짝 더 밝아짐) */
+body.dark-mode .filter-option-btn:hover {
+    background-color: #4a4a4a;
+}
+
+/* 📝 옵션 버튼 안의 글씨 (깔끔한 밝은 회색/흰색) */
+body.dark-mode .filter-option-btn span {
+    color: #eeeeee;
+}
+
+/* 🎛️ 리스트 필터(정렬/숨기기) 아이콘 (어두운 배경에 맞게 명도 업) */
+body.dark-mode .filter-btn {
+    color: #bbbbbb;
+}
+
+/* 📝 헤더 영역 제목 ('작품 순서 설정' 글씨) */
+body.dark-mode .filter-modal-header h3 {
+    color: #eeeeee;
+}
+
+/* ❌ 맨 아래 닫기 버튼 텍스트 (메인 옵션들보다 한 톤 죽여서 위계질서 유지) */
+body.dark-mode .filter-close-bottom-btn span {
+    color: #999999;
 }
 
 .balance-info {
@@ -859,27 +1006,27 @@ body.dark-mode .weekly-highlight {
     border-radius: 10px;
     font-size: 15px;
     cursor: pointer;
-    font-weight: bold;
+    font-weight: normal;
 }
 
 .edit-btn {
     background: #e8f0fe;
-    color: #1967d2;
+    color: #333;
 }
 
 body.dark-mode .edit-btn {
     background: #1a233a;
-    color: #8ab4f8;
+    color: #f2f2f2;
 }
 
 .del-btn {
     background: #ffebee;
-    color: #d32f2f;
+    color: #333;
 }
 
 body.dark-mode .del-btn {
     background: #3d2022;
-    color: #ff6b76;
+    color: #f2f2f2;
 }
 
 .sale-badge {
@@ -1199,15 +1346,15 @@ body.dark-mode .highlight-result-mrblue {
 
 
 .move-btn {
-    background-color: #ffdbb8 !important;
-    color: #ff9d5b !important;
+    background-color: #ffdbb8;
+    color: #333;
     /* rgb(255, 157, 91)을 예쁘게 코드로 바꿨습니다 */
 }
 
 /* 다크 모드 - 눈이 편안하고 고급스러운 다크 오렌지 컬러! */
 .dark-mode .move-btn {
-    background-color: #4a2e1b !important;
-    color: #ffb880 !important;
+    background-color: #4a2e1b;
+    color: #fff;
 }
 
 /* 🌟 요일 체크박스 - 일반 입력창(Input) 스타일로 동기화 */
@@ -1745,7 +1892,94 @@ body.dark-mode .modal-content>div[style*="background: #f8f9fa"] {
     border-color: #333 !important;
 }
 
+/* 👻 드래그 중인 카드의 원래 빈자리 디자인 */
+.sortable-ghost {
+    opacity: 0.2;
+    background-color: #f0f4f8;
+    border: 2px dashed #1967d2;
+}
 
+/* 📜 순서 편집 리스트 스크롤바 숨기기 (기능은 유지!) */
+#reorder-list {
+    -ms-overflow-style: none;
+    /* 인터넷 익스플로러, 엣지용 */
+    scrollbar-width: none;
+    /* 파이어폭스용 */
+}
+
+#reorder-list::-webkit-scrollbar {
+    display: none;
+    /* 크롬, 사파리, 오페라, 최신 스마트폰 브라우저용 */
+}
+
+/* =========================================
+   🗂️ 순서 편집 리스트 아이템 (라이트 모드)
+   ========================================= */
+.reorder-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: #ffffff;
+    border-bottom: 1px solid #eeeeee;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.reorder-item-title {
+    flex: 1;
+    font-weight: bold;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #333333;
+    /* 기본 글씨색 */
+}
+
+.reorder-list-item .drag-handle {
+    color: #cccccc;
+    font-size: 20px;
+    cursor: grab;
+    padding-left: 10px;
+}
+
+/* 드래그 중인 카드의 원래 빈자리 (라이트 모드 - 기본 회색 톤) */
+.sortable-ghost {
+    opacity: 0.3;
+    background-color: #f8f9fa !important;
+    border: 2px dashed #bbbbbb !important;
+}
+
+
+/* =========================================
+   🌙 다크모드: 순서 편집 리스트 아이템 (오직 무채색!)
+   ========================================= */
+body.dark-mode .reorder-list-item {
+    background: #333333;
+    /* 모달 바탕(2a2a2a)보다 살짝 튀어나온 밝은 쥐색 */
+    border-bottom: 1px solid #444444;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    /* 그림자는 더 진하게 */
+}
+
+body.dark-mode .reorder-item-title {
+    color: #eeeeee;
+    /* 눈 안 부신 부드러운 흰색 */
+}
+
+body.dark-mode .reorder-list-item .drag-handle {
+    color: #888888;
+    /* 손잡이는 글씨보다 한 톤 죽여서 안 거슬리게 */
+}
+
+/* 드래그 빈자리 (다크모드 무채색 에디션) */
+body.dark-mode .sortable-ghost {
+    background-color: #222222 !important;
+    /* 움푹 파인 느낌나게 더 어둡게 */
+    border: 2px dashed #666666 !important;
+}
 
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
 a[x-apple-data-detectors] {

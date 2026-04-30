@@ -28,6 +28,7 @@
 
         gtag('config', 'G-DGKBKMNPYF');
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 
 
@@ -255,7 +256,11 @@
                 <button class="add-work-btn" onclick="openAddModal('lezhin')">+ 추가</button>
             </div>
             <div class="total-coin-banner">오늘의 필요 코인: <span id="lezhin-needed-val">0</span>개 <span id="lezhin-count-val"
-                    class="work-count-text">(작품 총 0개)</span></div>
+                    class="work-count-text">(작품 총 0개)</span>
+                <button class="filter-btn" onclick="toggleFilterMenu('lezhin')">
+                    <i data-lucide="sliders-horizontal" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
 
             <div class="balance-info">정산 후 <span id="lezhin-result" class="highlight-result-lezhin">0</span>C 남아요</div>
             <div class="scroll-wrapper">
@@ -271,7 +276,11 @@
                 <button class="add-work-btn" onclick="openAddModal('bomtoon')">+ 추가</button>
             </div>
             <div class="total-coin-banner">오늘의 필요 코인: <span id="bomtoon-needed-val">0</span>개 <span
-                    id="bomtoon-count-val" class="work-count-text">(작품 총 0개)</span></div>
+                    id="bomtoon-count-val" class="work-count-text">(작품 총 0개)</span>
+                <button class="filter-btn" onclick="toggleFilterMenu('bomtoon')">
+                    <i data-lucide="sliders-horizontal" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
 
             <div class="balance-info">정산 후 <span id="bomtoon-result" class="highlight-result-bomtoon">0</span>C 남아요
             </div>
@@ -288,7 +297,11 @@
                 <button class="add-work-btn" onclick="openAddModal('ridi')">+ 추가</button>
             </div>
             <div class="total-coin-banner">오늘의 필요 캐시: <span id="ridi-needed-val">0</span>원 <span id="ridi-count-val"
-                    class="work-count-text">(작품 총 0개)</span></div>
+                    class="work-count-text">(작품 총 0개)</span>
+                <button class="filter-btn" onclick="toggleFilterMenu('ridi')">
+                    <i data-lucide="sliders-horizontal" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
 
             <div class="balance-info">정산 후 <span id="ridi-result" class="highlight-result-ridi">0</span>원 남아요</div>
             <div class="scroll-wrapper">
@@ -304,7 +317,11 @@
                 <button class="add-work-btn" onclick="openAddModal('mrblue')">+ 추가</button>
             </div>
             <div class="total-coin-banner">오늘의 필요 머니: <span id="mrblue-needed-val">0</span>원 <span id="mrblue-count-val"
-                    class="work-count-text">(작품 총 0개)</span></div>
+                    class="work-count-text">(작품 총 0개)</span>
+                <button class="filter-btn" onclick="toggleFilterMenu('mrblue')">
+                    <i data-lucide="sliders-horizontal" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
 
             <div class="balance-info">정산 후 <span id="mrblue-result" class="highlight-result-mrblue">0</span>원 남아요</div>
             <div class="scroll-wrapper">
@@ -613,6 +630,57 @@
     </div>
 
 
+    <div id="filter-modal" class="filter-modal-overlay">
+        <div class="filter-modal-content">
+            <div class="filter-modal-header">
+                <h3>작품 순서 설정</h3>
+            </div>
+
+            <div class="filter-modal-body">
+                <!-- 첫 번째 버튼: 순서 편집 -->
+                <button class="filter-option-btn" onclick="startReorder()">
+                    <span>순서 편집</span>
+                </button>
+
+                <!-- 두 번째 버튼: 숨기기/보이기 토글 -->
+                <button id="toggle-hide-btn" class="filter-option-btn" onclick="toggleHideWorks()">
+                    <span id="hide-text">휴재 및 완결 작품 숨기기</span>
+                </button>
+
+                <button class="filter-close-bottom-btn" onclick="closeFilterMenu()">
+                    <span>닫기</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 🗂️ 세로형 순서 편집 모달창 -->
+    <div id="reorder-modal" class="modal-overlay" style="display: none; z-index: 6000;">
+        <div class="modal-content"
+            style="max-width: 320px; position: relative; max-height: 75vh; display: flex; flex-direction: column; padding: 25px 20px;">
+            <!-- 닫기 버튼 -->
+            <button onclick="closeReorderModal()"
+                style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
+
+            <h3 id="reorder-title" style="margin-top: 0; text-align: center; padding-bottom: 2px;">순서 편집</h3>
+
+            <!-- 🔠 가나다 자동 정렬 버튼 그룹 -->
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button class="save-btn" style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px;"
+                    onclick="sortListAZ()">가나다 나열</button>
+                <button class="cancel-btn"
+                    style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px; margin-bottom: 0;"
+                    onclick="sortListZA()">다가나 나열</button>
+            </div>
+
+            <!-- 📜 세로 리스트가 그려질 공간 -->
+            <div id="reorder-list"
+                style="overflow-y: auto; flex: 1; padding-right: 5px; border: 1px solid #eee; border-radius: 8px; padding: 10px; background: #fdfdfd;">
+                <p style="text-align: center; color: #888; font-size: 13px; margin: 20px 0;">여기에 작품들이 뜰 거예요!</p>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
@@ -1619,6 +1687,22 @@
             saveData();
         }
 
+
+        // 🧹 [핵심 마법] 휴재/완결/자동휴재 작품을 무조건 맨 뒤로 밀어내는 전용 청소기 함수!
+        function forceSortBreaks() {
+            ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
+                Object.keys(state[plt]).forEach(day => {
+                    state[plt][day].sort((a, b) => {
+                        // isWorkOnBreak 만능 판독기로 수동 휴재 + 완결 + 자동휴재까지 싹 다 잡아서 무거운 돌덩이(1)로 만듭니다!
+                        let aBreak = isWorkOnBreak(a) ? 1 : 0;
+                        let bBreak = isWorkOnBreak(b) ? 1 : 0;
+                        return aBreak - bBreak;
+                    });
+                });
+            });
+        }
+
+        // 1. 데이터 불러오기
         function loadAllData() {
             const data = localStorage.getItem(STORAGE_KEY);
             if (data) {
@@ -1630,11 +1714,10 @@
                 ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
                     if (!state[plt]) state[plt] = { "월요일": [], "화요일": [], "수요일": [], "목요일": [], "금요일": [], "토요일": [], "일요일": [], "10일 연재": [], "격주 연재": [] };
                     if (!state[plt]["10일 연재"]) state[plt]["10일 연재"] = [];
-                    if (!state[plt]["격주 연재"]) state[plt]["격주 연재"] = []; // 🌟 기존 유저들의 금고에도 격주 연재 방을 만들어줌!
+                    if (!state[plt]["격주 연재"]) state[plt]["격주 연재"] = [];
 
                     Object.keys(state[plt]).forEach(d => {
                         state[plt][d] = state[plt][d].map((w, idx) => {
-                            // [핵심] ID가 없는 작품에 고유 주민번호 부여!
                             if (!w.id) {
                                 w.id = Date.now().toString() + "_" + Math.random().toString(36).substr(2, 5);
                                 migratedCount++;
@@ -1644,7 +1727,6 @@
                     });
                 });
 
-                // 유령을 성불시켰다면 즉시 저장해서 데이터 확정!
                 if (migratedCount > 0) {
                     console.log(`총 ${migratedCount}개의 작품에 새 ID를 부여했습니다.`);
                     saveData();
@@ -1655,18 +1737,13 @@
                 localStorage.setItem('rWallet', p.rWallet || 0);
                 localStorage.setItem('mWallet', p.mWallet || 0);
 
-                // 🚨 [추가] 저장된 테마가 있다면 다시 불러오기
-                if (p.theme) {
-                    localStorage.setItem('theme', p.theme);
-                }
-
+                if (p.theme) localStorage.setItem('theme', p.theme);
                 if (p.platformOrder) {
                     platformOrder = p.platformOrder;
                     localStorage.setItem('platformOrder', JSON.stringify(platformOrder));
                 }
                 if (p.weeklySpent !== undefined) localStorage.setItem('weeklySpent', p.weeklySpent);
                 if (p.weeklySpentWon !== undefined) localStorage.setItem('weeklySpentWon', p.weeklySpentWon);
-
 
                 if (p.monthlyHistory) localStorage.setItem('monthlyHistory', JSON.stringify(p.monthlyHistory));
                 if (p.bomtoonLink) localStorage.setItem('bomtoonLink', p.bomtoonLink);
@@ -1676,12 +1753,15 @@
                 if (p.ridiExpire) localStorage.setItem('ridiExpire', JSON.stringify(p.ridiExpire));
                 if (p.mrblueExpire) localStorage.setItem('mrblueExpire', JSON.stringify(p.mrblueExpire));
             }
+
+            // 🚨 앱을 켤 때마다 자동으로 청소기를 싹~ 돌려서 휴재작들을 전부 뒤로 밀어냅니다!
+            forceSortBreaks();
         }
 
-
-
-        // 2. 데이터 저장하기 (새로운 데이터들도 봉투에 쏙!)
+        // 2. 데이터 저장하기
         function saveData() {
+            forceSortBreaks(); // 🚨 새로운 걸 추가하거나 수정할 때도 무조건 청소기 돌리기!
+
             const d = {
                 state: state,
                 lWallet: localStorage.getItem('lWallet') || 0,
@@ -1692,8 +1772,6 @@
                 platformOrder: platformOrder,
                 weeklySpent: localStorage.getItem('weeklySpent') || 0,
                 weeklySpentWon: localStorage.getItem('weeklySpentWon') || 0,
-
-                // 백업할 때 이것들도 무조건 같이 싸야 합니다!
                 monthlyHistory: JSON.parse(localStorage.getItem('monthlyHistory')) || {},
                 bomtoonLink: localStorage.getItem('bomtoonLink') || '',
                 lezhinLink: localStorage.getItem('lezhinLink') || '',
@@ -1703,13 +1781,11 @@
                 mrblueExpire: JSON.parse(localStorage.getItem('mrblueExpire')) || null
             };
 
-            // ⭕ [신규] 용량 초과 방어막 (try-catch)
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
                 renderAll();
                 checkStorage();
             } catch (error) {
-                // 저장소 용량이 꽉 찼을 때 발생하는 에러를 잡아냅니다!
                 if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
                     alert("모보의 저장 공간(5MB)이 꽉 찼습니다!\n새로운 내용을 저장하려면 기존 작품의 '사진'을 몇 개 삭제해 주세요.");
                 } else {
@@ -1856,6 +1932,11 @@
                 });
             }
 
+
+            // 🌟 [여기에 추가!] 숨기기 모드가 켜져 있다면, 휴재/완결/자동휴재 카드 걸러내기!
+            if (isHidingFinished) {
+                displayWorks = displayWorks.filter(work => !isWorkOnBreak(work));
+            }
 
             // [추가] 만약 오늘 볼 작품이 0개라면? 안내 문구 띄우기!
             if (displayWorks.length === 0) {
@@ -2555,6 +2636,10 @@
                     state[currentPlatform][day].push({ ...workData });
                 });
             }
+
+
+
+
 
             saveData();
 
@@ -3458,6 +3543,166 @@
             });
         };
 
+        // --- 🎛️ 필터 및 정렬 모달창 관련 기능 ---
+
+
+
+        // 💡 방금 누른 필터 버튼이 어떤 플랫폼인지 기억할 변수(메모장)
+        let currentFilterPlt = '';
+
+        // 1. 모달창 열기 (괄호 안에 plt 추가!)
+        function toggleFilterMenu(plt) {
+            currentFilterPlt = plt; // "아하! 지금 누른 게 레진(또는 봄툰)이구나!" 하고 메모장에 적어둡니다.
+            document.getElementById('filter-modal').style.display = 'flex';
+        }
+
+        // 2. 순서 편집 버튼 눌렀을 때
+        function startReorder() {
+            closeFilterMenu(); // 원래 있던 작은 필터 모달은 닫고!
+
+            let pltName = '';
+            if (currentFilterPlt === 'lezhin') pltName = '레진';
+            else if (currentFilterPlt === 'bomtoon') pltName = '봄툰';
+            else if (currentFilterPlt === 'ridi') pltName = '리디';
+            else if (currentFilterPlt === 'mrblue') pltName = '미블';
+
+            // 🌟 제목에 요일도 같이 보여주면 유저가 안 헷갈려요!
+            document.getElementById('reorder-title').textContent = `${pltName} (${viewDay}) 순서 편집`;
+
+            document.getElementById('reorder-modal').style.display = 'flex';
+
+            // 🌟 모달창을 열면서 세로 리스트를 쫙 그려줍니다!
+            renderReorderList();
+        }
+
+        // 3. 순서 편집 모달창 닫기 함수
+        function closeReorderModal() {
+            document.getElementById('reorder-modal').style.display = 'none';
+            renderAll(); // 혹시 순서가 바뀌었을지 모르니 닫을 때 메인 화면 새로고침!
+        }
+
+        // 🔠 가나다 자동 정렬 버튼 기능
+        function sortListAZ() {
+            if (viewDay === '휴재' || viewDay === '완결') return alert("이 탭에선 자동 정렬을 할 수 없어요!");
+
+            const arr = state[currentFilterPlt][viewDay];
+            if (arr.length === 0) return;
+
+            // 한글 가나다순으로 똑똑하게 정렬!
+            arr.sort((a, b) => a.title.localeCompare(b.title, 'ko'));
+
+            saveData();
+            renderReorderList(); // 바뀐 순서로 즉시 새로고침
+        }
+
+        // 🔡 다가나 자동 정렬 버튼 기능
+        function sortListZA() {
+            if (viewDay === '휴재' || viewDay === '완결') return alert("이 탭에선 자동 정렬을 할 수 없어요!");
+
+            const arr = state[currentFilterPlt][viewDay];
+            if (arr.length === 0) return;
+
+            // 다가나(역순)으로 정렬!
+            arr.sort((a, b) => b.title.localeCompare(a.title, 'ko'));
+
+            saveData();
+            renderReorderList(); // 바뀐 순서로 즉시 새로고침
+        }
+
+
+        // 모달창 닫기
+        function closeFilterMenu() {
+            document.getElementById('filter-modal').style.display = 'none';
+        }
+
+        // 어두운 배경 클릭 시 모달창 닫기
+        document.getElementById('filter-modal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeFilterMenu();
+            }
+        });
+
+
+
+        // 휴재/완결 숨기기 토글 로직
+        let isHidingFinished = false; // 기본값: 다 보이는 상태
+
+        function toggleHideWorks() {
+            const hideText = document.getElementById('hide-text');
+            isHidingFinished = !isHidingFinished; // 상태 뒤집기
+
+            if (isHidingFinished) {
+                hideText.innerText = "휴재 및 완결 작품 꺼내기";
+                // 나중에 여기에 '숨기는 코드' 추가
+            } else {
+                hideText.innerText = "휴재 및 완결 작품 숨기기";
+                // 나중에 여기에 '다시 보이는 코드' 추가
+            }
+
+            // 🌟 상태가 바뀌었으니 화면 전체를 다시 그려서 즉시 반영!
+            renderAll();
+            closeFilterMenu();
+        }
+
+        // 💡 전역 변수로 Sortable 마법사를 담을 공간 준비
+        let reorderSortable = null;
+
+        // 🗂️ 세로 리스트를 그려주고 마법을 부여하는 함수
+        function renderReorderList() {
+            const listEl = document.getElementById('reorder-list');
+            listEl.innerHTML = '';
+
+            // 🚨 휴재나 완결 탭은 순서 편집 막기
+            if (viewDay === '휴재' || viewDay === '완결') {
+                listEl.innerHTML = '<p style="text-align: center; color: #e60012; font-size: 14px; margin-top: 20px; font-weight: bold;">🚨 휴재/완결 탭에서는<br>순서를 편집할 수 없어요!</p><p style="text-align: center; color: #888; font-size: 12px;">(순서 변경은 각 요일 탭에서 진행해 주세요)</p>';
+                return;
+            }
+
+            const works = state[currentFilterPlt][viewDay] || [];
+
+            if (works.length === 0) {
+                listEl.innerHTML = '<p style="text-align: center; color: #888; font-size: 14px; margin-top: 20px;">작품이 없습니다!</p>';
+                return;
+            }
+
+            // 작품들을 하나씩 세로 박스로 만들기
+            works.forEach((work, idx) => {
+                const div = document.createElement('div');
+                div.dataset.idx = idx;
+
+                // 🌟 JS에서는 인라인 스타일 빼고 깔끔하게 클래스 이름표만 붙여줍니다!
+                div.className = 'reorder-list-item';
+
+                div.innerHTML = `
+                    <span class="reorder-item-title">${work.title}</span>
+                    <span class="drag-handle">≡</span>
+                `;
+                listEl.appendChild(div);
+            });
+
+            // 🪄 [핵심] 여기서 SortableJS 마법 부여!
+            if (reorderSortable) {
+                reorderSortable.destroy(); // 혹시 전에 만들어둔 게 있으면 깨끗하게 초기화
+            }
+
+            reorderSortable = new Sortable(listEl, {
+                animation: 150, // 쫀득~하게 길을 비켜주는 애니메이션 속도! (0.15초)
+                handle: '.drag-handle', // ≡ 아이콘을 잡았을 때만 움직이게 설정! (터치 오작동 완벽 방지)
+                ghostClass: 'sortable-ghost', // 아까 위에서 만든 예쁜 파란색 점선 빈자리 디자인 적용
+
+                // 🌟 유저가 카드를 제자리에 툭! 내려놓았을 때 발동하는 로직
+                onEnd: function (evt) {
+                    const arr = state[currentFilterPlt][viewDay]; // 현재 요일 배열 가져오기
+
+                    // 배열에서 옛날 자리(oldIndex)에 있던 걸 뽑아서, 새 자리(newIndex)에 끼워 넣기!
+                    const draggedItem = arr.splice(evt.oldIndex, 1)[0];
+                    arr.splice(evt.newIndex, 0, draggedItem);
+
+                    // 데이터 영구 저장!
+                    saveData();
+                }
+            });
+        }
 
     </script>
 
