@@ -54,7 +54,7 @@
 
             <div class="nav-section">
                 <h4>보기 설정</h4>
-                <button onclick="handleMenuAction('toggleOrder')" class="menu-item">플랫폼 순서 변경</button>
+                <button onclick="openPlatformSettingModal()" class="menu-item">플랫폼 순서 변경</button>
                 <button onclick="handleMenuAction('darkMode')" id="menu-dark-mode-btn" class="menu-item">다크
                     모드</button>
                 <button onclick="openLinkSettingModal()" class="menu-item">출석 링크 직접 설정</button>
@@ -404,9 +404,9 @@
             </div>
 
             <label id="add-deduct-label"
-                style="display:flex; align-items:center; gap:8px;  margin-bottom:10px; border: 1px solid #ddd; font-size:13px; color:#555; cursor:pointer; background: #f8f9fa; padding: 10px; border-radius: 8px;">
+                style="display:flex; align-items:center; gap:8px;  margin-bottom:10px; border: 1px solid #ddd; font-size:14px; color:#555; cursor:pointer; background: #f8f9fa; padding: 10px; border-radius: 8px;">
                 <input type="checkbox" id="add-deduct-chk" style="width:16px; height:16px; margin:0;">
-                <span style="font-weight: bold;">구매한 화수만큼 지갑에서 차감하기</span>
+                <span style="font-weight: normal; color: #333;">구매한 화수만큼 지갑에서 차감하기</span>
             </label>
 
             <p id="image-status-text" style="text-align: center; font-size: 12px; margin-bottom: 5px;">
@@ -419,7 +419,7 @@
                 <button onclick="document.getElementById('image-input').click()" class="img-pick-btn"
                     style="margin-bottom: 0; flex: 1;">사진 선택하기</button>
                 <button id="remove-img-btn" onclick="removeSelectedImage()" class="cancel-btn"
-                    style="margin-bottom: 0; display: none; flex: 1; background: #ffebee; color: #d32f2f;">사진
+                    style="margin-bottom: 0; display: none; flex: 1; font-weight: normal; border: 1px dashed rgb(255, 204, 204); background: #FDFDFD; border-radius: 10px;">사진
                     삭제</button>
             </div>
 
@@ -440,6 +440,7 @@
             <div class="action-btns-container">
                 <button class="act-btn edit-btn" onclick="editFromAction()">작품 상세 수정</button>
                 <button onclick="moveFromAction()" class="act-btn move-btn">다른 플랫폼으로 이동</button>
+                <button class="act-btn dup-btn" onclick="duplicateFromAction()">이 작품 템플릿으로 복제</button>
                 <button class="act-btn del-btn" onclick="deleteFromAction()"> 서랍에서 영구 삭제</button>
             </div>
             <button onclick="closeActionModal()" class="cancel-btn" style="margin-top:15px; width:100%;">닫기</button>
@@ -676,6 +677,25 @@
                 style="overflow-y: auto; flex: 1; padding-right: 5px; border: 1px solid #eee; border-radius: 8px; padding: 10px; background: #fdfdfd;">
                 <p style="text-align: center; color: #888; font-size: 13px; margin: 20px 0;">여기에 작품들이 뜰 거예요!</p>
             </div>
+        </div>
+    </div>
+
+    <!-- 🎛️ 플랫폼 순서 및 토글 설정 모달창 -->
+    <div id="platform-setting-modal" class="modal-overlay" style="display: none; z-index: 7000;">
+        <div class="modal-content" style="max-width: 320px; position: relative; padding: 25px 20px;">
+            <button onclick="closePlatformSettingModal()"
+                style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
+            <h3 style="margin-top: 0; text-align: center; padding-bottom: 2px;">플랫폼 설정</h3>
+            <p style="text-align: center; color: #888; font-size: 12px; margin-bottom: 15px;">순서를 꾹 눌러 바꾸거나 스위치를 끄고 켤 수
+                있어요!</p>
+
+            <!-- 📜 플랫폼 리스트가 들어갈 공간 -->
+            <div id="platform-sort-list"
+                style="border: 1px solid #eee; border-radius: 8px; padding: 10px; background: #fdfdfd;">
+            </div>
+
+            <button onclick="savePlatformSetting()" class="save-btn"
+                style="width: 100%; margin-top: 15px;">저장하기</button>
         </div>
     </div>
 
@@ -984,38 +1004,88 @@
             closeNav();
         }
 
-        // 온오프 & 순서 변경 기능 (1개~4개 내 맘대로 입력!)
-        function changePlatformOrder() {
-            const input = prompt("사용할 플랫폼과 순서를 정해주세요!\n\n[1] 레진 [2] 봄툰 [3] 리디 [4] 미블\n\n사용할 플랫폼의 숫자만 원하는 순서대로 입력하세요.\n(예: 레진, 리디만 쓰면 👉 13)");
+        // 💡 마법의 드래그 변수 하나 더 준비!
+        let pltSortable = null;
 
-            if (!input) return;
+        // 1. 플랫폼 설정 모달창 열기
+        function openPlatformSettingModal() {
+            closeNav();
+            const listEl = document.getElementById('platform-sort-list');
+            listEl.innerHTML = '';
 
-            // 4개가 아니라 1~4개 자유롭게 입력 가능!
-            if (input.length < 1 || input.length > 4) {
-                alert("❌ 최소 1개에서 최대 4개의 숫자를 입력해주세요!");
-                return;
-            }
+            const pltNames = { lezhin: '레진 코믹스', bomtoon: '봄툰', ridi: '리디', mrblue: '미스터블루' };
+            const allPlts = ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
 
-            const map = { '1': 'lezhin', '2': 'bomtoon', '3': 'ridi', '4': 'mrblue' };
-            const newOrder = [];
+            // 켜져 있는 애들을 먼저 위로 올리고, 꺼진 애들은 밑에 배치
+            let activePlts = [...platformOrder];
+            let inactivePlts = allPlts.filter(p => !platformOrder.includes(p));
+            let displayPlts = [...activePlts, ...inactivePlts];
 
-            for (let char of input) {
-                if (!map[char] || newOrder.includes(map[char])) {
-                    alert("❌ 1부터 4까지의 숫자를 한 번씩만 중복 없이 입력해주세요!");
-                    return;
+            displayPlts.forEach(plt => {
+                const isChecked = activePlts.includes(plt) ? 'checked' : '';
+                const div = document.createElement('div');
+                div.className = 'plt-setting-item';
+                div.dataset.plt = plt; // 플랫폼 아이디 기억하기
+
+                div.innerHTML = `
+                    <div class="plt-setting-left">
+                        <span class="drag-handle">≡</span>
+                        <span class="plt-setting-name">${pltNames[plt]}</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" class="plt-toggle" value="${plt}" ${isChecked}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                `;
+                listEl.appendChild(div);
+            });
+
+            // 🪄 여기서 작품 드래그할 때 썼던 SortableJS 재활용!!!
+            if (pltSortable) pltSortable.destroy();
+            pltSortable = new Sortable(listEl, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost'
+            });
+
+            document.getElementById('platform-setting-modal').style.display = 'flex';
+        }
+
+        // 2. 모달 닫기
+        function closePlatformSettingModal() {
+            document.getElementById('platform-setting-modal').style.display = 'none';
+        }
+
+        // 3. 변경된 순서와 스위치 상태 저장하기!
+        function savePlatformSetting() {
+            const listEl = document.getElementById('platform-sort-list');
+            const items = listEl.querySelectorAll('.plt-setting-item');
+
+            let newOrder = [];
+
+            // 위에서부터 순서대로 쭉 읽으면서, 스위치 켜진 애들만 장바구니에 담기
+            items.forEach(item => {
+                const plt = item.dataset.plt;
+                const isChecked = item.querySelector('.plt-toggle').checked;
+                if (isChecked) {
+                    newOrder.push(plt);
                 }
-                newOrder.push(map[char]);
+            });
+
+            // 🚨 전부 다 끄면 앱이 고장 나니까 막아주기!
+            if (newOrder.length === 0) {
+                return alert("최소 1개 이상의 플랫폼은 켜두셔야 합니다!");
             }
 
-            localStorage.setItem('platformOrder', JSON.stringify(newOrder));
+            // 진짜 저장!
             platformOrder = newOrder;
-
+            localStorage.setItem('platformOrder', JSON.stringify(platformOrder));
             saveData();
 
-            // 바뀐 설정으로 화면 즉시 새로고침!
+            // 화면 레이아웃 즉시 새로고침
             updatePlatformOrder();
             renderAll();
-            alert("설정 완료! 선택하신 플랫폼만 화면에 표시되며 정산됩니다!");
+            closePlatformSettingModal();
         }
 
         function openCalcModal() {
@@ -2062,7 +2132,7 @@
     
     <div class="card-info">
         
-        <div class="cycle-wrapper" style="margin-bottom: 8px; text-align: left;">
+        <div class="cycle-wrapper" style="text-align: left;">
             ${cycleTag}
         </div>
         
@@ -2437,6 +2507,121 @@
             if (typeof toggleCycleInputs === "function") toggleCycleInputs();
 
             // 🌟 [수정] 그 다음에 값을 넣어줘야 달력에 날짜가 제대로 표시됩니다.
+            if (cWeek) document.getElementById('input-cycle-week').value = cWeek;
+
+            document.getElementById('custom-modal').style.display = 'flex';
+        }
+
+
+        // 🌟 [신규 추가] 작품 복제 (껍데기 템플릿) 함수!
+        function duplicateFromAction() {
+            closeActionModal();
+
+            // 🚨 핵심 1: 수정 모드가 아니라 '새 작품 추가' 모드라고 브라우저를 속입니다!
+            editMode = false;
+            currentPlatform = actionPlt;
+            const work = state[actionPlt][actionOrigDay][actionIdx];
+
+            document.getElementById('modal-title-label').textContent = "작품 복제 (새로 추가)";
+
+            // 🚨 핵심 2: 우니님 기획대로 4가지는 완벽하게 '백지화' 합니다!
+            document.getElementById('input-title').value = ''; // 제목 비우기
+            document.getElementById('input-url').value = '';   // 링크 비우기
+            document.getElementById('input-progress').value = ''; // 진도 비우기
+            document.getElementById('input-time').value = ''; // 🌟 [추가] 업로드 시간 비우기!
+
+            // 사진(이미지) 완벽하게 초기화
+            tempImg = "";
+            document.getElementById('image-input').value = "";
+            document.getElementById('image-status-text').textContent = "📷 사진은 선택 사항입니다.";
+            document.getElementById('image-status-text').style.color = "#888";
+            document.getElementById('remove-img-btn').style.display = 'none';
+
+            // 🌟 3. 나머지 유용한 설정(주기, 코인, 시간, 상태)은 알뜰하게 훔쳐옵니다!
+            let savedCyc = work.cycle || "";
+            let tenDayDates = "";
+            let cType = "";
+            let cWeek = "";
+
+            if (savedCyc) {
+                if (savedCyc.includes("10일 연재")) {
+                    let match10 = savedCyc.match(/10일 연재\s*\((.*?)\)/);
+                    if (match10) tenDayDates = match10[1];
+                    savedCyc = savedCyc.replace(/\+?\s*10일 연재\s*\(.*?\)/, '').trim();
+                    if (savedCyc.endsWith('+')) savedCyc = savedCyc.slice(0, -1).trim();
+                }
+
+                if (savedCyc) {
+                    if (savedCyc.includes("격주 연재")) {
+                        cType = "격주 연재";
+                        let match = savedCyc.match(/\((.*?)\)/);
+                        if (match) {
+                            const parts = match[1].split('/');
+                            if (parts.length === 2) {
+                                const year = new Date().getFullYear();
+                                const month = parts[0].padStart(2, '0');
+                                const day = parts[1].padStart(2, '0');
+                                cWeek = `${year}-${month}-${day}`;
+                            } else {
+                                cWeek = match[1];
+                            }
+                        }
+                    }
+                    else if (savedCyc.includes("매월")) {
+                        cType = "매월 특정 주 휴재";
+                        let match = savedCyc.match(/매월\s*(\d+)주차\s*휴재/);
+                        if (match) cWeek = match[1];
+                    }
+                    else {
+                        let match = savedCyc.match(/^(.*?)(?:\s+(\d+)주차)?$/);
+                        if (match) { cType = match[1].trim(); cWeek = match[2] || ""; }
+                    }
+                }
+            }
+
+            const tenDayInput = document.getElementById('input-10day-dates');
+            if (tenDayInput) tenDayInput.value = tenDayDates;
+
+            const typeSelect = document.getElementById('input-cycle-type');
+            if (typeSelect) {
+                const typeExists = Array.from(typeSelect.options).some(o => o.value === cType);
+                typeSelect.value = typeExists ? cType : "";
+            }
+
+            const weekInput = document.getElementById('input-cycle-week');
+            if (weekInput) weekInput.value = cWeek;
+
+            // 요일 체크박스 동기화 복사
+            let activeDays = [];
+            if (work.id) {
+                Object.keys(state[actionPlt]).forEach(d => {
+                    if (state[actionPlt][d].some(w => w.id === work.id)) activeDays.push(d);
+                });
+            } else {
+                activeDays.push(actionOrigDay);
+            }
+            document.querySelectorAll('input[name="day-chk"]').forEach(chk => {
+                chk.checked = activeDays.includes(chk.value);
+            });
+
+            // 코인, 시간, 상태 복사
+            const coinInput = document.getElementById('input-coin');
+            if (actionPlt === 'ridi') coinInput.placeholder = "예: 600 (캐시)";
+            else if (actionPlt === 'mrblue') coinInput.placeholder = "예: 500 (머니)";
+            else coinInput.placeholder = "예: 3 (코인)";
+
+            document.getElementById('input-coin').value = work.coin;
+            document.getElementById('input-time').value = work.time || '';
+            document.getElementById('input-status').value = work.status || '연재중';
+
+            const deductLabel = document.getElementById('add-deduct-label');
+            if (deductLabel) {
+                deductLabel.style.display = 'flex';
+                const deductChk = document.getElementById('add-deduct-chk');
+                if (deductChk) deductChk.checked = false;
+            }
+
+            if (typeof toggleCycleInputs === "function") toggleCycleInputs();
             if (cWeek) document.getElementById('input-cycle-week').value = cWeek;
 
             document.getElementById('custom-modal').style.display = 'flex';
@@ -3209,10 +3394,10 @@
 
             const isDark = document.body.classList.contains('dark-mode');
             const pltInfo = {
-                lezhin: { name: '레진', unit: 'C', color: isDark ? '#ff6b76' : '#e60012' },
-                bomtoon: { name: '봄툰', unit: 'C', color: isDark ? '#ff85c0' : '#e84393' },
-                ridi: { name: '리디', unit: '캐시', color: isDark ? '#5dade2' : '#1e90ff' },
-                mrblue: { name: '미블', unit: '머니', color: isDark ? '#8ab4f8' : '#004e9a' }
+                lezhin: { name: '레진', unit: 'C', color: isDark ? '#333' : '#eee' },
+                bomtoon: { name: '봄툰', unit: 'C', color: isDark ? '#333' : '#eee' },
+                ridi: { name: '리디', unit: '캐시', color: isDark ? '#333' : '#eee' },
+                mrblue: { name: '미블', unit: '머니', color: isDark ? '#333' : '#eee' }
             };
 
             platformOrder.forEach(plt => {

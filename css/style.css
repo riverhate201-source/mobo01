@@ -2,6 +2,7 @@
     font-family: 'OngleipParkDahyeon', sans-serif !important;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
+
 }
 
 @font-face {
@@ -182,6 +183,10 @@ body.dark-mode .nav-content {
     font-size: 13px;
     color: #aaa;
     margin-bottom: 10px;
+    font-weight: normal;
+}
+
+.nav-section button {
     font-weight: normal;
 }
 
@@ -374,7 +379,7 @@ body.dark-mode .day-btn.active {
     padding: 35px 18px 18px 18px !important;
     background: #fff;
     border-radius: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -388,22 +393,23 @@ body.dark-mode .my-wallet-container {
     font-size: 24px;
     font-weight: bold;
     cursor: pointer;
+    margin-top: 5px;
 }
 
 .lezhin-wallet {
-    color: #e60012;
+    color: #333;
 }
 
 .bomtoon-wallet {
-    color: #ff69b4;
+    color: #333;
 }
 
 body.dark-mode .lezhin-wallet {
-    color: #ff6b76;
+    color: #eee;
 }
 
 body.dark-mode .bomtoon-wallet {
-    color: #ff85c0;
+    color: #eee;
 }
 
 .wallet-divider {
@@ -421,9 +427,12 @@ body.dark-mode .wallet-divider {
     background: #fff;
     padding: 20px;
     border-radius: 24px;
+
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-    max-width: 450px;
+    max-width: 448px;
     margin: 0 auto 35px auto;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 body.dark-mode .webtoon-container {
@@ -445,6 +454,7 @@ body.dark-mode .webtoon-container {
     border-radius: 12px;
     cursor: pointer;
     font-size: 14px;
+    margin-bottom: 8px;
 }
 
 body.dark-mode .add-work-btn {
@@ -884,6 +894,7 @@ body.dark-mode .modal-select {
     cursor: pointer;
     font-size: 14px;
     color: #666;
+    box-sizing: border-box;
 }
 
 body.dark-mode .img-pick-btn {
@@ -910,8 +921,8 @@ body.dark-mode .img-pick-btn {
     background: #eee;
     color: #666;
     width: 100%;
-    padding: 0;
-    margin-top: 10px;
+    padding: 10px;
+    box-sizing: border-box;
     background-color: transparent;
     border: none;
     border-radius: 12px;
@@ -1010,6 +1021,7 @@ body.dark-mode .weekly-highlight {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    transition: background 0.2s;
 }
 
 .act-btn {
@@ -1020,6 +1032,7 @@ body.dark-mode .weekly-highlight {
     font-size: 15px;
     cursor: pointer;
     font-weight: normal;
+    transition: all 0.2s ease;
 }
 
 .edit-btn {
@@ -1040,6 +1053,27 @@ body.dark-mode .edit-btn {
 body.dark-mode .del-btn {
     background: #3A3A3A;
     color: #eeee;
+}
+
+.dup-btn {
+    background: #f8f9fa;
+    color: #333;
+}
+
+body.dark-mode .dup-btn {
+    background: #3A3A3A;
+    color: #eee;
+}
+
+.action-btns-container .act-btn:hover {
+    background-color: #f1f3f5;
+
+
+}
+
+body.dark-mode .action-btns-container .act-btn:hover {
+    background-color: #4a4a4a;
+
 }
 
 .sale-badge {
@@ -1158,9 +1192,13 @@ body.dark-mode .coinback-label {
    ========================================== */
 .wallet-master-wrapper {
     position: relative;
-    /* 도트 점을 이 박스 기준으로 고정! */
-    max-width: 450px;
-    margin: 0 auto 30px auto;
+    max-width: 468px;
+    margin: 0 auto 9px auto;
+    width: 100%;
+    box-sizing: border-box;
+
+
+    /* 🚨 아까 넣었던 overflow-x: hidden; 은 무조건 지워주세요! (얘가 범인입니다) 🚨 */
 }
 
 .wallet-swipe-wrapper {
@@ -1169,9 +1207,22 @@ body.dark-mode .coinback-label {
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    gap: 16px;
+    /* 🌟 정석 해결법: 안쪽으로 여백을 주고 꽉 차게 만들기 */
     width: 100%;
-    padding-bottom: 10px;
-    /* 그림자 잘림 방지 */
+    box-sizing: border-box;
+    /* 패딩을 넣어도 100% 너비가 유지되게 묶어줌 */
+    padding: 15px 3px 10px 15px;
+    /* 위 15, 오른쪽 0, 아래 10, 왼쪽 15 (오른쪽은 아래 투명방패가 책임짐!) */
+}
+
+/* 🌟 Flexbox 스크롤 특유의 버그(맨 오른쪽 여백 무시 현상)를 막아주는 투명 방패! */
+.wallet-swipe-wrapper::after {
+    content: '';
+    display: block;
+    min-width: 15px;
+    /* 맨 마지막(미블) 카드 오른쪽에 15px짜리 투명 쿠션을 세워줍니다 */
+    flex-shrink: 0;
 }
 
 .wallet-swipe-wrapper::-webkit-scrollbar {
@@ -1257,26 +1308,26 @@ body.dark-mode .mrblue-card .no-img-title {
 /* --- 리디 지갑 색상 관리 --- */
 .ridi-wallet .platform-name,
 .ridi-wallet .coin-amount {
-    color: #1e90ff;
+    color: #333;
     /* 라이트 모드: 원래 리디색 */
 }
 
 body.dark-mode .ridi-wallet .platform-name,
 body.dark-mode .ridi-wallet .coin-amount {
-    color: #5dade2;
+    color: #eee;
     /* 다크 모드: 눈 편한 하늘색 */
 }
 
 /* --- 미블 지갑 색상 관리 --- */
 .mrblue-wallet .platform-name,
 .mrblue-wallet .coin-amount {
-    color: #004e9a;
+    color: #333;
     /* 라이트 모드: 원래 미블색 */
 }
 
 body.dark-mode .mrblue-wallet .platform-name,
 body.dark-mode .mrblue-wallet .coin-amount {
-    color: #8ab4f8;
+    color: #eee;
     /* 다크 모드: 선생님이 찜한 밝은 파랑! */
 }
 
@@ -2031,6 +2082,124 @@ body.dark-mode .sort-tab-btn.active {
     color: #222222;
     border-color: #eeeeee;
 }
+
+/* =========================================
+   🎛️ 플랫폼 설정 모달창 & 토글 스위치
+   ========================================= */
+.plt-setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 10px;
+    background: #ffffff;
+    border-bottom: 1px solid #eeeeee;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.plt-setting-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.plt-setting-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.plt-setting-left .drag-handle {
+    color: #cccccc;
+    font-size: 20px;
+    cursor: grab;
+}
+
+.plt-setting-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333333;
+}
+
+/* 🟢 iOS 스타일 토글 스위치 */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cccccc;
+    transition: .3s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 스위치 켜졌을 때 (모보 시그니처 컬러 중 하나인 파란색!) */
+.toggle-switch input:checked+.toggle-slider {
+    background-color: #ffa6aa;
+}
+
+.toggle-switch input:checked+.toggle-slider:before {
+    transform: translateX(20px);
+}
+
+/* 🌙 다크모드 대응 (무채색 에디션) */
+body.dark-mode .plt-setting-item {
+    background: #333333;
+    border-color: #444444;
+}
+
+body.dark-mode .plt-setting-name {
+    color: #eeeeee;
+}
+
+body.dark-mode .toggle-slider {
+    background-color: #555555;
+}
+
+/* 다크모드 켜졌을 때 토글 색깔 */
+body.dark-mode .toggle-switch input:checked+.toggle-slider {
+    background-color: #4d96ea;
+}
+
+/* 브라우저 기본값을 무시하고 내 마음대로 커스텀! */
+.platform-header {
+    font-size: 24px;
+    /* 브라우저 기본 1.5em을 무시하고 18px로 덮어씌움 */
+    margin: 3px;
+    padding: 6px 0;
+    /* 브라우저가 만든 위아래 기본 여백 싹 날려버림 */
+    font-weight: 600;
+    /* 무조건 굵게 나오는 걸 적당한 굵기로 변경 */
+}
+
+
 
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
 a[x-apple-data-detectors] {
