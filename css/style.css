@@ -44,11 +44,17 @@ body.dark-mode {
     width: 100%;
     display: flex;
     justify-content: flex-end;
-    padding: 15px 0;
-    padding-right: 15px;
+    padding: 15px 15px;
     z-index: 2100;
     pointer-events: none;
     /* 투명한 상자 통과해서 뒤에 클릭 되게 하기 */
+}
+
+@media screen and (min-width: 500px) {
+    .top-util-bar {
+        /* PC 풀화면에서는 양옆 쿠션을 0으로 빼서 하얀 박스와 완벽한 칼각을 맞춥니다! */
+        padding: 15px 0;
+    }
 }
 
 /* 1. 햄버거 버튼 (알약 모양 배경) */
