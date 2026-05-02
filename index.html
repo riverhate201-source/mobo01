@@ -3394,10 +3394,10 @@
 
             const isDark = document.body.classList.contains('dark-mode');
             const pltInfo = {
-                lezhin: { name: '레진', unit: 'C', color: isDark ? '#333' : '#eee' },
-                bomtoon: { name: '봄툰', unit: 'C', color: isDark ? '#333' : '#eee' },
-                ridi: { name: '리디', unit: '캐시', color: isDark ? '#333' : '#eee' },
-                mrblue: { name: '미블', unit: '머니', color: isDark ? '#333' : '#eee' }
+                lezhin: { name: '레진', unit: 'C', bgColor: isDark ? '#333' : '#f9f9f9', textColor: isDark ? '#fff' : '#333', themeColor: '#e60012' },
+                bomtoon: { name: '봄툰', unit: 'C', bgColor: isDark ? '#333' : '#f9f9f9', textColor: isDark ? '#fff' : '#333', themeColor: '#ff69b4' },
+                ridi: { name: '리디', unit: '캐시', bgColor: isDark ? '#333' : '#f9f9f9', textColor: isDark ? '#fff' : '#333', themeColor: '#1e90ff' },
+                mrblue: { name: '미블', unit: '머니', bgColor: isDark ? '#333' : '#f9f9f9', textColor: isDark ? '#fff' : '#333', themeColor: '#004e9a' }
             };
 
             platformOrder.forEach(plt => {
@@ -3413,12 +3413,12 @@
 
                     // 🌟 개별 캡처를 위해 id를 달고 예쁜 카드 박스로 감싸줍니다!
                     htmlContent += `
-                    <div class="report-plt-section" id="receipt-mini-${plt}" style="background: ${isDark ? '#2c2c2e' : '#fff'}; padding: 16px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative;">
+                    <div class="report-plt-section" id="receipt-mini-${plt}" style="background: ${info.bgColor}; padding: 16px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; color: ${info.textColor};">
                         
-                        <div class="report-plt-title" style="display: flex; justify-content: space-between; align-items: center; color: ${info.color}; border-bottom: 2px solid ${info.color}40; padding-bottom: 8px; margin-bottom: 12px;">
+                        <div class="report-plt-title" style="display: flex; justify-content: space-between; align-items: center; color: ${info.textColor}; border-bottom: 2px solid ${isDark ? '#555' : '#ccc'}; padding-bottom: 8px; margin-bottom: 12px;">
                             <span style="font-weight: 900; font-size: 15px;">${info.name} 정산</span>
                             
-                            <button onclick="saveSingleReceipt('${plt}', '${info.name}')" style="background: ${info.color}15; border: none; color: ${info.color}; cursor: pointer; padding: 6px 10px; border-radius: 8px; display: flex; align-items: center; font-size: 11px; font-weight: bold; gap: 4px;" title="${info.name}만 사진 저장">
+                            <button onclick="saveSingleReceipt('${plt}', '${info.name}')" style="background: ${info.themeColor}; border: none; color: #fff; cursor: pointer; padding: 6px 10px; border-radius: 8px; display: flex; align-items: center; font-size: 11px; font-weight: normal; gap: 4px;" title="${info.name}만 사진 저장">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                 저장
                             </button>
@@ -3428,16 +3428,16 @@
                         const spent = works[title];
                         totalPltSpent += spent;
                         htmlContent += `
-                        <div class="report-item">
+                        <div class="report-item" style="color: ${info.textColor};">
                             <span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-right:10px;">${title}</span>
                             <span>${formatNum(spent)}<span style="font-size:11px; margin-left:3px;">${info.unit}</span></span>
                         </div>`;
                     });
 
                     htmlContent += `
-                        <div class="report-total" style="display: flex; justify-content: space-between; font-weight: 900; font-size: 15px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed ${isDark ? '#444' : '#ddd'};">
+                        <div class="report-total" style="display: flex; justify-content: space-between; font-weight: 900; font-size: 15px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed ${isDark ? '#555' : '#ccc'}; color: ${info.textColor};">
                             <span>소계</span>
-                            <span style="color: ${info.color};">${formatNum(totalPltSpent)} ${info.unit}</span>
+                            <span>${formatNum(totalPltSpent)} ${info.unit}</span>
                         </div>
                     </div>`;
                 }

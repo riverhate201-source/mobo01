@@ -40,11 +40,11 @@ body.dark-mode {
     top: 12px;
     left: 50%;
     transform: translateX(-50%);
-    max-width: 480px;
+    max-width: 468px;
     width: 100%;
     display: flex;
     justify-content: flex-end;
-    padding-right: 15px;
+    padding: 15px 0;
     z-index: 2100;
     pointer-events: none;
     /* 투명한 상자 통과해서 뒤에 클릭 되게 하기 */
@@ -374,12 +374,12 @@ body.dark-mode .day-btn.active {
 
 
 .my-wallet-container {
-    max-width: 450px;
+    max-width: 100%;
     margin: 0 auto 30px auto;
     padding: 35px 18px 18px 18px !important;
     background: #fff;
     border-radius: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.05);
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -390,7 +390,7 @@ body.dark-mode .my-wallet-container {
 }
 
 .coin-amount {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: bold;
     cursor: pointer;
     margin-top: 5px;
@@ -424,15 +424,19 @@ body.dark-mode .wallet-divider {
 
 
 .webtoon-container {
+    max-width: 468px;
+    width: 100%;
     background: #fff;
     padding: 20px;
     border-radius: 24px;
 
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-    max-width: 448px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+
+
     margin: 0 auto 35px auto;
     box-sizing: border-box;
     width: 100%;
+    padding: 20px 20px;
 }
 
 body.dark-mode .webtoon-container {
@@ -832,11 +836,11 @@ body.dark-mode .scroll-btn {
 }
 
 .left-btn {
-    left: -12px;
+    left: -6px;
 }
 
 .right-btn {
-    right: -12px;
+    right: -6px;
 }
 
 .modal-overlay {
@@ -1193,7 +1197,7 @@ body.dark-mode .coinback-label {
 .wallet-master-wrapper {
     position: relative;
     max-width: 468px;
-    margin: 0 auto 9px auto;
+    margin: 0 auto 30px auto;
     width: 100%;
     box-sizing: border-box;
 
@@ -1207,22 +1211,13 @@ body.dark-mode .coinback-label {
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
-    gap: 16px;
+    gap: 24px;
     /* 🌟 정석 해결법: 안쪽으로 여백을 주고 꽉 차게 만들기 */
     width: 100%;
     box-sizing: border-box;
     /* 패딩을 넣어도 100% 너비가 유지되게 묶어줌 */
-    padding: 15px 3px 10px 15px;
+    padding: 5px 0 5px 0;
     /* 위 15, 오른쪽 0, 아래 10, 왼쪽 15 (오른쪽은 아래 투명방패가 책임짐!) */
-}
-
-/* 🌟 Flexbox 스크롤 특유의 버그(맨 오른쪽 여백 무시 현상)를 막아주는 투명 방패! */
-.wallet-swipe-wrapper::after {
-    content: '';
-    display: block;
-    min-width: 15px;
-    /* 맨 마지막(미블) 카드 오른쪽에 15px짜리 투명 쿠션을 세워줍니다 */
-    flex-shrink: 0;
 }
 
 .wallet-swipe-wrapper::-webkit-scrollbar {
