@@ -45,6 +45,7 @@ body.dark-mode {
     display: flex;
     justify-content: flex-end;
     padding: 15px 0;
+    padding-right: 15px;
     z-index: 2100;
     pointer-events: none;
     /* 투명한 상자 통과해서 뒤에 클릭 되게 하기 */
