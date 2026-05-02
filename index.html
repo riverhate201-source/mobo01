@@ -1934,7 +1934,7 @@
 
 
             // 🌟 [여기에 추가!] 숨기기 모드가 켜져 있다면, 휴재/완결/자동휴재 카드 걸러내기!
-            if (isHidingFinished) {
+            if (isHidingFinished[platform]) {
                 displayWorks = displayWorks.filter(work => !isWorkOnBreak(work));
             }
 
@@ -3550,9 +3550,21 @@
         // 💡 방금 누른 필터 버튼이 어떤 플랫폼인지 기억할 변수(메모장)
         let currentFilterPlt = '';
 
-        // 1. 모달창 열기 (괄호 안에 plt 추가!)
+        // 🌟 [업그레이드] 숨기기 스위치를 플랫폼별로 4개 달아줍니다!
+        let isHidingFinished = { lezhin: false, bomtoon: false, ridi: false, mrblue: false };
+
+        // 1. 모달창 열기
         function toggleFilterMenu(plt) {
-            currentFilterPlt = plt; // "아하! 지금 누른 게 레진(또는 봄툰)이구나!" 하고 메모장에 적어둡니다.
+            currentFilterPlt = plt;
+
+            // 🌟 모달창 열 때, 지금 누른 플랫폼이 숨기기 상태인지 아닌지 확인해서 글씨를 맞춰줍니다!
+            const hideText = document.getElementById('hide-text');
+            if (isHidingFinished[currentFilterPlt]) {
+                hideText.innerText = "휴재 및 완결 작품 꺼내기";
+            } else {
+                hideText.innerText = "휴재 및 완결 작품 숨기기";
+            }
+
             document.getElementById('filter-modal').style.display = 'flex';
         }
 
@@ -3624,22 +3636,12 @@
 
 
 
-        // 휴재/완결 숨기기 토글 로직
-        let isHidingFinished = false; // 기본값: 다 보이는 상태
-
+        // 🌟 [업그레이드] 현재 선택한 플랫폼의 숨기기 스위치만 똑딱! 켜고 끄는 함수
         function toggleHideWorks() {
-            const hideText = document.getElementById('hide-text');
-            isHidingFinished = !isHidingFinished; // 상태 뒤집기
+            // 해당 플랫폼의 상태만 반대로 뒤집기 (true <-> false)
+            isHidingFinished[currentFilterPlt] = !isHidingFinished[currentFilterPlt];
 
-            if (isHidingFinished) {
-                hideText.innerText = "휴재 및 완결 작품 꺼내기";
-                // 나중에 여기에 '숨기는 코드' 추가
-            } else {
-                hideText.innerText = "휴재 및 완결 작품 숨기기";
-                // 나중에 여기에 '다시 보이는 코드' 추가
-            }
-
-            // 🌟 상태가 바뀌었으니 화면 전체를 다시 그려서 즉시 반영!
+            // 상태가 바뀌었으니 화면 전체를 다시 그려서 즉시 반영!
             renderAll();
             closeFilterMenu();
         }
@@ -3673,7 +3675,22 @@
                 // 🌟 JS에서는 인라인 스타일 빼고 깔끔하게 클래스 이름표만 붙여줍니다!
                 div.className = 'reorder-list-item';
 
+                // 🌟 [추가] 순서 편집 창에도 상태 뱃지를 달아줍니다!
+                let badgeHtml = '';
+                let isBreak = isWorkOnBreak(work);
+                if (work.status === '휴재') {
+                    badgeHtml = `<span style="font-size: 11px; background: #e67e22; color: #fff; padding: 2px 5px; border-radius: 4px; margin-right: 8px; font-weight: bold;">휴재</span>`;
+                } else if (work.status === '완결') {
+                    badgeHtml = `<span style="font-size: 11px; background: #7f8c8d; color: #fff; padding: 2px 5px; border-radius: 4px; margin-right: 8px; font-weight: bold;">완결</span>`;
+                } else if (isBreak) {
+                    badgeHtml = `<span style="font-size: 11px; background: #e67e22; color: #fff; padding: 2px 5px; border-radius: 4px; margin-right: 8px; font-weight: bold;">자동휴재</span>`;
+                }
+
+                // 🌟 [디테일] 휴재작들은 살짝 반투명하게 만들어서 위계질서를 낮춰줍니다.
+                if (isBreak) div.style.opacity = '0.5';
+
                 div.innerHTML = `
+                    ${badgeHtml}
                     <span class="reorder-item-title">${work.title}</span>
                     <span class="drag-handle">≡</span>
                 `;
@@ -3682,24 +3699,26 @@
 
             // 🪄 [핵심] 여기서 SortableJS 마법 부여!
             if (reorderSortable) {
-                reorderSortable.destroy(); // 혹시 전에 만들어둔 게 있으면 깨끗하게 초기화
+                reorderSortable.destroy();
             }
 
             reorderSortable = new Sortable(listEl, {
-                animation: 150, // 쫀득~하게 길을 비켜주는 애니메이션 속도! (0.15초)
-                handle: '.drag-handle', // ≡ 아이콘을 잡았을 때만 움직이게 설정! (터치 오작동 완벽 방지)
-                ghostClass: 'sortable-ghost', // 아까 위에서 만든 예쁜 파란색 점선 빈자리 디자인 적용
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost',
 
-                // 🌟 유저가 카드를 제자리에 툭! 내려놓았을 때 발동하는 로직
                 onEnd: function (evt) {
-                    const arr = state[currentFilterPlt][viewDay]; // 현재 요일 배열 가져오기
+                    const arr = state[currentFilterPlt][viewDay];
 
                     // 배열에서 옛날 자리(oldIndex)에 있던 걸 뽑아서, 새 자리(newIndex)에 끼워 넣기!
                     const draggedItem = arr.splice(evt.oldIndex, 1)[0];
                     arr.splice(evt.newIndex, 0, draggedItem);
 
-                    // 데이터 영구 저장!
+                    // 데이터 영구 저장! (이때 만능 청소기가 뒤에서 휴재작을 쓸어 내림)
                     saveData();
+
+                    // 🚨👇 [핵심 추가] 데이터가 갱신됐으니, 유저가 보고 있는 이 모달창도 1초 만에 새로고침!
+                    renderReorderList();
                 }
             });
         }
