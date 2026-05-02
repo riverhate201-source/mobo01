@@ -665,13 +665,10 @@
 
             <h3 id="reorder-title" style="margin-top: 0; text-align: center; padding-bottom: 2px;">순서 편집</h3>
 
-            <!-- 🔠 가나다 자동 정렬 버튼 그룹 -->
+            <!-- 🔠 가나다 자동 정렬 탭 메뉴 -->
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <button class="save-btn" style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px;"
-                    onclick="sortListAZ()">가나다 나열</button>
-                <button class="cancel-btn"
-                    style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px; margin-bottom: 0;"
-                    onclick="sortListZA()">다가나 나열</button>
+                <button id="btn-sort-az" class="sort-tab-btn" onclick="sortListAZ()">가나다 나열</button>
+                <button id="btn-sort-za" class="sort-tab-btn" onclick="sortListZA()">다나가 나열</button>
             </div>
 
             <!-- 📜 세로 리스트가 그려질 공간 -->
@@ -3568,22 +3565,50 @@
             document.getElementById('filter-modal').style.display = 'flex';
         }
 
-        // 2. 순서 편집 버튼 눌렀을 때
+        // 1. 순서 편집 창 열 때 불 켜기/끄기 자동 판독!
         function startReorder() {
-            closeFilterMenu(); // 원래 있던 작은 필터 모달은 닫고!
-
+            closeFilterMenu();
             let pltName = '';
             if (currentFilterPlt === 'lezhin') pltName = '레진';
             else if (currentFilterPlt === 'bomtoon') pltName = '봄툰';
             else if (currentFilterPlt === 'ridi') pltName = '리디';
             else if (currentFilterPlt === 'mrblue') pltName = '미블';
 
-            // 🌟 제목에 요일도 같이 보여주면 유저가 안 헷갈려요!
             document.getElementById('reorder-title').textContent = `${pltName} (${viewDay}) 순서 편집`;
 
-            document.getElementById('reorder-modal').style.display = 'flex';
+            // 🌟 [핵심] 현재 리스트가 가나다순인지 다가나순인지 똑똑하게 스캔하는 로직!
+            const arr = state[currentFilterPlt][viewDay] || [];
+            let isAZ = true;
+            let isZA = true;
 
-            // 🌟 모달창을 열면서 세로 리스트를 쫙 그려줍니다!
+            // 카드가 2개 이상일 때만 앞뒤 글자 비교
+            if (arr.length > 1) {
+                for (let i = 0; i < arr.length - 1; i++) {
+                    let compare = arr[i].title.localeCompare(arr[i + 1].title, 'ko');
+                    if (compare > 0) isAZ = false; // 앞글자가 더 뒤쪽(ㅎ)이면 가나다(AZ) 아님
+                    if (compare < 0) isZA = false; // 앞글자가 더 앞쪽(ㄱ)이면 다가나(ZA) 아님
+                }
+            } else {
+                isAZ = false; isZA = false; // 1개 이하면 굳이 불 켤 필요 없음
+            }
+
+            // 🌟 스캔 결과에 따라 똑똑하게 버튼 불 켜주기!
+            const btnAZ = document.getElementById('btn-sort-az');
+            const btnZA = document.getElementById('btn-sort-za');
+
+            if (isAZ) {
+                btnAZ.classList.add('active');
+                btnZA.classList.remove('active');
+            } else if (isZA) {
+                btnZA.classList.add('active');
+                btnAZ.classList.remove('active');
+            } else {
+                // 섞여 있으면 둘 다 끄기
+                btnAZ.classList.remove('active');
+                btnZA.classList.remove('active');
+            }
+
+            document.getElementById('reorder-modal').style.display = 'flex';
             renderReorderList();
         }
 
@@ -3593,32 +3618,36 @@
             renderAll(); // 혹시 순서가 바뀌었을지 모르니 닫을 때 메인 화면 새로고침!
         }
 
-        // 🔠 가나다 자동 정렬 버튼 기능
+        // 2. 가나다 정렬 버튼 기능
         function sortListAZ() {
             if (viewDay === '휴재' || viewDay === '완결') return alert("이 탭에선 자동 정렬을 할 수 없어요!");
 
             const arr = state[currentFilterPlt][viewDay];
             if (arr.length === 0) return;
 
-            // 한글 가나다순으로 똑똑하게 정렬!
             arr.sort((a, b) => a.title.localeCompare(b.title, 'ko'));
-
             saveData();
-            renderReorderList(); // 바뀐 순서로 즉시 새로고침
+            renderReorderList();
+
+            // 🌟 탭 색상 변경 로직 (가나다에 불 켜고, 다가나 불 끄기)
+            document.getElementById('btn-sort-az').classList.add('active');
+            document.getElementById('btn-sort-za').classList.remove('active');
         }
 
-        // 🔡 다가나 자동 정렬 버튼 기능
+        // 3. 다가나 정렬 버튼 기능
         function sortListZA() {
             if (viewDay === '휴재' || viewDay === '완결') return alert("이 탭에선 자동 정렬을 할 수 없어요!");
 
             const arr = state[currentFilterPlt][viewDay];
             if (arr.length === 0) return;
 
-            // 다가나(역순)으로 정렬!
             arr.sort((a, b) => b.title.localeCompare(a.title, 'ko'));
-
             saveData();
-            renderReorderList(); // 바뀐 순서로 즉시 새로고침
+            renderReorderList();
+
+            // 🌟 탭 색상 변경 로직 (다가나에 불 켜고, 가나다 불 끄기)
+            document.getElementById('btn-sort-za').classList.add('active');
+            document.getElementById('btn-sort-az').classList.remove('active');
         }
 
 
@@ -3713,6 +3742,10 @@
                     // 배열에서 옛날 자리(oldIndex)에 있던 걸 뽑아서, 새 자리(newIndex)에 끼워 넣기!
                     const draggedItem = arr.splice(evt.oldIndex, 1)[0];
                     arr.splice(evt.newIndex, 0, draggedItem);
+
+                    // 🚨 [디테일] 유저가 직접 드래그해서 섞었으니, 더 이상 가나다순이 아님! 탭 버튼 불 끄기!
+                    document.getElementById('btn-sort-az').classList.remove('active');
+                    document.getElementById('btn-sort-za').classList.remove('active');
 
                     // 데이터 영구 저장! (이때 만능 청소기가 뒤에서 휴재작을 쓸어 내림)
                     saveData();
