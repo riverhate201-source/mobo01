@@ -1357,8 +1357,8 @@
                 ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
                     Object.keys(state[plt]).forEach(day => {
                         state[plt][day].forEach(work => {
-                            // 🌟 안전장치: 'n연 m휴' 주차만 자동으로 올리고, '격주 연재'나 '10일 연재'는 절대 건드리지 마!!
-                            if (work.cycle && /\d+연\s*\d+휴/.test(work.cycle) && !work.cycle.includes('격주 연재') && !work.cycle.includes('10일 연재')) {
+                            // 🌟 [수정] 10일 연재가 섞여 있든 말든, 'N연 M휴'라는 글씨만 있으면 무조건 통과!
+                            if (work.cycle && /\d+연\s*\d+휴/.test(work.cycle)) {
                                 work.cycle = autoIncrementCycleText(work.cycle);
                             }
                         });
@@ -1451,25 +1451,21 @@
 
 
 
-        // 🌟 [최종 진화] 주차도 올려주고, 격주 날짜도 14일 더해주는 만능 계산기
+        // 🌟 [최종 진화] 주차도 올려주고, 격주 날짜도 14일 더해주는 짬짜면 만능 계산기
         function autoIncrementCycleText(cyc) {
             if (!cyc) return cyc;
 
-            if (/(\d+)주차/.test(cyc)) {
-                let maxCycle = 5;
-                let cycleParts = cyc.match(/(\d+)연\s*(\d+)휴/);
-                if (cycleParts) {
-                    let runOn = parseInt(cycleParts[1]);
-                    let restOn = parseInt(cycleParts[2]);
-                    maxCycle = runOn + restOn;
-                }
-                return cyc.replace(/(\d+)주차/, (m, p1) => {
-                    let nextWeek = parseInt(p1) + 1;
-                    return nextWeek > maxCycle ? "1주차" : nextWeek + "주차";
+            // 1. 'N연 M휴 K주차' 숫자 올리기 (🚨 return 하지 않고 cyc 변수에 덮어쓰기만 합니다!)
+            if (/\d+연\s*\d+휴/.test(cyc)) {
+                cyc = cyc.replace(/(\d+)연\s*(\d+)휴\s*(\d+)주차/, (match, run, rest, currentWeek) => {
+                    let maxCycle = parseInt(run) + parseInt(rest);
+                    let nextWeek = parseInt(currentWeek) + 1;
+                    // 주차가 최대치를 넘어가면 다시 1주차로 롤백!
+                    return `${run}연 ${rest}휴 ${nextWeek > maxCycle ? 1 : nextWeek}주차`;
                 });
             }
 
-            // 🔥 격주 연재 날짜(4/10)에 14일 더하기 로직!
+            // 2. 격주 연재 날짜(4/10)에 14일 더하기 (🚨 마찬가지로 cyc 변수에 덮어쓰기!)
             if (cyc.includes('격주 연재')) {
                 let match = cyc.match(/\((.*?)\)/);
                 if (match) {
@@ -1478,16 +1474,20 @@
                         let today = getWebtoonDate();
                         let tempDate = new Date(today.getFullYear(), parseInt(parts[0]) - 1, parseInt(parts[1]));
 
-                        // 🌟 [추가] 1월인데 카드에 12월이 적혀있다면 작년으로 인식하게 보정
+                        // 🌟 해가 바뀌었을 때 보정
                         if (tempDate.getTime() - today.getTime() > 180 * 24 * 60 * 60 * 1000) {
                             tempDate.setFullYear(today.getFullYear() - 1);
                         }
 
                         tempDate.setDate(tempDate.getDate() + 14);
-                        return `격주 연재 (${tempDate.getMonth() + 1}/${tempDate.getDate()})`;
+
+                        // 🌟 다른 글씨(10일 연재 등)는 가만히 두고, 격주 연재 부분만 쏙 바꿔치기!
+                        cyc = cyc.replace(/격주 연재\s*\((.*?)\)/, `격주 연재 (${tempDate.getMonth() + 1}/${tempDate.getDate()})`);
                     }
                 }
             }
+
+            // 3. 모든 계산이 끝난 최종 결과물을 여기서 딱 한 번만 반환! 퇴근! 🏃‍♂️💨
             return cyc;
         }
 
