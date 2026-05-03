@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
-    <link rel="stylesheet" href="./css/style.css?v=2.0">
+    <link rel="stylesheet" href="./css/style.css?v=2.1">
 
 
 
@@ -2105,7 +2105,11 @@
                     card.style.border = `2px solid ${borderColor}`;
                 }
 
-                if (viewDay !== '휴재' && viewDay !== '완결') { card.draggable = true; card.dataset.idx = work.origIdx; card.dataset.plt = platform; card.dataset.day = work.origDay; card.addEventListener('dragstart', handleDragStart); card.addEventListener('dragover', handleDragOver); card.addEventListener('dragenter', handleDragEnter); card.addEventListener('dragleave', handleDragLeave); card.addEventListener('drop', handleDrop); card.addEventListener('dragend', handleDragEnd); }
+                if (viewDay !== '휴재' && viewDay !== '완결') {
+                    card.dataset.idx = work.origIdx;
+                    card.dataset.plt = platform;
+                    card.dataset.day = work.origDay;
+                }
 
                 let isStrike = (work.status !== '연재중' || isBreak);
                 let unit = 'C';
@@ -2155,40 +2159,54 @@
                     listEl.appendChild(card);
                 }
             });
+
+            // 🌟 [추가할 마법 코드] 화면에 카드를 다 그렸으니, SortableJS 소환!
+            if (horizontalSortables[platform]) {
+                horizontalSortables[platform].destroy(); // 기존 마법사는 퇴근
+            }
+
+            // 휴재/완결/격주 등 정렬이 꼬이면 안 되는 특수 탭은 제외!
+            if (viewDay !== '휴재' && viewDay !== '완결' && viewDay !== '격주 연재' && viewDay !== '10일 연재') {
+                horizontalSortables[platform] = new Sortable(listEl, {
+                    animation: 150,           // 부드럽게 움직이는 속도
+                    delay: 200,               // 🚨 모바일 스와이프를 위해 0.2초 꾹 눌러야 잡히게! (핵심)
+                    delayOnTouchOnly: true,   // 터치할 때만 딜레이 걸기 (PC는 바로 잡힘)
+                    ghostClass: 'sortable-ghost', // 끌려다닐 때 흐릿해지는 CSS
+                    direction: 'horizontal',  // 가로 방향 모드!
+                    scroll: true,              // 스크롤 기능 ON!
+                    forceFallback: true,       // 🌟 [핵심 모터] 브라우저 드래그 끄고 Sortable이 직접 끝까지 밀게 만들기!
+                    fallbackOnBody: true,      // 🌟 [부드러움 증가] 카드가 박스에 걸리지 않게 화면 위로 띄워주기
+                    scrollSensitivity: 80,     // 화면 끝에서 80px 남았을 때 스크롤 발동
+                    scrollSpeed: 20,           // 스크롤 슉슉 밀리는 속도
+                    // 👆👆 여기까지 추가 완료! 👆👆
+
+                    // 카드를 툭! 하고 내려놓았을 때 실행
+                    onEnd: function (evt) {
+                        const cards = Array.from(listEl.querySelectorAll('.webtoon-card-link'));
+                        let newArr = [];
+                        let oldArr = state[platform][viewDay];
+
+                        // 화면에 보이는 순서대로 싹 쓸어담기 (해당 요일 카드만!)
+                        cards.forEach(card => {
+                            if (card.dataset.day === viewDay) {
+                                let oldIdx = parseInt(card.dataset.idx);
+                                newArr.push(oldArr[oldIdx]);
+                            }
+                        });
+
+                        // 개수가 딱 맞게 들어왔으면, 금고에 새 순서 저장!
+                        if (newArr.length === oldArr.length && newArr.every(x => x)) {
+                            state[platform][viewDay] = newArr;
+                            saveData(); // 화면 새로고침은 saveData가 알아서 해줌!
+                        } else {
+                            renderList(platform); // 뭔가 꼬였으면 원래대로 롤백!
+                        }
+                    }
+                });
+            }
         }
 
-        function handleDragStart(e) { draggedIdx = parseInt(this.dataset.idx); draggedPlt = this.dataset.plt; draggedDay = this.dataset.day; this.style.opacity = '0.4'; }
-        // 카드를 들고 움직일 때 스크롤을 자동으로 밀어주는 마법! (모바일 부스터 장착)
-        function handleDragOver(e) {
-            e.preventDefault();
 
-            const scrollContainer = this.closest('.webtoon-list');
-            if (!scrollContainer) return;
-
-            const clientX = e.clientX || e.touches?.[0]?.clientX;
-            const containerRect = scrollContainer.getBoundingClientRect();
-
-            // 현재 화면이 모바일(가로 768px 이하)인지 확인합니다.
-            const isMobile = window.innerWidth <= 768;
-
-            // 모바일이면 터치 민감도(edgeSize)와 스크롤 속도(scrollSpeed)를 확! 올립니다!
-            const edgeSize = isMobile ? 100 : 80;    // 모바일은 화면 끝에서 좀 더 일찍 반응하게!
-            const scrollSpeed = isMobile ? 50 : 20;  // 모바일은 스크롤 속도를 2.5배 뻥튀기!
-
-            // 왼쪽 끝에 닿았을 때 -> 왼쪽으로 밀기
-            if (clientX - containerRect.left < edgeSize) {
-                scrollContainer.scrollLeft -= scrollSpeed;
-            }
-            // 오른쪽 끝에 닿았을 때 -> 오른쪽으로 밀기
-            else if (containerRect.right - clientX < edgeSize) {
-                scrollContainer.scrollLeft += scrollSpeed;
-            }
-        }
-
-        function handleDragEnter(e) { e.preventDefault(); this.style.transform = 'scale(1.03)'; this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)'; }
-        function handleDragLeave(e) { this.style.transform = 'scale(1)'; this.style.boxShadow = 'none'; }
-        function handleDrop(e) { e.stopPropagation(); this.style.transform = 'scale(1)'; this.style.boxShadow = 'none'; const targetIdx = parseInt(this.dataset.idx); const targetPlt = this.dataset.plt; const targetDay = this.dataset.day; if (draggedPlt === targetPlt && draggedDay === targetDay && draggedIdx !== targetIdx) { const arr = state[draggedPlt][draggedDay]; const draggedItem = arr.splice(draggedIdx, 1)[0]; arr.splice(targetIdx, 0, draggedItem); saveData(); } }
-        function handleDragEnd(e) { this.style.opacity = '1'; renderAll(); }
 
         function incrementProgress(plt, day, idx) {
             let work = state[plt][day][idx];
@@ -3728,6 +3746,7 @@
         // --- 🎛️ 필터 및 정렬 모달창 관련 기능 ---
 
 
+        let horizontalSortables = {}; // 🌟 가로 스크롤 마법사 바구니
 
         // 💡 방금 누른 필터 버튼이 어떤 플랫폼인지 기억할 변수(메모장)
         let currentFilterPlt = '';
