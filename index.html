@@ -154,7 +154,7 @@
                         </div>
                     </div>
 
-                    <span class="platform-name" style="margin-bottom: 2px;">봄툰 코인</span>
+                    <span class="platform-name">봄툰 코인</span>
                     <span class="coin-amount" onclick="updateCoin('bomtoon')" style="cursor:pointer;"><span
                             id="bomtoon-wallet-val">0</span> C</span>
 
@@ -176,7 +176,7 @@
                         </div>
                     </div>
 
-                    <span class="platform-name" style="margin-bottom: 2px;">레진 코인</span>
+                    <span class="platform-name">레진 코인</span>
                     <span class="coin-amount" onclick="updateCoin('lezhin')" style="cursor:pointer;"><span
                             id="lezhin-wallet-val">0</span> C</span>
 
@@ -198,7 +198,7 @@
                         </div>
                     </div>
 
-                    <span class="platform-name" style="margin-bottom: 2px;">리디 캐시</span>
+                    <span class="platform-name">리디 캐시</span>
                     <span class="coin-amount" onclick="updateCoin('ridi')" style="cursor:pointer;"><span
                             id="ridi-wallet-val">0</span>원</span>
 
@@ -221,7 +221,7 @@
                         </div>
                     </div>
 
-                    <span class="platform-name" style="margin-bottom: 2px;">미블 머니</span>
+                    <span class="platform-name">미블 머니</span>
                     <span class="coin-amount" onclick="updateCoin('mrblue')" style="cursor:pointer;"><span
                             id="mrblue-wallet-val">0</span>원</span>
 
@@ -255,7 +255,7 @@
                 <h2 class="platform-header lezhin-title">레진 (<span id="lezhin-day-display">요일</span>)</h2>
                 <button class="add-work-btn" onclick="openAddModal('lezhin')">+ 추가</button>
             </div>
-            <div class="total-coin-banner">오늘의 필요 코인: <span id="lezhin-needed-val">0</span>개 <span id="lezhin-count-val"
+            <div class="total-coin-banner">오늘의 필요 코인: <span id="lezhin-needed-val">0</span>개<span id="lezhin-count-val"
                     class="work-count-text">(작품 총 0개)</span>
                 <button class="filter-btn" onclick="toggleFilterMenu('lezhin')">
                     <i data-lucide="sliders-horizontal" style="width: 18px; height: 18px;"></i>
@@ -3735,6 +3735,13 @@
         // 🌟 [업그레이드] 숨기기 스위치를 플랫폼별로 4개 달아줍니다!
         let isHidingFinished = { lezhin: false, bomtoon: false, ridi: false, mrblue: false };
 
+        // 🌟 [핵심 로직] 페이지를 처음 켤 때, 로컬 스토리지에서 저장된 필터 기억을 꺼내옵니다!
+        const savedHideData = localStorage.getItem('mobo_hide_works_plt');
+        if (savedHideData) {
+            // 포장지(문자열)를 뜯어서 다시 자바스크립트 주머니(객체)로 복구!
+            isHidingFinished = JSON.parse(savedHideData);
+        }
+
         // 1. 모달창 열기
         function toggleFilterMenu(plt) {
             currentFilterPlt = plt;
@@ -3850,13 +3857,26 @@
 
 
 
-        // 🌟 [업그레이드] 현재 선택한 플랫폼의 숨기기 스위치만 똑딱! 켜고 끄는 함수
+        // 🌟 [최종 완성본] 현재 선택한 플랫폼의 숨기기 스위치만 똑딱! 켜고 끄는 함수
         function toggleHideWorks() {
-            // 해당 플랫폼의 상태만 반대로 뒤집기 (true <-> false)
+            // 1. 해당 플랫폼의 상태만 반대로 뒤집기 (true <-> false)
             isHidingFinished[currentFilterPlt] = !isHidingFinished[currentFilterPlt];
 
-            // 상태가 바뀌었으니 화면 전체를 다시 그려서 즉시 반영!
+            // 🌟 2. 핵심!! 플랫폼 4개의 상태가 담긴 주머니를 통째로 포장해서 장기 기억장치에 저장!
+            localStorage.setItem('mobo_hide_works_plt', JSON.stringify(isHidingFinished));
+
+            // 3. 버튼 글씨 바꾸기
+            const hideTextBtn = document.getElementById('hide-text');
+            if (isHidingFinished[currentFilterPlt]) {
+                hideTextBtn.textContent = '휴재 및 완결 작품 꺼내기';
+            } else {
+                hideTextBtn.textContent = '휴재 및 완결 작품 숨기기';
+            }
+
+            // 🌟 4. 상태가 바뀌었으니 화면 전체를 다시 그려서 (renderAll) 숨김/표시 즉시 반영!
             renderAll();
+
+            // 모달창 닫기
             closeFilterMenu();
         }
 

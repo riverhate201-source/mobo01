@@ -27,7 +27,7 @@ body.dark-mode {
 .main-page-title {
     text-align: center;
     margin-top: 40px;
-    margin-bottom: 30px;
+    margin-bottom: 24px;
     font-size: 28px;
     line-height: 1.2;
 }
@@ -302,12 +302,12 @@ body.dark-mode .mini-bar {
 
     border: 1px solid #ddd;
 
-    width: 42px !important;
+    width: 40px;
     /* '전체' 글씨가 예쁘게 들어가도록 아주 살짝만 키움 */
 
-    height: 42px !important;
+    height: 40px;
 
-    border-radius: 50%;
+    border-radius: 14px;
 
     color: #333;
 
@@ -400,7 +400,7 @@ body.dark-mode .my-wallet-container {
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    margin-top: 5px;
+    margin-top: 8px;
 }
 
 .lezhin-wallet {
@@ -412,11 +412,11 @@ body.dark-mode .my-wallet-container {
 }
 
 body.dark-mode .lezhin-wallet {
-    color: #eee;
+    color: #fff;
 }
 
 body.dark-mode .bomtoon-wallet {
-    color: #eee;
+    color: #fff;
 }
 
 .wallet-divider {
@@ -458,14 +458,14 @@ body.dark-mode .webtoon-container {
 }
 
 .add-work-btn {
-    background: #333;
+    background: #666;
     color: #fff;
     border: none;
     padding: 6px 14px;
     border-radius: 12px;
     cursor: pointer;
     font-size: 14px;
-    margin-bottom: 8px;
+    margin-bottom: 7px;
 }
 
 body.dark-mode .add-work-btn {
@@ -476,19 +476,37 @@ body.dark-mode .add-work-btn {
     position: relative;
     background: #fff4d1;
     padding: 14px;
+    margin-top: 8px;
     border-radius: 15px;
     text-align: center;
-    font-weight: bold;
-    margin-bottom: 9px;
+    font-weight: normal;
+    margin-bottom: 13px;
     font-size: 17px;
-    color: #444;
+    color: #4c4c4c;
 }
 
+#lezhin-needed-val,
+#bomtoon-needed-val,
+#ridi-needed-val,
+#mrblue-needed-val {
+    font-weight: bold;
+    color: #333;
+    /* 일반 bold보다 더 두꺼운 900을 주면 훨씬 눈에 잘 띕니다! */
+}
+
+body.dark-mode #lezhin-needed-val,
+#bomtoon-needed-val,
+#ridi-needed-val,
+#mrblue-needed-val {
+    color: #fff;
+}
 
 body.dark-mode .total-coin-banner {
     background: #3d3521;
-    color: #d4c18d;
+    color: #eeee;
 }
+
+
 
 
 /* 🚨 여기서부터 빠져있던 핵심 뼈대들입니다! 🚨 */
@@ -639,9 +657,9 @@ body.dark-mode .filter-close-bottom-btn span {
 
 .balance-info {
     text-align: center;
-    font-size: 13px;
+    font-size: 15px;
     color: #999;
-    margin-bottom: 15px;
+    margin-top: 8px;
 }
 
 .scroll-wrapper {
@@ -654,7 +672,7 @@ body.dark-mode .filter-close-bottom-btn span {
     gap: 12px;
     overflow-x: auto;
     scrollbar-width: none;
-    padding: 10px 0;
+    padding: 24px 0;
     min-height: 180px;
     scroll-behavior: smooth;
 }
@@ -955,7 +973,7 @@ body.dark-mode .img-pick-btn {
     font-size: 14px;
     color: #777;
     font-weight: normal;
-    margin-left: 4px;
+    margin-left: 8px;
 }
 
 body.dark-mode .work-count-text {
@@ -965,21 +983,21 @@ body.dark-mode .work-count-text {
 .highlight-result-lezhin {
     font-weight: 900;
     font-size: 15px;
-    color: #e60012;
+    color: #333;
 }
 
 body.dark-mode .highlight-result-lezhin {
-    color: #ff6b76;
+    color: #eee;
 }
 
 .highlight-result-bomtoon {
     font-weight: 900;
     font-size: 15px;
-    color: #ff69b4;
+    color: #333;
 }
 
 body.dark-mode .highlight-result-bomtoon {
-    color: #ff85c0;
+    color: #eee;
 }
 
 .backup-alert {
@@ -1129,7 +1147,7 @@ body.dark-mode .action-btns-container .act-btn:hover {
 
 .attend-btn.done {
     background: #e8f5e9;
-    color: #2e7d32;
+    color: #666;
     border-color: #c8e6c9;
 }
 
@@ -1141,7 +1159,7 @@ body.dark-mode .attend-btn {
 
 body.dark-mode .attend-btn.done {
     background: #1b3320;
-    color: #81c784;
+    color: #d4d4d4;
     border-color: #2e7d32;
 }
 
@@ -1307,29 +1325,35 @@ body.dark-mode .mrblue-card .no-img-title {
     border: 1px solid #444;
 }
 
+.platform-name {
+    margin-bottom: 2px;
+    font-weight: normal;
+    color: #666;
+}
+
+body.dark-mode .platform-name {
+    color: #cfcfcf;
+}
+
 /* --- 리디 지갑 색상 관리 --- */
-.ridi-wallet .platform-name,
 .ridi-wallet .coin-amount {
     color: #333;
     /* 라이트 모드: 원래 리디색 */
 }
 
-body.dark-mode .ridi-wallet .platform-name,
 body.dark-mode .ridi-wallet .coin-amount {
-    color: #eee;
+    color: #fff;
     /* 다크 모드: 눈 편한 하늘색 */
 }
 
 /* --- 미블 지갑 색상 관리 --- */
-.mrblue-wallet .platform-name,
 .mrblue-wallet .coin-amount {
     color: #333;
     /* 라이트 모드: 원래 미블색 */
 }
 
-body.dark-mode .mrblue-wallet .platform-name,
 body.dark-mode .mrblue-wallet .coin-amount {
-    color: #eee;
+    color: #fff;
     /* 다크 모드: 선생님이 찜한 밝은 파랑! */
 }
 
@@ -1338,21 +1362,21 @@ body.dark-mode .mrblue-wallet .coin-amount {
 .highlight-result-ridi {
     font-weight: 900;
     font-size: 15px;
-    color: #1e90ff;
+    color: #333;
 }
 
 body.dark-mode .highlight-result-ridi {
-    color: #5dade2;
+    color: #eee;
 }
 
 .highlight-result-mrblue {
     font-weight: 900;
     font-size: 15px;
-    color: #004e9a;
+    color: #333;
 }
 
 body.dark-mode .highlight-result-mrblue {
-    color: #66a3ff;
+    color: #eee;
 }
 
 /* 공통 이벤트 뱃지 스타일  */
@@ -2192,7 +2216,7 @@ body.dark-mode .toggle-switch input:checked+.toggle-slider {
 
 /* 브라우저 기본값을 무시하고 내 마음대로 커스텀! */
 .platform-header {
-    font-size: 24px;
+    font-size: 26px;
     /* 브라우저 기본 1.5em을 무시하고 18px로 덮어씌움 */
     margin: 3px;
     padding: 6px 0;
