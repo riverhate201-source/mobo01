@@ -2225,24 +2225,6 @@ body.dark-mode .toggle-switch input:checked+.toggle-slider {
     /* 무조건 굵게 나오는 걸 적당한 굵기로 변경 */
 }
 
-/* 1. 원래 자리에 남아있는 빈자리 (투명도 0.4 적용!) */
-.sortable-ghost {
-    opacity: 0.4 !important;
-}
-
-/* 2. 손가락을 쫀득하게 따라다니는 진짜 카드 (살짝 커지고 그림자 뽝!) */
-.sortable-fallback {
-    opacity: 1 !important;
-    z-index: 9999 !important;
-    /* 무조건 제일 위에 보이게! */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
-    /* 입체감 부여 */
-    transition: none !important;
-    pointer-events: none !important;
-    cursor: grabbing !important;
-}
-
-
 
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
 a[x-apple-data-detectors] {
