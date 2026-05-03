@@ -2173,12 +2173,14 @@
                     delayOnTouchOnly: true,   // 터치할 때만 딜레이 걸기 (PC는 바로 잡힘)
                     ghostClass: 'sortable-ghost', // 끌려다닐 때 흐릿해지는 CSS
                     direction: 'horizontal',  // 가로 방향 모드!
-                    scroll: true,              // 스크롤 기능 ON!
-                    forceFallback: true,       // 🌟 [핵심 모터] 브라우저 드래그 끄고 Sortable이 직접 끝까지 밀게 만들기!
-                    fallbackOnBody: true,      // 🌟 [부드러움 증가] 카드가 박스에 걸리지 않게 화면 위로 띄워주기
-                    scrollSensitivity: 80,     // 화면 끝에서 80px 남았을 때 스크롤 발동
-                    scrollSpeed: 20,           // 스크롤 슉슉 밀리는 속도
-                    // 👆👆 여기까지 추가 완료! 👆👆
+                    // 🚨👇 여기서부터 모바일 전용으로 강력하게 수정! 👇🚨
+                    scroll: listEl,            // 1. [가장 핵심!!] true 대신 listEl을 적어줍니다! ("이 가로 박스만 스크롤해!" 라고 타겟 지정)
+                    bubbleScroll: true,        // 2. [추가] 모바일에서 스크롤 꼬임(먹통)을 방지해 주는 마법 스위치!
+                    forceFallback: true,
+                    fallbackOnBody: true,
+                    scrollSensitivity: 100,    // 3. 모바일은 화면이 좁으니 가장자리 인식 범위를 80 -> 100으로 살짝 넓혀줍니다.
+                    scrollSpeed: 20,
+                    // 👆👆 여기까지 수정 완료! 👆👆
 
                     // 카드를 툭! 하고 내려놓았을 때 실행
                     onEnd: function (evt) {
