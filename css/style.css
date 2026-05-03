@@ -495,9 +495,9 @@ body.dark-mode .add-work-btn {
 }
 
 body.dark-mode #lezhin-needed-val,
-#bomtoon-needed-val,
-#ridi-needed-val,
-#mrblue-needed-val {
+body.dark-mode #bomtoon-needed-val,
+body.dark-mode #ridi-needed-val,
+body.dark-mode #mrblue-needed-val {
     color: #fff;
 }
 
