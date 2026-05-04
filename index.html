@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
-    <link rel="stylesheet" href="./css/style.css?v=2.2">
+    <link rel="stylesheet" href="./css/style.css?v=2.3">
 
 
 
@@ -2001,7 +2001,8 @@
 
 
             // 🌟 [여기에 추가!] 숨기기 모드가 켜져 있다면, 휴재/완결/자동휴재 카드 걸러내기!
-            if (isHidingFinished[platform]) {
+            // 🚨 단, 유저가 메뉴에서 직접 '휴재'나 '완결' 탭을 눌러서 들어온 거라면 숨기지 않기!
+            if (isHidingFinished[platform] && viewDay !== '휴재' && viewDay !== '완결') {
                 displayWorks = displayWorks.filter(work => !isWorkOnBreak(work));
             }
 
@@ -2986,15 +2987,15 @@
 
         function checkBackupStatus() { const lastBackup = localStorage.getItem('lastBackupDate'); const alertEl = document.getElementById('backup-alert'); if (!lastBackup || (Date.now() - parseInt(lastBackup)) / 86400000 >= 7) alertEl.style.display = 'block'; else alertEl.style.display = 'none'; }
 
-        // 주간 누적 통계 UI 업데이트 (코인 색상 파란색으로 통일!)
+        // 주간 누적 통계 UI 업데이트
         function updateWeeklyStatUI() {
             const coinSpent = formatNum(localStorage.getItem('weeklySpent') || 0);
             const wonSpent = formatNum(localStorage.getItem('weeklySpentWon') || 0);
 
             const el = document.getElementById('weekly-spent-val');
             if (el) {
-
-                el.innerHTML = `<span style="color:#4d96ea; font-weight:bold;">${coinSpent} C</span> <span style="color:#ccc; margin:0 6px;">|</span> <span style="color:#4d96ea; font-weight:bold;">${wonSpent} 원</span>`;
+                // 🌟 가운데 있던 구분선 태그를 통째로 삭제! 딱 알맹이(값) 두 개만 남깁니다!
+                el.innerHTML = `<span class="stat-val">${coinSpent} C</span><span class="stat-val">${wonSpent} 원</span>`;
             }
         }
 
