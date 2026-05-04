@@ -1,6 +1,6 @@
 {
     "name": "모보 mobo",
-    "short_name": "mobo",
+    "short_name": "mobo_demo",
     "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#f4f6f8",
