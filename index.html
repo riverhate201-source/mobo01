@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
-    <link rel="stylesheet" href="./css/style.css?v=2.4">
+    <link rel="stylesheet" href="./css/style.css?v=3.0">
 
 
 
@@ -132,7 +132,7 @@
     </div>
 
     <div id="global-event-alert"
-        style="display:none; text-align:center; font-size:12px; color:#e60012; background-color:#fff0f0; border:1px solid #ffcccc; padding:4px 12px; border-radius:20px; width:fit-content; margin:0 auto 10px auto; font-weight:bold;">
+        style="display:none; text-align:center; font-size:12px; color:#e60012; background-color:#fff0f0; border:1px solid #ffcccc; padding:4px 12px; border-radius:20px; width:fit-content; margin:0 auto 16px auto; font-weight:bold;">
         옆으로 넘겨보세요! 플랫폼 이벤트 진행 중!
     </div>
 
@@ -341,16 +341,116 @@
         2026 우니 @s_euni_
     </footer>
 
-    <div id="custom-modal" class="modal-overlay" style="display: none;">
+    <!-- 🎛️ 작품 추가/수정 모달창 (최종 진화형) -->
+    <div id="custom-modal" class="modal-overlay" style="display: none; z-index: 6000;">
         <div class="modal-content">
             <h3 id="modal-title-label">작품 추가</h3>
-            <input type="text" id="input-title" placeholder="작품 제목">
-            <input type="text" id="input-url" placeholder="작품 바로가기 링크 (선택)" style="margin-top: 2px;">
-            <input type="text" id="input-time" placeholder="업로드 시간 (예: 오전 7시 업로드 / 웹소설의 경우에만)" style="flex: 1;">
 
-            <div style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- 🌟 단일/일괄 스위치 버튼 -->
+            <div id="add-mode-toggle-container"
+                style="display: flex; gap: 10px; margin-bottom: 16px; background: #f1f3f5; padding: 4px; border-radius: 8px;">
+                <button id="btn-mode-single" onclick="setAddMode('single')"
+                    style="flex: 1; padding: 8px; border: none; background: #fff; border-radius: 6px; font-weight: normal; color: #333; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer;">단일
+                    추가</button>
+                <button id="btn-mode-batch" onclick="setAddMode('batch')"
+                    style="flex: 1; padding: 8px; border: none; background: transparent; border-radius: 6px; font-weight: normal; color: #888; cursor: pointer;">요일별
+                    일괄 추가</button>
+            </div>
+
+            <!-- 🌟 [최종 진화] 요일별 일괄 추가 해시태그 바둑판! -->
+            <div id="batch-add-section" style="display: none; margin-bottom: 15px;">
+                <p class="batch-guide-text">제목을 적고 엔터, 쉼표, 또는 스페이스바 2번을 누르세요!</p>
+
+                <!-- 🔥 1fr 대신 minmax(0, 1fr)로 바꿔서 바둑판 팽창을 완벽 차단! -->
+                <div class="hide-scrollbar"
+                    style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; max-height: 350px; overflow-y: auto; padding-right: 4px; padding-bottom: 5px; scrollbar-width: none; -ms-overflow-style: none;">
+
+                    <!-- 🔥 각 요일 박스마다 style="min-width: 0;" 을 넣어서 튀어나가는 걸 막았습니다! -->
+                    <div style="min-width: 0;"><label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 8px; font-weight: normal;">월요일</label>
+                        <div class="tag-wrapper" onclick="document.getElementById('batch-input-월요일').focus()">
+                            <div id="tag-list-월요일" class="tag-list"></div><textarea id="batch-input-월요일"
+                                class="tag-input" placeholder="입력 후 엔터" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div style="min-width: 0;"><label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 2px; font-weight: normal;">화요일</label>
+                        <div class="tag-wrapper" onclick="document.getElementById('batch-input-화요일').focus()">
+                            <div id="tag-list-화요일" class="tag-list"></div><textarea id="batch-input-화요일"
+                                class="tag-input" placeholder="입력 후 엔터" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div style="min-width: 0;"><label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 2px; font-weight: normal;">수요일</label>
+                        <div class="tag-wrapper" onclick="document.getElementById('batch-input-수요일').focus()">
+                            <div id="tag-list-수요일" class="tag-list"></div><textarea id="batch-input-수요일"
+                                class="tag-input" placeholder="입력 후 엔터" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div style="min-width: 0;"><label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 2px; font-weight: normal;">목요일</label>
+                        <div class="tag-wrapper" onclick="document.getElementById('batch-input-목요일').focus()">
+                            <div id="tag-list-목요일" class="tag-list"></div><textarea id="batch-input-목요일"
+                                class="tag-input" placeholder="입력 후 엔터" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div style="min-width: 0;"><label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 2px; font-weight: normal;">금요일</label>
+                        <div class="tag-wrapper" onclick="document.getElementById('batch-input-금요일').focus()">
+                            <div id="tag-list-금요일" class="tag-list"></div><textarea id="batch-input-금요일"
+                                class="tag-input" placeholder="입력 후 엔터" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div style="min-width: 0;"><label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 2px; font-weight: normal;">토요일</label>
+                        <div class="tag-wrapper" onclick="document.getElementById('batch-input-토요일').focus()">
+                            <div id="tag-list-토요일" class="tag-list"></div><textarea id="batch-input-토요일"
+                                class="tag-input" placeholder="입력 후 엔터" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div style="min-width: 0;"><label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 2px; font-weight: normal;">일요일</label>
+                        <div class="tag-wrapper" onclick="document.getElementById('batch-input-일요일').focus()">
+                            <div id="tag-list-일요일" class="tag-list"></div><textarea id="batch-input-일요일"
+                                class="tag-input" placeholder="입력 후 엔터" rows="1"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 특수 요일 상자 -->
+                    <div style="min-width: 0;">
+                        <label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 2px; font-weight: normal;">10일 연재</label>
+                        <div class="tag-wrapper wrapper-10day"
+                            onclick="document.getElementById('batch-input-10일 연재').focus()">
+                            <div id="tag-list-10일 연재" class="tag-list"></div><textarea id="batch-input-10일 연재"
+                                class="tag-input" placeholder="입력 후 엔터" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div style="grid-column: span 2; min-width: 0;">
+                        <label class="batch-theme-text"
+                            style="font-size: 12px; font-weight: normal; padding-right: 2px;">격주 연재</label>
+                        <div class="tag-wrapper wrapper-biweekly"
+                            onclick="document.getElementById('batch-input-격주 연재').focus()">
+                            <div id="tag-list-격주 연재" class="tag-list"></div><textarea id="batch-input-격주 연재"
+                                class="tag-input" placeholder="입력 후 엔터" rows="1"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="batch-footer-desc">* 기본 가격(레진/봄툰 3C, 리디 600캐시/미블 500머니)과 진도 '1화'로 자동세팅됩니다. 10일/격주 날짜는 임의설정되며
+                    추후 수정 가능합니다.</p>
+            </div>
+
+            <!-- 1️⃣ 단일 추가 전용 윗부분 (제목, 링크, 시간) -->
+            <div id="single-add-section-1">
+                <input type="text" id="input-title" placeholder="작품 제목">
+                <input type="text" id="input-url" placeholder="작품 바로가기 링크 (선택)" style="margin-top: 2px;">
+                <input type="text" id="input-time" placeholder="업로드 시간 (예: 오전 7시 업로드 / 웹소설의 경우에만)" style="flex: 1;">
+            </div>
+
+            <!-- 2️⃣ 공통 영역 (요일 체크박스 + 상태) -->
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 5px;">
                 <div id="day-selection-area" style="width: 100%;">
-
                     <div
                         style="display: flex; flex-wrap: wrap; gap: 6px; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
                         <label class="chk-label"><input type="checkbox" name="day-chk" value="월요일"
@@ -381,49 +481,47 @@
                 </select>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 12px; margin-bottom: 12px;">
-                <select id="input-cycle-type" class="modal-select" style="flex: 2; margin-bottom: 0;"
-                    onchange="toggleCycleInputs(this)">
-                    <option value="">연재 주기 선택 (없음)</option>
-                    <option value="5연 1휴">5연 1휴</option>
-                    <option value="4연 1휴">4연 1휴</option>
-                    <option value="3연 1휴">3연 1휴</option>
-                    <option value="2연 1휴">2연 1휴</option>
-                    <option value="매월 특정 주 휴재">매월 특정 주 휴재</option>
-                    <option value="격주 연재">격주 연재</option>
-                </select>
-                <input type="text" id="input-cycle-week" placeholder="n주차 (숫자)"
-                    style="display: none; flex: 1; margin-bottom: 0; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+            <!-- 3️⃣ 단일 추가 전용 아랫부분 (주기, 코인, 결제, 사진) -->
+            <div id="single-add-section-2">
+                <div style="display: flex; gap: 10px; margin-top: 12px; margin-bottom: 12px;">
+                    <select id="input-cycle-type" class="modal-select" style="flex: 2; margin-bottom: 0;"
+                        onchange="toggleCycleInputs(this)">
+                        <option value="">연재 주기 선택 (없음)</option>
+                        <option value="5연 1휴">5연 1휴</option>
+                        <option value="4연 1휴">4연 1휴</option>
+                        <option value="3연 1휴">3연 1휴</option>
+                        <option value="2연 1휴">2연 1휴</option>
+                        <option value="매월 특정 주 휴재">매월 특정 주 휴재</option>
+                        <option value="격주 연재">격주 연재</option>
+                    </select>
+                    <input type="text" id="input-cycle-week" placeholder="n주차 (숫자)"
+                        style="display: none; flex: 1; margin-bottom: 0; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="input-coin" placeholder="코인"
+                        style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+                    <input type="text" id="input-progress" placeholder="진도 (예: 1화)"
+                        style="flex: 2; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+                </div>
+
+                <label id="add-deduct-label"
+                    style="display:flex; align-items:center; gap:8px; margin-bottom:10px; border: 1px solid #ddd; font-size:14px; color:#555; cursor:pointer; background: #f8f9fa; padding: 10px; border-radius: 8px;">
+                    <input type="checkbox" id="add-deduct-chk" style="width:16px; height:16px; margin:0;">
+                    <span style="font-weight: normal; color: #333;">구매한 화수만큼 지갑에서 차감하기</span>
+                </label>
+
+                <p id="image-status-text" style="text-align: center; font-size: 12px; margin-bottom: 5px;">📷 사진은 선택
+                    사항입니다.</p>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button onclick="document.getElementById('image-input').click()" class="img-pick-btn"
+                        style="margin-bottom: 0; flex: 1;">사진 선택하기</button>
+                    <button id="remove-img-btn" onclick="removeSelectedImage()" class="cancel-btn"
+                        style="margin-bottom: 0; display: none; flex: 1; font-weight: normal; border: 1px dashed rgb(255, 204, 204); background: #FDFDFD; border-radius: 10px;">사진
+                        삭제</button>
+                </div>
             </div>
-
-            <div style="display: flex; gap: 10px;">
-                <input type="number" id="input-coin" placeholder="코인"
-                    style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
-                <input type="text" id="input-progress" placeholder="진도 (예: 1화)"
-                    style="flex: 2; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
-            </div>
-
-            <label id="add-deduct-label"
-                style="display:flex; align-items:center; gap:8px;  margin-bottom:10px; border: 1px solid #ddd; font-size:14px; color:#555; cursor:pointer; background: #f8f9fa; padding: 10px; border-radius: 8px;">
-                <input type="checkbox" id="add-deduct-chk" style="width:16px; height:16px; margin:0;">
-                <span style="font-weight: normal; color: #333;">구매한 화수만큼 지갑에서 차감하기</span>
-            </label>
-
-            <p id="image-status-text" style="text-align: center; font-size: 12px; margin-bottom: 5px;">
-                📷
-                사진은 선택
-                사항입니다.
-            </p>
-
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <button onclick="document.getElementById('image-input').click()" class="img-pick-btn"
-                    style="margin-bottom: 0; flex: 1;">사진 선택하기</button>
-                <button id="remove-img-btn" onclick="removeSelectedImage()" class="cancel-btn"
-                    style="margin-bottom: 0; display: none; flex: 1; font-weight: normal; border: 1px dashed rgb(255, 204, 204); background: #FDFDFD; border-radius: 10px;">사진
-                    삭제</button>
-            </div>
-
-
 
             <div class="modal-btns">
                 <button onclick="closeAddModal()" class="cancel-btn">취소</button>
@@ -703,6 +801,16 @@
 
     <script>
 
+        // 📊 GA4 클릭 추적용 공통 함수
+        function trackClick(eventName, eventDetails) {
+            // gtag(구글 애널리틱스)가 정상적으로 로드되었을 때만 실행! (에러 방지)
+            if (typeof gtag === 'function') {
+                gtag('event', eventName, eventDetails);
+            } else {
+                console.log('클릭 추적됨 (GA 미연결):', eventName, eventDetails);
+            }
+        }
+
         function isWorkOnAutoBreak(work) {
             if (!work.cycle) return false;
 
@@ -880,6 +988,8 @@
             }
         }
 
+
+
         function isDateMatch(cycleStr, dateObj) {
             if (!cycleStr || !cycleStr.includes("10일 연재")) return false;
             let match = cycleStr.match(/\((.*?)\)/);
@@ -953,6 +1063,7 @@
             cleanupIncorrectHistoryV2();
             applyTheme();
             lucide.createIcons();
+            checkCoinExpiration();
             checkSaleDays();
             checkAttendanceReset();
             checkAndShowAttendPopup();
@@ -964,6 +1075,114 @@
             autoUpdatePastBiweeklyDates(); // 🔥 앱 처음 켤 때도 날짜 갱신 검사!
         };
 
+        // 🪄 태그(칩) 생성 함수
+        function addTag(day, text) {
+            text = text.trim();
+            if (!text) return;
+            const tagList = document.getElementById(`tag-list-${day}`);
+            const span = document.createElement('span');
+            span.className = 'tag-chip';
+            span.dataset.val = text; // 나중에 저장할 때 빼갈 데이터!
+            span.innerHTML = `${text} <span class="tag-chip-del" onclick="this.parentElement.remove()">×</span>`;
+            tagList.appendChild(span);
+            // 🌟 [핵심 마법] 칩이 추가될 때마다 스크롤을 맨 아래로 끌어내려서 입력창을 무조건 보여주기!
+            setTimeout(() => {
+                const wrapper = tagList.parentElement;
+                if (wrapper) wrapper.scrollTop = wrapper.scrollHeight;
+            }, 10);
+        }
+
+        // 🪄 엔터, 쉼표, 더블스페이스, 백스페이스 감지 센서 설치!
+        document.addEventListener("DOMContentLoaded", () => {
+            const dayList = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일', '10일 연재', '격주 연재'];
+            dayList.forEach(day => {
+                const input = document.getElementById(`batch-input-${day}`);
+                const tagList = document.getElementById(`tag-list-${day}`);
+                if (!input || !tagList) return;
+
+                // 1. [키보드 누를 때] 폼 제출 방지 및 백스페이스 삭제
+                input.addEventListener('keydown', function (e) {
+                    if (e.isComposing) return;
+
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addTag(day, this.value);
+                        this.value = '';
+                    } else if (e.key === 'Backspace' && this.value === '') {
+                        if (tagList.lastChild) {
+                            tagList.removeChild(tagList.lastChild);
+                        }
+                    }
+                });
+
+                // 2. 🌟 [핵심] 글자가 입력될 때 (복붙 포함) 줄바꿈(\n), 쉼표(,), 더블스페이스 즉시 감지!
+                input.addEventListener('input', function (e) {
+                    if (this.value.includes('\n') || this.value.includes(',') || this.value.includes('  ')) {
+                        // 엔터나 쉼표가 들어오면 싹 다 쪼개버리기!
+                        const parts = this.value.split(/[\n,]+|\s{2,}/).map(t => t.trim()).filter(t => t !== "");
+                        this.value = ''; // 입력창 싹 비우기
+                        parts.forEach(p => addTag(day, p));
+                    }
+                });
+            });
+        });
+
+        // 🎛️ 모달창 단일/일괄 스위치 변신 함수!
+        function setAddMode(mode) {
+            const btnSingle = document.getElementById('btn-mode-single');
+            const btnBatch = document.getElementById('btn-mode-batch');
+            const sectionSingle1 = document.getElementById('single-add-section-1');
+            const sectionSingle2 = document.getElementById('single-add-section-2');
+            const sectionBatch = document.getElementById('batch-add-section');
+            const templateArea = document.getElementById('template-recommend-area');
+
+            // 🌟 요일/상태 공통 부모 박스와 모달창 제목 찾기!
+            const commonArea = document.getElementById('day-selection-area').parentElement;
+            const modalTitle = document.getElementById('modal-title-label'); // 👈 제목 요소 가져오기
+
+            // 🌟 현재 선택된 플랫폼의 한글 이름 변환기
+            const pltNames = { lezhin: '레진', bomtoon: '봄툰', ridi: '리디', mrblue: '미블' };
+            const currentPltName = pltNames[currentPlatform] || '';
+
+            if (mode === 'single') {
+                // 단일 추가 버튼 불 켜기
+                btnSingle.style.background = '#fff'; btnSingle.style.color = '#333'; btnSingle.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                btnBatch.style.background = 'transparent'; btnBatch.style.color = '#888'; btnBatch.style.boxShadow = 'none';
+
+                sectionSingle1.style.display = 'block';
+                sectionSingle2.style.display = 'block';
+                sectionBatch.style.display = 'none';
+
+                // 단일 모드일 땐 다시 보여주기!
+                if (commonArea) commonArea.style.display = 'flex';
+
+                if (templateArea && document.getElementById('template-chips-container').innerHTML.trim() !== "") {
+                    templateArea.style.display = 'block';
+                }
+
+                // 🌟 [핵심] 단일 추가 탭일 때는 원래대로 "작품 추가"로 복구!
+                modalTitle.textContent = "작품 추가";
+
+            } else {
+                // 일괄 추가 버튼 불 켜기
+                btnBatch.style.background = '#fff'; btnBatch.style.color = '#333'; btnBatch.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                btnSingle.style.background = 'transparent'; btnSingle.style.color = '#888'; btnSingle.style.boxShadow = 'none';
+
+                sectionSingle1.style.display = 'none';
+                sectionSingle2.style.display = 'none';
+                // 바둑판 그리드 활성화
+                sectionBatch.style.display = 'grid';
+
+                // 일괄 모드일 땐 헷갈리는 요일/상태 선택창 싹 숨기기!
+                if (commonArea) commonArea.style.display = 'none';
+
+                if (templateArea) templateArea.style.display = 'none';
+
+                // 🌟 [핵심] 일괄 추가 탭일 때는 제목 옆에 (플랫폼) 이름 딱 박아주기!
+                modalTitle.textContent = `작품 추가 (${currentPltName})`;
+            }
+        }
+
 
         function checkAndShowAttendPopup() {
             const lAttend = localStorage.getItem('lezhinAttend') === 'true';
@@ -973,6 +1192,32 @@
             if (missing.length > 0) {
                 document.getElementById('attend-missing-text').innerHTML = `(현재 <b>${missing.join(', ')}</b> 출석 전입니다)`;
                 document.getElementById('attend-warning-modal').style.display = 'flex';
+            }
+        }
+
+        // 📊 24시간 레진 보너스 코인 소멸 검사기
+        function checkCoinExpiration() {
+            const expireTime = localStorage.getItem('lezhinBonusExpire');
+
+            // 1. 타이머가 존재하고 & 2. 현재 시간이 타이머 시간을 넘어섰다면?!
+            if (expireTime && Date.now() > parseInt(expireTime)) {
+
+                // 유저의 현재 레진 코인 잔액을 가져옵니다. (우니님 변수명 lWallet)
+                let currentLezhinCoins = parseInt(localStorage.getItem('lWallet') || 0);
+
+                // 코인이 0보다 클 때만 1코인을 뺏어옵니다. (마이너스 통장 방지)
+                if (currentLezhinCoins > 0) {
+                    localStorage.setItem('lWallet', currentLezhinCoins - 1); // 1코인 뺏어서 저장
+
+                    // 유저에게 친절하게(하지만 슬프게) 알려주기
+                    alert('레진 출석 보너스(1C)를 24시간 내에 사용하지 않아 소멸되었어요.');
+
+                    // 화면 지갑 잔액 즉시 새로고침
+                    refreshBalance();
+                }
+
+                // 폭탄이 터졌으니 타이머 기록은 지워줍니다.
+                localStorage.removeItem('lezhinBonusExpire');
             }
         }
 
@@ -1222,6 +1467,11 @@
                 addWeeklySpent(0, amount); // 원/캐시는 뒤쪽으로
             } else {
                 addWeeklySpent(amount, 0); // 코인은 앞쪽으로
+            }
+
+            // 🌟 [여기에 추가!] 결제한 플랫폼이 레진이라면, 폭탄 타이머를 해체(삭제)합니다!
+            if (plt === 'lezhin') {
+                localStorage.removeItem('lezhinBonusExpire');
             }
 
             // 마무리 저장 및 갱신
@@ -1744,6 +1994,10 @@
                 const currentWallet = parseInt(localStorage.getItem('lWallet') || 0);
                 localStorage.setItem('lWallet', currentWallet + 1); // 기존 잔액 + 1 저장
                 refreshBalance(); // 화면 지갑 잔액 즉시 업데이트!
+
+                // 🌟 [핵심 추가] 지금부터 24시간(밀리초) 뒤에 폭탄이 터지도록 시간 기록!
+                const expireTime = Date.now() + (24 * 60 * 60 * 1000);
+                localStorage.setItem('lezhinBonusExpire', expireTime);
             }
 
             // 3. 코인 검사가 끝났으니, 이제 출석 도장 쾅! (다음에 또 누르면 alreadyAttended가 true가 됨)
@@ -1752,6 +2006,8 @@
             // 4. 화면 버튼을 '출석완료'로 바꾸고 통합 금고에 저장
             updateAttendUI();
             saveData();
+
+            trackClick('attend_check', { 'platform': plt });
         }
 
 
@@ -2009,7 +2265,7 @@
             // [추가] 만약 오늘 볼 작품이 0개라면? 안내 문구 띄우기!
             if (displayWorks.length === 0) {
                 listEl.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; padding: 40px 0;">
+        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; padding: 30px 0;">
     <p style="margin: 0; font-size: 15px; font-weight: bold; color: #555;">오늘은 연재 작품이 없어요!</p>
     <p style="margin: 5px 0 0 0; font-size: 13px; color: #aaa;">여유롭게 정주행은 어떠신가요?</p>
 </div>
@@ -2178,6 +2434,8 @@
             }
 
             saveData();
+
+            trackClick('click_plus_one', { 'platform': plt, 'title': work.title });
             let badge = document.getElementById(`prog-${plt}-${day}-${idx}`); if (badge) { const activeColor = plt === 'lezhin' ? '#ff7675' : plt === 'bomtoon' ? '#ff78cb' : plt === 'ridi' ? '#5dade2' : '#66a3ff'; badge.style.transform = "scale(1.2)"; badge.style.backgroundColor = activeColor; setTimeout(() => { badge.style.transform = "scale(1)"; badge.style.backgroundColor = "rgba(0, 0, 0, 0.6)"; }, 250); }
         }
 
@@ -2379,6 +2637,9 @@
             const work = state[actionPlt][actionOrigDay][actionIdx];
 
             document.getElementById('modal-title-label').textContent = "작품 수정";
+            // 🌟 [추가] 수정할 땐 스위치 감추고 단일 모드 고정!
+            document.getElementById('add-mode-toggle-container').style.display = 'none';
+            setAddMode('single');
             document.getElementById('input-title').value = work.title;
             document.getElementById('input-url').value = work.url || '';
 
@@ -2498,6 +2759,10 @@
 
             document.getElementById('modal-title-label').textContent = "작품 복제 (새로 추가)";
 
+            // 🌟 [추가] 수정할 땐 스위치 감추고 단일 모드 고정!
+            document.getElementById('add-mode-toggle-container').style.display = 'none';
+            setAddMode('single');
+
             // 🚨 핵심 2: 우니님 기획대로 4가지는 완벽하게 '백지화' 합니다!
             document.getElementById('input-title').value = ''; // 제목 비우기
             document.getElementById('input-url').value = '';   // 링크 비우기
@@ -2608,6 +2873,18 @@
             document.getElementById('modal-title-label').textContent = "작품 추가";
             document.getElementById('input-title').value = '';
             document.getElementById('input-url').value = '';
+            // 🌟 [추가] 새 작품 추가할 땐 스위치 보이게 하고 무조건 '단일 추가'로 세팅!
+            document.getElementById('add-mode-toggle-container').style.display = 'flex';
+            setAddMode('single');
+            // 🌟 9개의 일괄 추가 태그 상자 전부 깨끗하게 지우기!
+            const dayList = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일', '10일 연재', '격주 연재'];
+            dayList.forEach(day => {
+                const tagList = document.getElementById(`tag-list-${day}`);
+                if (tagList) tagList.innerHTML = ''; // 칩들 날리기
+                const input = document.getElementById(`batch-input-${day}`);
+                if (input) input.value = ''; // 적던 글자 날리기
+            });
+
 
             // 🌟 에러 안 나게 안전장치 걸어서 초기화
             const cycleType = document.getElementById('input-cycle-type');
@@ -2665,6 +2942,72 @@
         function closeAddModal() { document.getElementById('custom-modal').style.display = 'none'; }
 
         function saveWorkFinal() {
+            const batchSection = document.getElementById('batch-add-section');
+            const isBatchMode = batchSection && batchSection.style.display !== 'none';
+
+            if (isBatchMode) {
+                const targetStatus = '연재중';
+
+                // 🌟 [핵심 복구] 플랫폼별 맞춤 기본 가격 세팅 (우니님 기획 완벽 복원!)
+                let defaultCoin = 0;
+                if (currentPlatform === 'lezhin' || currentPlatform === 'bomtoon') {
+                    defaultCoin = 3;
+                } else if (currentPlatform === 'ridi') {
+                    defaultCoin = 600;
+                } else if (currentPlatform === 'mrblue') {
+                    defaultCoin = 500;
+                }
+
+                let addedCount = 0;
+                const dayList = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일', '10일 연재', '격주 연재'];
+
+                dayList.forEach(day => {
+                    const tagList = document.getElementById(`tag-list-${day}`);
+                    const input = document.getElementById(`batch-input-${day}`);
+
+                    let titles = [];
+                    // 🌟 1. 만들어진 칩(태그)들의 데이터 쏙쏙 빼오기
+                    if (tagList) {
+                        Array.from(tagList.children).forEach(span => {
+                            if (span.dataset.val) titles.push(span.dataset.val);
+                        });
+                    }
+                    // 🌟 2. 실수로 엔터 안 치고 입력칸에 남겨둔 글자도 살려주기!
+                    if (input && input.value.trim() !== "") {
+                        titles.push(input.value.trim());
+                    }
+
+                    if (titles.length > 0) {
+                        titles.forEach(title => {
+                            const workId = Date.now().toString() + "_" + Math.random().toString(36).substr(2, 5);
+                            let defaultCycle = "";
+                            if (day === '10일 연재') defaultCycle = "10일 연재 (10/20/30)";
+                            else if (day === '격주 연재') defaultCycle = "격주 연재";
+
+                            const workData = {
+                                id: workId, title: title, url: "", cycle: defaultCycle,
+                                coin: defaultCoin, progress: "1화", status: targetStatus,
+                                img: "", time: "", lastDeductDate: ""
+                            };
+                            state[currentPlatform][day].push({ ...workData });
+                            addedCount++;
+                        });
+                    }
+                });
+
+                if (addedCount === 0) return alert("추가할 작품 제목을 하나 이상 적어주세요!");
+
+                saveData();
+                autoUpdatePastBiweeklyDates();
+                renderAll();
+
+                trackClick('batch_add_works_tags', { 'platform': currentPlatform, 'count': addedCount });
+                alert(`총 ${addedCount}개의 작품이 요일별로 완벽하게 추가되었습니다!`);
+                closeAddModal();
+                return;
+            }
+
+
             const title = document.getElementById('input-title').value;
             const url = document.getElementById('input-url').value;
 
@@ -2802,6 +3145,10 @@
             // 🌟 [핵심 추가] 작품을 저장하자마자 즉시 격주 날짜 갱신 및 화면 새로고침!
             autoUpdatePastBiweeklyDates();
             renderAll();
+
+
+            trackClick(editMode ? 'edit_work' : 'add_new_work', { 'platform': currentPlatform, 'title': title });
+
             closeAddModal();
         }
 
@@ -3850,6 +4197,12 @@
 
             // 🌟 4. 상태가 바뀌었으니 화면 전체를 다시 그려서 (renderAll) 숨김/표시 즉시 반영!
             renderAll();
+
+            // 🌟 [여기에 추가!] 숨기기 토글 이벤트 쏘기! (켜졌는지 꺼졌는지 상태도 같이 보냄)
+            trackClick('toggle_hide_works', {
+                'platform': currentFilterPlt,
+                'status': isHidingFinished[currentFilterPlt] ? 'hidden' : 'shown'
+            });
 
             // 모달창 닫기
             closeFilterMenu();

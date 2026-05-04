@@ -17,6 +17,7 @@ body {
     color: #333;
     transition: background-color 0.3s, color 0.3s;
     overflow-x: hidden;
+    word-break: keep-all;
 }
 
 body.dark-mode {
@@ -839,7 +840,7 @@ body.dark-mode .quick-btn {
 .scroll-btn {
     position: absolute;
     top: 50%;
-    transform: translateY(-140%);
+    transform: translateY(-110%);
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -860,11 +861,11 @@ body.dark-mode .scroll-btn {
 }
 
 .left-btn {
-    left: -6px;
+    left: -10px;
 }
 
 .right-btn {
-    right: -6px;
+    right: -10px;
 }
 
 .modal-overlay {
@@ -2254,6 +2255,346 @@ body.dark-mode .toggle-switch input:checked+.toggle-slider {
     /* 무조건 굵게 나오는 걸 적당한 굵기로 변경 */
 }
 
+/* 🔥 스크롤바 완전 박멸 (사파리/크롬 대응) */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+
+/* ======================================================
+   🔥 일괄 추가 바둑판 UI 스타일 (라이트 모드 기본)
+====================================================== */
+#batch-add-section {
+    margin-bottom: 15px;
+}
+
+.batch-desc {
+    font-size: 12px;
+    color: #333;
+    margin-bottom: 10px;
+    font-weight: normal;
+}
+
+.batch-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 4px;
+    padding-bottom: 5px;
+}
+
+.batch-label {
+    font-size: 11px;
+    font-weight: bold;
+    color: #555;
+    display: block;
+    /* 텍스트 에어리어랑 줄바꿈되도록 */
+    margin-bottom: 4px;
+}
+
+.batch-textarea {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    padding: 6px;
+    font-size: 12px;
+    resize: none;
+    /* 유저가 크기 조절 못하게 막기 */
+    box-sizing: border-box;
+    background-color: #fff;
+    color: #333;
+    font-family: inherit;
+}
+
+.batch-textarea:focus {
+    outline: none;
+    border-color: #1967d2;
+    /* 클릭하면 파란색 테두리 */
+}
+
+/* 10일 연재 전용 스타일 */
+.batch-label-10day {
+    color: #333;
+}
+
+.batch-textarea-10day {
+    border: 1px solid #27ae60;
+    background-color: #f0fdf4;
+}
+
+/* 격주 연재 전용 스타일 */
+.batch-span-2 {
+    grid-column: span 2;
+}
+
+.batch-label-biweekly {
+    color: #333;
+}
+
+.batch-textarea-biweekly {
+    border: 1px solid #e67e22;
+    background-color: #fff8f2;
+}
+
+.batch-footer-desc {
+    font-size: 11px;
+    color: #888;
+    margin: 8px 0 0 0;
+    line-height: 1.4;
+}
+
+
+/* ======================================================
+   🌙 다크 모드 (Dark Mode) 일괄 추가 UI 스타일
+====================================================== */
+body.dark-mode .batch-desc {
+    color: #ddd;
+}
+
+body.dark-mode .batch-label {
+    color: #bbb;
+}
+
+body.dark-mode .batch-textarea {
+    background-color: #2c2c2e;
+    /* 다크모드용 어두운 메모장 배경 */
+    border-color: #444;
+    color: #eee;
+}
+
+body.dark-mode .batch-textarea:focus {
+    border-color: #eee;
+    /* 다크모드용 밝은 파란색 포커스 */
+}
+
+/* 10일 연재 전용 다크모드 스타일 */
+body.dark-mode .batch-label-10day {
+    color: #eee;
+    /* 눈에 띄게 살짝 더 밝은 초록 */
+}
+
+body.dark-mode .batch-textarea-10day {
+    background-color: #1a2f24;
+    /* 아주 어두운 초록 틴트 배경 */
+    border-color: #27ae60;
+}
+
+/* 격주 연재 전용 다크모드 스타일 */
+body.dark-mode .batch-label-biweekly {
+    color: #eee;
+    /* 눈에 띄게 살짝 더 밝은 주황 */
+}
+
+body.dark-mode .batch-textarea-biweekly {
+    background-color: #33261a;
+    /* 아주 어두운 주황 틴트 배경 */
+    border-color: #e67e22;
+}
+
+/* 라이트 모드 (기본 색상) */
+.batch-theme-text {
+    color: #333;
+}
+
+/* 🔥 일괄 추가 가이드 텍스트 (인라인 스타일 대체) */
+.batch-guide-text {
+    font-size: 12px;
+    margin-top: 2px;
+    margin-bottom: 16px;
+    font-weight: normal;
+    color: #888888;
+}
+
+body.dark-mode .batch-guide-text {
+    color: #bdbdbd;
+}
+
+/* 🌙 다크모드 대응 (important 없이 우선순위로 자연스럽게 덮어쓰기!) */
+body.dark-mode .batch-theme-text {
+    color: #eee;
+}
+
+/* 🔥 해시태그(칩) 겉 포장지 (크기 완벽 고정 & 투명 스크롤) */
+#custom-modal .tag-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    padding: 6px;
+    height: 75px;
+    /* 🔥 세로 크기 75px로 꽉 고정 (뚱뚱해짐 방지!) */
+    overflow-y: auto;
+    /* 안에서만 투명 스크롤! */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    background-color: #fff;
+    box-sizing: border-box;
+    cursor: text;
+    align-content: flex-start;
+    transition: 0.2s;
+}
+
+#custom-modal .tag-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+#custom-modal .tag-wrapper:focus-within {
+    border-color: #1967d2;
+    box-shadow: 0 0 0 2px rgba(25, 103, 210, 0.1);
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* 🌟 칩 글자색 #333 통일 (파란색 제거) */
+.tag-chip {
+    background: #e8f0fe;
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: popIn 0.2s ease-out forwards;
+}
+
+/* 🌟 X 버튼 글자색 #333 통일 & 호버 시 빨간색 제거 (투명도만 조절) */
+.tag-chip-del {
+    cursor: pointer;
+    color: #333;
+    opacity: 0.5;
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 4px;
+    margin-right: -4px;
+}
+
+.tag-chip-del:hover {
+    opacity: 1;
+}
+
+/* 🌟 입력창(textarea) 가로세로 폭주 완벽 차단! */
+#custom-modal .tag-wrapper .tag-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+    flex: 1;
+    min-width: 30px;
+    /* 🔥 textarea 기본 가로 고집 꺾기 (가로 팽창 방지!) */
+    max-width: 100%;
+    font-size: 12px;
+    color: #333;
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+    resize: none;
+    /* 유저가 크기 조절 못하게 막기 */
+    height: 18px;
+    /* 🔥 한 줄 높이로 꽉 누르기 (세로 팽창 방지!) */
+    line-height: 18px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+@keyframes popIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 🌟 특수 컬러 (배경과 테두리만 변경) */
+.tag-wrapper.wrapper-10day {
+    border-color: #27ae60;
+    background: #f0fdf4;
+}
+
+.tag-wrapper.wrapper-biweekly {
+    border-color: #e67e22;
+    background: #fff8f2;
+}
+
+/* ====================================
+   🌙 다크모드 대응 (글자색 #eee 통일!)
+==================================== */
+/* 🌙 다크모드 대응 (important 없이 우선순위로 제압) */
+body.dark-mode #custom-modal .tag-wrapper {
+    background-color: #2c2c2e;
+    border-color: #444;
+}
+
+body.dark-mode #custom-modal .tag-wrapper:focus-within {
+    border-color: #8ab4f8;
+}
+
+body.dark-mode #custom-modal .tag-wrapper .tag-input {
+    color: #eee;
+    background: transparent;
+}
+
+body.dark-mode .tag-chip {
+    background: #1a233a;
+    color: #eee;
+}
+
+body.dark-mode .tag-chip-del {
+    color: #eee;
+}
+
+/* 🌟 다크모드 특수 컬러 */
+body.dark-mode .tag-wrapper.wrapper-10day {
+    background-color: #1a2f24;
+    border-color: #27ae60;
+}
+
+body.dark-mode .tag-wrapper.wrapper-biweekly {
+    background-color: #33261a;
+    border-color: #e67e22;
+}
+
+
+/* 🌟 입력창 기본 테두리 완벽 박멸 + 한 줄처럼 위장! */
+#custom-modal #batch-add-section .tag-wrapper .tag-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+    flex: 1;
+    width: 10px;
+    min-width: 30px;
+    font-size: 12px;
+    color: #333;
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+    /* 🔥 다중줄 입력창(textarea)을 한 줄처럼 보이게 꽉 압축! */
+    resize: none;
+    height: 18px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* 🌙 다크모드 대응 */
+body.dark-mode #custom-modal #batch-add-section .tag-wrapper .tag-input {
+    color: #eee;
+    background: transparent;
+}
 
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
 a[x-apple-data-detectors] {
