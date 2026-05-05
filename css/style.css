@@ -1220,7 +1220,7 @@ body.dark-mode #deduction-list label span {
 }
 
 .coinback-label {
-    color: #e84393;
+    color: #333;
 }
 
 /* --- 코인백 이벤트 계산기 색상 (다크 모드) --- */
@@ -1230,7 +1230,7 @@ body.dark-mode .coinback-box {
 }
 
 body.dark-mode .coinback-label {
-    color: #ff9ff3;
+    color: #eee;
     /* 다크모드용 밝은 핑크 글씨 */
 }
 
@@ -2594,6 +2594,203 @@ body.dark-mode .tag-wrapper.wrapper-biweekly {
 body.dark-mode #custom-modal #batch-add-section .tag-wrapper .tag-input {
     color: #eee;
     background: transparent;
+}
+
+/* ======================================================
+   🔥 글로벌 이벤트 알림창 스타일 (Light & Dark)
+====================================================== */
+#global-event-alert {
+    text-align: center;
+    font-size: 12px;
+    color: #333;
+    /* 기본 빨간 글씨 */
+    background-color: #fff0f0;
+    /* 연한 핑크빛 배경 */
+    border: 1px solid #ffcccc;
+    padding: 4px 12px;
+    border-radius: 20px;
+    width: fit-content;
+    margin: 0 auto 16px auto;
+    font-weight: normal;
+}
+
+/* 🌙 다크모드 대응 (눈부시지 않게 톤 다운된 빨간색으로!) */
+body.dark-mode #global-event-alert {
+    color: #eee;
+    /* 다크모드용 밝은 빨강 */
+    background-color: #3a1c1c;
+    /* 어두운 버건디 배경 */
+    border-color: #5c2e2e;
+    /* 어두운 테두리 */
+}
+
+/* 🌟 알림창 내 강조 텍스트 (이벤트 이름) */
+#global-event-alert .event-highlight-text {
+    color: #333;
+    /* 기존의 진한 빨간색 유지! */
+}
+
+/* 🌙 다크모드 대응 (어두운 배경에서 더 잘 보이도록 살짝 밝은 빨간색으로!) */
+body.dark-mode #global-event-alert .event-highlight-text {
+    color: #fff;
+}
+
+/* ======================================================
+   🧮 계산기 모달창 스타일 (Light & Dark)
+====================================================== */
+
+/* 버튼 여백 및 크기 공통 설정 */
+.calc-btn-full {
+    width: 100%;
+}
+
+.calc-mb-15 {
+    margin-bottom: 15px;
+}
+
+.calc-mt-15 {
+    margin-top: 15px;
+}
+
+/* 🌟 계산 결과 박스 기본 바탕 */
+#calc-result-box {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+/* 텍스트 1: 남은 화수 */
+.calc-text-remain {
+    margin: 0;
+    font-size: 14px;
+    color: #7c7a7a;
+}
+
+#calc-remain-ep {
+    font-weight: bold;
+    color: #333;
+}
+
+/* 텍스트 2: 필요한 금액 */
+.calc-text-need {
+    margin: 5px 0 0 0;
+    font-size: 16px;
+    font-weight: normal;
+    color: #7c7a7a;
+}
+
+body.dark-mode .calc-text-need {
+    color: #d5d5d5;
+}
+
+#calc-need-coin {
+    font-weight: bold;
+    color: #333;
+    font-size: 20px;
+}
+
+/* 🌟 코인백 결과 박스 (점선 테두리) */
+#calc-coinback-result {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #ccc;
+}
+
+/* 텍스트 3: 돌려받는 금액 */
+.calc-text-coinback {
+    margin: 0;
+    font-size: 13px;
+    color: #333;
+}
+
+#calc-back-coin {
+    font-weight: bold;
+}
+
+/* 텍스트 4: N화 더 볼 수 있어요 */
+.calc-text-extra {
+    margin: 5px 0 0 0;
+    font-size: 15px;
+    font-weight: bold;
+    color: #333;
+}
+
+#calc-extra-ep {
+    color: #333;
+    font-size: 18px;
+}
+
+/* 🌟 지갑에서 바로 차감 버튼 */
+#calc-deduct-btn {
+    margin-top: 15px;
+    width: 100%;
+    padding: 12px;
+    background: #e74c3c;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: normal;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+#calc-deduct-btn:hover {
+    background: #c0392b;
+    /* 마우스 올렸을 때 살짝 진해지게 */
+}
+
+
+/* ======================================================
+   🌙 계산기 모달창 다크모드 대응
+====================================================== */
+body.dark-mode #calc-result-box {
+    background: #2c2c2e;
+}
+
+body.dark-mode .calc-text-remain {
+    color: #dcdcdc;
+}
+
+body.dark-mode #calc-remain-ep {
+    color: #eee;
+}
+
+body.dark-mode .calc-text-need {
+    color: #eee;
+}
+
+body.dark-mode #calc-need-coin {
+    color: #fff;
+}
+
+/* 다크모드용 밝은 빨강 */
+
+body.dark-mode #calc-coinback-result {
+    border-top-color: #555;
+}
+
+body.dark-mode .calc-text-coinback {
+    color: #eee;
+}
+
+/* 다크모드용 핑크 */
+body.dark-mode .calc-text-extra {
+    color: #eee;
+}
+
+/* 다크모드용 파랑 */
+body.dark-mode #calc-extra-ep {
+    color: #eee;
+}
+
+body.dark-mode #calc-deduct-btn {
+    background: #d63031;
+}
+
+body.dark-mode #calc-deduct-btn:hover {
+    background: #ff5252;
 }
 
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */

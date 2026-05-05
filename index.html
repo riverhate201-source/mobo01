@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
-    <link rel="stylesheet" href="./css/style.css?v=3.0">
+    <link rel="stylesheet" href="./css/style.css?v=3.1">
 
 
 
@@ -75,7 +75,7 @@
                 <h4>편의 기능</h4>
                 <button onclick="openSearchModal()" class="menu-item">작품 검색하기</button>
                 <button onclick="openCalcModal()" class="menu-item">정주행 코인 및 페이 계산기</button>
-                <button onclick="deductToday()" class="menu-item">오늘 작품 당일 정산</button>
+                <button onclick="deductToday()" class="menu-item">오늘 작품 미리 정산</button>
                 <button class="menu-item" onclick="showMonthlyReport()">이번 달 월말정산 보기
                 </button>
 
@@ -131,8 +131,7 @@
         &lt;경고&gt; 백업을 안 한 지 7일이 넘었어요! 안전하게 데이터를 백업해 주세요.
     </div>
 
-    <div id="global-event-alert"
-        style="display:none; text-align:center; font-size:12px; color:#e60012; background-color:#fff0f0; border:1px solid #ffcccc; padding:4px 12px; border-radius:20px; width:fit-content; margin:0 auto 16px auto; font-weight:bold;">
+    <div id="global-event-alert" style="display: none;">
         옆으로 넘겨보세요! 플랫폼 이벤트 진행 중!
     </div>
 
@@ -537,9 +536,9 @@
             <h3 id="action-title" style="text-align:center; margin-top:0;">작품명</h3>
             <div class="action-btns-container">
                 <button class="act-btn edit-btn" onclick="editFromAction()">작품 상세 수정</button>
-                <button onclick="moveFromAction()" class="act-btn move-btn">다른 플랫폼으로 이동</button>
                 <button class="act-btn dup-btn" onclick="duplicateFromAction()">이 작품 템플릿으로 복제</button>
-                <button class="act-btn del-btn" onclick="deleteFromAction()"> 서랍에서 영구 삭제</button>
+                <button onclick="moveFromAction()" class="act-btn move-btn">다른 플랫폼으로 이동</button>
+                <button class="act-btn del-btn" onclick="deleteFromAction()">서랍에서 영구 삭제</button>
             </div>
             <button onclick="closeActionModal()" class="cancel-btn" style="margin-top:15px; width:100%;">닫기</button>
         </div>
@@ -590,7 +589,7 @@
 
             <div class="coinback-box" style="margin-bottom: 15px; padding: 12px; border-radius: 8px;">
                 <label class="coinback-label"
-                    style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: bold; cursor: pointer;">
+                    style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: normal; cursor: pointer;">
                     <input type="checkbox" id="calc-coinback-toggle" onchange="toggleCoinbackInput()"
                         style="margin: 0; width: 16px; height: 16px;">
                     코인백 / 페이백(이벤트) 적용하기
@@ -602,32 +601,22 @@
                 </div>
             </div>
 
-            <button onclick="calculateCoins()" class="save-btn" style="width: 100%; margin-bottom: 15px;">얼마나
-                필요할까?</button>
+            <button onclick="calculateCoins()" class="save-btn calc-btn-full calc-mb-15">얼마나 필요할까?</button>
 
-            <div id="calc-result-box"
-                style="display: none; background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;">
-                <p style="margin: 0; font-size: 14px; color: #555;">남은 화수: <span id="calc-remain-ep"
-                        style="font-weight: bold; color: #333;">0</span>화</p>
-                <p style="margin: 5px 0 0 0; font-size: 16px;">필요한 금액: <span id="calc-need-coin"
-                        style="font-weight: bold; color: #e60012; font-size: 20px;">0</span></p>
+            <div id="calc-result-box" style="display: none;">
+                <p class="calc-text-remain">남은 화수: <span id="calc-remain-ep">0</span>화</p>
+                <p class="calc-text-need">필요한 금액: <span id="calc-need-coin">0</span></p>
 
-                <div id="calc-coinback-result"
-                    style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ccc;">
-                    <p style="margin: 0; font-size: 13px; color: #e84393;">돌려받는 금액: <span id="calc-back-coin"
-                            style="font-weight: bold;">0</span></p>
-                    <p style="margin: 5px 0 0 0; font-size: 15px; font-weight: bold; color: #1967d2;">👉
-                        <span id="calc-extra-ep" style="color:#e60012; font-size:18px;">0</span>화 더 볼 수
-                        있어요!
-                    </p>
+                <div id="calc-coinback-result" style="display: none;">
+                    <p class="calc-text-coinback">돌려받는 금액: <span id="calc-back-coin">0</span></p>
+                    <p class="calc-text-extra">👉 <span id="calc-extra-ep">0</span>화 더 볼 수 있어요!</p>
                 </div>
-                <button id="calc-deduct-btn" onclick="deductFromCalculator()"
-                    style="margin-top: 15px; width: 100%; padding: 12px; background: #e74c3c; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px;">
+                <button id="calc-deduct-btn" onclick="deductFromCalculator()">
                     지갑에서 바로 차감하기
                 </button>
             </div>
 
-            <button onclick="closeCalcModal()" class="cancel-btn" style="width: 100%; margin-top: 15px;">닫기</button>
+            <button onclick="closeCalcModal()" class="cancel-btn calc-btn-full calc-mt-15">닫기</button>
         </div>
     </div>
 
@@ -1368,18 +1357,34 @@
             }
         }
 
-        // 신규: 드롭다운 선택 시 글씨(코인/캐시/원) 알아서 바꿔주기
+        // 신규: 드롭다운 선택 시 글씨(코인/캐시/원) 알아서 바꿔주고, 입력창 싹 초기화!
         function updateCalcLabels() {
             const plt = document.getElementById('calc-platform').value;
             const priceLabel = document.getElementById('calc-price-label');
             if (plt === 'cash') priceLabel.textContent = '1화당 캐시 (리디)';
             else if (plt === 'won') priceLabel.textContent = '1화당 머니 (미블)';
             else priceLabel.textContent = '1화당 코인 (레진/봄툰)';
+
+            // 🌟 [추가] 플랫폼이 바뀔 때마다 모든 입력창과 결과창을 아주 깨끗하게 초기화합니다!
+            document.getElementById('calc-total').value = '';
+            document.getElementById('calc-current').value = '';
+            document.getElementById('calc-price').value = '';
+
+            // 코인백 체크박스와 퍼센트도 끄기
+            const coinbackToggle = document.getElementById('calc-coinback-toggle');
+            if (coinbackToggle) {
+                coinbackToggle.checked = false;
+                toggleCoinbackInput(); // 체크 풀렸으니 알아서 숨겨주는 함수 실행!
+            }
+            document.getElementById('calc-coinback-percent').value = '';
+
+            // 열려있던 결과창 닫기
+            document.getElementById('calc-result-box').style.display = 'none';
         }
 
         let currentCalcCoin = 0;
 
-        // 수정: 계산기 로직 (선택한 플랫폼에 맞게 쉼표 + 단위 + 색상 싹 다 적용!)
+        // 수정: 계산기 로직 (JS에 숨어있던 인라인 색상 주입 로직 완전 제거!)
         function calculateCoins() {
             const total = parseInt(document.getElementById('calc-total').value) || 0;
             const current = parseInt(document.getElementById('calc-current').value) || 0;
@@ -1395,31 +1400,18 @@
             const needCoin = remainEp * price;
             currentCalcCoin = needCoin;
 
-            const isDark = document.body.classList.contains('dark-mode');
-
-            // 플랫폼별 단위와 맞춤 색상 세팅
+            // 🌟 플랫폼별 단위 세팅 (복잡했던 색상 로직은 싹 지웠습니다!)
             let unit = 'C';
-            let color = '';
+            if (plt === 'cash') { unit = '캐시'; }
+            else if (plt === 'won') { unit = '머니'; }
 
-            if (isDark) {
-                // 🌙 다크모드일 때: 까만 배경에서 눈에 확 띄고 예쁜 파스텔톤!
-                if (plt === 'cash') { unit = '캐시'; color = '#74b9ff'; } // 리디 (밝은 하늘색)
-                else if (plt === 'won') { unit = '머니'; color = '#82ccdd'; } // 미블 (밝은 청록/회파랑)
-                else { color = '#ff7675'; } // 레진, 봄툰 (밝은 코랄/핑크)
-            } else {
-                // ☀️ 라이트모드일 때: 하얀 배경에서 뚜렷하게 보이는 원래 색상!
-                if (plt === 'cash') { unit = '캐시'; color = '#1e90ff'; } // 리디 (블루)
-                else if (plt === 'won') { unit = '머니'; color = '#004e9a'; } // 미블 (네이비)
-                else { color = '#e60012'; } // 레진, 봄툰 (기본 빨강)
-            }
-
-            // 결과 적용 (쉼표 포맷팅 + 맞춤 단위 글씨 + 맞춤 색상)
+            // 🌟 결과 적용 (쉼표 포맷팅 + 맞춤 단위 글씨)
             document.getElementById('calc-remain-ep').textContent = formatNum(remainEp);
             const needCoinEl = document.getElementById('calc-need-coin');
             needCoinEl.textContent = formatNum(needCoin) + ' ' + unit;
-            needCoinEl.style.color = color; // 결과창 색깔도 플랫폼에 맞게
+            // 🚨 숨어있던 인라인 스타일 (needCoinEl.style.color = color;) 박멸!
 
-            // 코인백 로직 계산
+            // 🌟 코인백 로직 계산
             const isCoinback = document.getElementById('calc-coinback-toggle').checked;
             const coinbackResultArea = document.getElementById('calc-coinback-result');
 
@@ -1430,10 +1422,10 @@
                 // 돌려받은 코인으로 더 볼 수 있는 화수 계산
                 const extraEp = Math.floor(backCoin / price);
 
-                // 코인백 결과에도 쉼표와 맞춤 단위 적용!
                 document.getElementById('calc-back-coin').textContent = formatNum(backCoin) + ' ' + unit;
                 document.getElementById('calc-extra-ep').textContent = formatNum(extraEp);
-                document.getElementById('calc-extra-ep').style.color = color;
+                // 🚨 숨어있던 인라인 스타일 (calc-extra-ep.style.color = color;) 박멸!
+
                 coinbackResultArea.style.display = 'block';
             } else {
                 coinbackResultArea.style.display = 'none';
@@ -1973,7 +1965,8 @@
             // 4. 알림바 띄우기
             if (globalAlert) {
                 if (hiddenEvents.length > 0) {
-                    globalAlert.innerHTML = `옆으로 넘겨보세요! <b style="color:#d32f2f;">${hiddenEvents.join(', ')}</b> 진행 중!`;
+                    // 🌟 인라인 스타일 제거하고 class 이름표 달아주기!
+                    globalAlert.innerHTML = `옆으로 넘겨보세요! <b class="event-highlight-text">${hiddenEvents.join(', ')}</b> 진행 중!`;
                     globalAlert.style.display = 'block';
                 } else {
                     globalAlert.style.display = 'none';
