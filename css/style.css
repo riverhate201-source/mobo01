@@ -2,7 +2,6 @@
     font-family: 'OngleipParkDahyeon', sans-serif !important;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
-
 }
 
 @font-face {
@@ -17,7 +16,6 @@ body {
     color: #333;
     transition: background-color 0.3s, color 0.3s;
     overflow-x: hidden;
-    word-break: keep-all;
 }
 
 body.dark-mode {
@@ -28,7 +26,7 @@ body.dark-mode {
 .main-page-title {
     text-align: center;
     margin-top: 40px;
-    margin-bottom: 24px;
+    margin-bottom: 30px;
     font-size: 28px;
     line-height: 1.2;
 }
@@ -41,21 +39,14 @@ body.dark-mode {
     top: 12px;
     left: 50%;
     transform: translateX(-50%);
-    max-width: 468px;
+    max-width: 480px;
     width: 100%;
     display: flex;
     justify-content: flex-end;
-    padding: 15px 15px;
+    padding-right: 15px;
     z-index: 2100;
     pointer-events: none;
     /* 투명한 상자 통과해서 뒤에 클릭 되게 하기 */
-}
-
-@media screen and (min-width: 500px) {
-    .top-util-bar {
-        /* PC 풀화면에서는 양옆 쿠션을 0으로 빼서 하얀 박스와 완벽한 칼각을 맞춥니다! */
-        padding: 15px 0;
-    }
 }
 
 /* 1. 햄버거 버튼 (알약 모양 배경) */
@@ -194,10 +185,6 @@ body.dark-mode .nav-content {
     font-weight: normal;
 }
 
-.nav-section button {
-    font-weight: normal;
-}
-
 .menu-item {
     width: 100%;
     text-align: left;
@@ -265,9 +252,10 @@ body.dark-mode .mini-bar {
     /* 🌟 화면이 넓으면 가운데 정렬, 좁으면 알아서 스크롤 되게 하는 마법 */
     width: fit-content;
     max-width: 100%;
-    margin: 40px auto 20px auto;
+    margin: 0 auto 20px auto;
+
     gap: 8px;
-    padding: 5px 5px;
+    padding: 5px 10px;
     /* 양끝에서 짤리지 않게 여백 넉넉히 */
     box-sizing: border-box;
 
@@ -300,16 +288,16 @@ body.dark-mode .mini-bar {
 
     background: #fff;
 
-    border: 1px dashed #ddd;
+    border: 1px solid #ddd;
 
-    width: 40px;
+    width: 42px !important;
     /* '전체' 글씨가 예쁘게 들어가도록 아주 살짝만 키움 */
 
-    height: 40px;
+    height: 42px !important;
 
-    border-radius: 14px;
+    border-radius: 50%;
 
-    color: #797979;
+    color: #333;
 
     cursor: pointer;
 
@@ -343,7 +331,7 @@ body.dark-mode .day-btn {
 
     border-color: #444;
 
-    color: #cccccc;
+    color: #eee;
 
 }
 
@@ -381,12 +369,12 @@ body.dark-mode .day-btn.active {
 
 
 .my-wallet-container {
-    max-width: 100%;
+    max-width: 450px;
     margin: 0 auto 30px auto;
     padding: 35px 18px 18px 18px !important;
     background: #fff;
     border-radius: 20px;
-    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -397,26 +385,25 @@ body.dark-mode .my-wallet-container {
 }
 
 .coin-amount {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: bold;
     cursor: pointer;
-    margin-top: 8px;
 }
 
 .lezhin-wallet {
-    color: #333;
+    color: #e60012;
 }
 
 .bomtoon-wallet {
-    color: #333;
+    color: #ff69b4;
 }
 
 body.dark-mode .lezhin-wallet {
-    color: #fff;
+    color: #ff6b76;
 }
 
 body.dark-mode .bomtoon-wallet {
-    color: #fff;
+    color: #ff85c0;
 }
 
 .wallet-divider {
@@ -431,19 +418,12 @@ body.dark-mode .wallet-divider {
 
 
 .webtoon-container {
-    max-width: 468px;
-    width: 100%;
     background: #fff;
     padding: 20px;
     border-radius: 24px;
-
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
-
-
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    max-width: 450px;
     margin: 0 auto 35px auto;
-    box-sizing: border-box;
-    width: 100%;
-    padding: 20px 20px;
 }
 
 body.dark-mode .webtoon-container {
@@ -458,14 +438,13 @@ body.dark-mode .webtoon-container {
 }
 
 .add-work-btn {
-    background: #666;
+    background: #333;
     color: #fff;
     border: none;
     padding: 6px 14px;
     border-radius: 12px;
     cursor: pointer;
     font-size: 14px;
-    margin-bottom: 7px;
 }
 
 body.dark-mode .add-work-btn {
@@ -476,37 +455,19 @@ body.dark-mode .add-work-btn {
     position: relative;
     background: #fff4d1;
     padding: 14px;
-    margin-top: 8px;
     border-radius: 15px;
     text-align: center;
-    font-weight: normal;
-    margin-bottom: 13px;
-    font-size: 17px;
-    color: #4c4c4c;
-}
-
-#lezhin-needed-val,
-#bomtoon-needed-val,
-#ridi-needed-val,
-#mrblue-needed-val {
     font-weight: bold;
-    color: #333;
-    /* 일반 bold보다 더 두꺼운 900을 주면 훨씬 눈에 잘 띕니다! */
+    margin-bottom: 9px;
+    font-size: 17px;
+    color: #444;
 }
 
-body.dark-mode #lezhin-needed-val,
-body.dark-mode #bomtoon-needed-val,
-body.dark-mode #ridi-needed-val,
-body.dark-mode #mrblue-needed-val {
-    color: #fff;
-}
 
 body.dark-mode .total-coin-banner {
     background: #3d3521;
-    color: #eeee;
+    color: #d4c18d;
 }
-
-
 
 
 /* 🚨 여기서부터 빠져있던 핵심 뼈대들입니다! 🚨 */
@@ -657,9 +618,9 @@ body.dark-mode .filter-close-bottom-btn span {
 
 .balance-info {
     text-align: center;
-    font-size: 15px;
+    font-size: 13px;
     color: #999;
-    margin-top: 8px;
+    margin-bottom: 15px;
 }
 
 .scroll-wrapper {
@@ -672,7 +633,7 @@ body.dark-mode .filter-close-bottom-btn span {
     gap: 12px;
     overflow-x: auto;
     scrollbar-width: none;
-    padding: 24px 0;
+    padding: 10px 0;
     min-height: 180px;
     scroll-behavior: smooth;
 }
@@ -683,7 +644,7 @@ body.dark-mode .filter-close-bottom-btn span {
 
 .webtoon-card-link {
     flex: 0 0 135px;
-    border-radius: 14px;
+    border-radius: 15px;
     overflow: hidden;
     border: 1px solid #f0f0f0;
     background: #fff;
@@ -824,7 +785,7 @@ body.dark-mode .bomtoon-card .no-img-title {
     /* 안쪽 여백 때문에 커지는 것 방지 */
 
     font-size: 10px;
-    font-weight: normal;
+    font-weight: bold;
     cursor: pointer;
     flex-shrink: 0;
 }
@@ -840,7 +801,7 @@ body.dark-mode .quick-btn {
 .scroll-btn {
     position: absolute;
     top: 50%;
-    transform: translateY(-110%);
+    transform: translateY(-140%);
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -861,11 +822,11 @@ body.dark-mode .scroll-btn {
 }
 
 .left-btn {
-    left: -10px;
+    left: -12px;
 }
 
 .right-btn {
-    right: -10px;
+    right: -12px;
 }
 
 .modal-overlay {
@@ -923,7 +884,6 @@ body.dark-mode .modal-select {
     cursor: pointer;
     font-size: 14px;
     color: #666;
-    box-sizing: border-box;
 }
 
 body.dark-mode .img-pick-btn {
@@ -949,20 +909,7 @@ body.dark-mode .img-pick-btn {
 .cancel-btn {
     background: #eee;
     color: #666;
-    width: 100%;
-    padding: 10px;
-    box-sizing: border-box;
-    background-color: transparent;
-    border: none;
-    border-radius: 12px;
-    font-weight: bold;
-    font-size: 15px;
-    cursor: pointer;
-    text-align: center;
-    transition: background-color 0.2s;
 }
-
-
 
 .save-btn {
     background: #333;
@@ -973,7 +920,7 @@ body.dark-mode .img-pick-btn {
     font-size: 14px;
     color: #777;
     font-weight: normal;
-    margin-left: 8px;
+    margin-left: 4px;
 }
 
 body.dark-mode .work-count-text {
@@ -983,104 +930,73 @@ body.dark-mode .work-count-text {
 .highlight-result-lezhin {
     font-weight: 900;
     font-size: 15px;
-    color: #333;
+    color: #e60012;
 }
 
 body.dark-mode .highlight-result-lezhin {
-    color: #eee;
+    color: #ff6b76;
 }
 
 .highlight-result-bomtoon {
     font-weight: 900;
     font-size: 15px;
-    color: #333;
+    color: #ff69b4;
 }
 
 body.dark-mode .highlight-result-bomtoon {
-    color: #eee;
+    color: #ff85c0;
 }
 
 .backup-alert {
     text-align: center;
     font-size: 13px;
-    color: #333;
+    color: #d32f2f;
     background: #ffebee;
     padding: 12px;
     border-radius: 15px;
     margin: 10px auto 20px auto;
-    max-width: 468px;
+    max-width: 450px;
     font-weight: bold;
 }
 
 body.dark-mode .backup-alert {
     background: #3d2022;
-    color: #eee;
+    color: #ff7982;
 }
 
 .weekly-stat-container {
-    max-width: 468px;
+    max-width: 450px;
     margin: 20px auto 40px auto;
     padding: 15px;
     background: #e8f0fe;
     border-radius: 15px;
     text-align: center;
     font-size: 15px;
-    color: #5f5f5f;
-    font-weight: normal;
+    color: #1967d2;
+    font-weight: bold;
     box-shadow: 0 2px 8px rgba(25, 103, 210, 0.1);
 }
 
 body.dark-mode .weekly-stat-container {
     background: #1a233a;
-    color: #d6d6d6;
+    color: #8ab4f8;
     box-shadow: 0 2px 8px rgba(138, 180, 248, 0.1);
 }
 
 .weekly-highlight {
     font-size: 18px;
-    color: #333;
+    color: #3b7adf;
 }
 
 body.dark-mode .weekly-highlight {
-    color: #fff;
+    color: #e0ebfd;
 
 }
-
-
-/* 🌟 주간 누적 통계 금액 강조 (라이트 모드 기본) */
-.stat-val {
-    color: #333;
-    font-weight: bold;
-}
-
-/* 🌟 구분선 (라이트 모드 기본) */
-.stat-val+.stat-val::before {
-    content: "|";
-    color: #ccc;
-    margin: 0 8px;
-    font-weight: normal;
-}
-
-/* ========================================= */
-/* 🌙 다크 모드 전용 색상 덮어쓰기! */
-/* ========================================= */
-body.dark-mode .stat-val {
-    color: #fff;
-    /* 까만 배경에서 눈에 더 잘 띄는 밝고 화사한 파스텔 블루! */
-}
-
-body.dark-mode .stat-val+.stat-val::before {
-    color: #555;
-    /* 까만 배경에 맞게 구분선도 자연스럽게 톤다운! */
-}
-
-
 
 .action-btns-container {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    transition: background 0.2s;
 }
 
 .act-btn {
@@ -1091,48 +1007,26 @@ body.dark-mode .stat-val+.stat-val::before {
     font-size: 15px;
     cursor: pointer;
     font-weight: normal;
-    transition: all 0.2s ease;
 }
 
 .edit-btn {
-    background: #f8f9fa;
+    background: #e8f0fe;
     color: #333;
 }
 
 body.dark-mode .edit-btn {
-    background: #3A3A3A;
-    color: #eee;
+    background: #1a233a;
+    color: #f2f2f2;
 }
 
 .del-btn {
-    background: #f8f9fa;
+    background: #ffebee;
     color: #333;
 }
 
 body.dark-mode .del-btn {
-    background: #3A3A3A;
-    color: #eeee;
-}
-
-.dup-btn {
-    background: #f8f9fa;
-    color: #333;
-}
-
-body.dark-mode .dup-btn {
-    background: #3A3A3A;
-    color: #eee;
-}
-
-.action-btns-container .act-btn:hover {
-    background-color: #f1f3f5;
-
-
-}
-
-body.dark-mode .action-btns-container .act-btn:hover {
-    background-color: #4a4a4a;
-
+    background: #3d2022;
+    color: #f2f2f2;
 }
 
 .sale-badge {
@@ -1177,7 +1071,7 @@ body.dark-mode .action-btns-container .act-btn:hover {
 
 .attend-btn.done {
     background: #e8f5e9;
-    color: #666;
+    color: #2e7d32;
     border-color: #c8e6c9;
 }
 
@@ -1189,7 +1083,7 @@ body.dark-mode .attend-btn {
 
 body.dark-mode .attend-btn.done {
     background: #1b3320;
-    color: #d4d4d4;
+    color: #81c784;
     border-color: #2e7d32;
 }
 
@@ -1220,7 +1114,7 @@ body.dark-mode #deduction-list label span {
 }
 
 .coinback-label {
-    color: #333;
+    color: #e84393;
 }
 
 /* --- 코인백 이벤트 계산기 색상 (다크 모드) --- */
@@ -1230,7 +1124,7 @@ body.dark-mode .coinback-box {
 }
 
 body.dark-mode .coinback-label {
-    color: #eee;
+    color: #ff9ff3;
     /* 다크모드용 밝은 핑크 글씨 */
 }
 
@@ -1251,13 +1145,9 @@ body.dark-mode .coinback-label {
    ========================================== */
 .wallet-master-wrapper {
     position: relative;
-    max-width: 468px;
+    /* 도트 점을 이 박스 기준으로 고정! */
+    max-width: 450px;
     margin: 0 auto 30px auto;
-    width: 100%;
-    box-sizing: border-box;
-
-
-    /* 🚨 아까 넣었던 overflow-x: hidden; 은 무조건 지워주세요! (얘가 범인입니다) 🚨 */
 }
 
 .wallet-swipe-wrapper {
@@ -1266,13 +1156,9 @@ body.dark-mode .coinback-label {
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
-    gap: 24px;
-    /* 🌟 정석 해결법: 안쪽으로 여백을 주고 꽉 차게 만들기 */
     width: 100%;
-    box-sizing: border-box;
-    /* 패딩을 넣어도 100% 너비가 유지되게 묶어줌 */
-    padding: 5px 0 5px 0;
-    /* 위 15, 오른쪽 0, 아래 10, 왼쪽 15 (오른쪽은 아래 투명방패가 책임짐!) */
+    padding-bottom: 10px;
+    /* 그림자 잘림 방지 */
 }
 
 .wallet-swipe-wrapper::-webkit-scrollbar {
@@ -1355,35 +1241,29 @@ body.dark-mode .mrblue-card .no-img-title {
     border: 1px solid #444;
 }
 
-.platform-name {
-    margin-bottom: 2px;
-    font-weight: normal;
-    color: #666;
-}
-
-body.dark-mode .platform-name {
-    color: #eee;
-}
-
 /* --- 리디 지갑 색상 관리 --- */
+.ridi-wallet .platform-name,
 .ridi-wallet .coin-amount {
-    color: #333;
+    color: #1e90ff;
     /* 라이트 모드: 원래 리디색 */
 }
 
+body.dark-mode .ridi-wallet .platform-name,
 body.dark-mode .ridi-wallet .coin-amount {
-    color: #fff;
+    color: #5dade2;
     /* 다크 모드: 눈 편한 하늘색 */
 }
 
 /* --- 미블 지갑 색상 관리 --- */
+.mrblue-wallet .platform-name,
 .mrblue-wallet .coin-amount {
-    color: #333;
+    color: #004e9a;
     /* 라이트 모드: 원래 미블색 */
 }
 
+body.dark-mode .mrblue-wallet .platform-name,
 body.dark-mode .mrblue-wallet .coin-amount {
-    color: #fff;
+    color: #8ab4f8;
     /* 다크 모드: 선생님이 찜한 밝은 파랑! */
 }
 
@@ -1392,21 +1272,21 @@ body.dark-mode .mrblue-wallet .coin-amount {
 .highlight-result-ridi {
     font-weight: 900;
     font-size: 15px;
-    color: #333;
+    color: #1e90ff;
 }
 
 body.dark-mode .highlight-result-ridi {
-    color: #eee;
+    color: #5dade2;
 }
 
 .highlight-result-mrblue {
     font-weight: 900;
     font-size: 15px;
-    color: #333;
+    color: #004e9a;
 }
 
 body.dark-mode .highlight-result-mrblue {
-    color: #eee;
+    color: #66a3ff;
 }
 
 /* 공통 이벤트 뱃지 스타일  */
@@ -1466,15 +1346,15 @@ body.dark-mode .highlight-result-mrblue {
 
 
 .move-btn {
-    background-color: #f8f9fa;
+    background-color: #ffdbb8;
     color: #333;
     /* rgb(255, 157, 91)을 예쁘게 코드로 바꿨습니다 */
 }
 
 /* 다크 모드 - 눈이 편안하고 고급스러운 다크 오렌지 컬러! */
 .dark-mode .move-btn {
-    background-color: #3A3A3A;
-    color: #eee;
+    background-color: #4a2e1b;
+    color: #fff;
 }
 
 /* 🌟 요일 체크박스 - 일반 입력창(Input) 스타일로 동기화 */
@@ -1590,7 +1470,7 @@ body.dark-mode #coin-update-modal input {
 }
 
 .expire-warning-box .expire-label {
-    color: #333;
+    color: #e60012;
 }
 
 .expire-warning-box .expire-input {
@@ -1598,7 +1478,7 @@ body.dark-mode #coin-update-modal input {
 }
 
 .expire-warning-box .expire-desc {
-    color: #333;
+    color: #d63031;
 }
 
 /* --- 소멸 예정 박스 (다크 모드) --- */
@@ -1610,7 +1490,7 @@ body.dark-mode .expire-warning-box {
 }
 
 body.dark-mode .expire-warning-box .expire-label {
-    color: #fff;
+    color: #ff6b81;
     /* 다크모드에서 잘 보이면서 눈 안 아픈 파스텔톤 빨강 */
 }
 
@@ -1622,7 +1502,7 @@ body.dark-mode .expire-warning-box .expire-input {
 }
 
 body.dark-mode .expire-warning-box .expire-desc {
-    color: #eee;
+    color: #ff9999;
     /* 아래쪽 안내 글씨도 눈에 잘 띄는 연분홍으로 */
 }
 
@@ -2099,698 +1979,6 @@ body.dark-mode .sortable-ghost {
     background-color: #222222 !important;
     /* 움푹 파인 느낌나게 더 어둡게 */
     border: 2px dashed #666666 !important;
-}
-
-/* =========================================
-   🔠 순서 편집 모달 - 정렬 탭 버튼 스타일
-   ========================================= */
-/* 기본 상태 (선택 안 됨 - 연한 회색) */
-.sort-tab-btn {
-    flex: 1;
-    padding: 10px;
-    font-size: 13px;
-    font-weight: bold;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    background-color: #f8f9fa;
-    color: #888888;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    margin-bottom: 0;
-}
-
-/* ⬛ 활성화 상태 (선택됨 - 까만색으로 불 켜짐!) */
-.sort-tab-btn.active {
-    background-color: #333333;
-    color: #ffffff;
-    border-color: #333333;
-}
-
-/* 🌙 다크모드 대응 */
-body.dark-mode .sort-tab-btn {
-    background-color: #333333;
-    border-color: #444444;
-    color: #888888;
-}
-
-body.dark-mode .sort-tab-btn.active {
-    background-color: #eeeeee;
-    color: #222222;
-    border-color: #eeeeee;
-}
-
-/* =========================================
-   🎛️ 플랫폼 설정 모달창 & 토글 스위치
-   ========================================= */
-.plt-setting-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 10px;
-    background: #ffffff;
-    border-bottom: 1px solid #eeeeee;
-    border-radius: 8px;
-    margin-bottom: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.plt-setting-item:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-}
-
-.plt-setting-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.plt-setting-left .drag-handle {
-    color: #cccccc;
-    font-size: 20px;
-    cursor: grab;
-}
-
-.plt-setting-name {
-    font-size: 14px;
-    font-weight: bold;
-    color: #333333;
-}
-
-/* 🟢 iOS 스타일 토글 스위치 */
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 44px;
-    height: 24px;
-}
-
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #cccccc;
-    transition: .3s;
-    border-radius: 24px;
-}
-
-.toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .3s;
-    border-radius: 50%;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* 스위치 켜졌을 때 (모보 시그니처 컬러 중 하나인 파란색!) */
-.toggle-switch input:checked+.toggle-slider {
-    background-color: #ffa6aa;
-}
-
-.toggle-switch input:checked+.toggle-slider:before {
-    transform: translateX(20px);
-}
-
-/* 🌙 다크모드 대응 (무채색 에디션) */
-body.dark-mode .plt-setting-item {
-    background: #333333;
-    border-color: #444444;
-}
-
-body.dark-mode .plt-setting-name {
-    color: #eeeeee;
-}
-
-body.dark-mode .toggle-slider {
-    background-color: #555555;
-}
-
-/* 다크모드 켜졌을 때 토글 색깔 */
-body.dark-mode .toggle-switch input:checked+.toggle-slider {
-    background-color: #4d96ea;
-}
-
-/* 브라우저 기본값을 무시하고 내 마음대로 커스텀! */
-.platform-header {
-    font-size: 26px;
-    /* 브라우저 기본 1.5em을 무시하고 18px로 덮어씌움 */
-    margin: 3px;
-    padding: 6px 0;
-    /* 브라우저가 만든 위아래 기본 여백 싹 날려버림 */
-    font-weight: 600;
-    /* 무조건 굵게 나오는 걸 적당한 굵기로 변경 */
-}
-
-/* 🔥 스크롤바 완전 박멸 (사파리/크롬 대응) */
-.hide-scrollbar::-webkit-scrollbar {
-    display: none;
-}
-
-
-/* ======================================================
-   🔥 일괄 추가 바둑판 UI 스타일 (라이트 모드 기본)
-====================================================== */
-#batch-add-section {
-    margin-bottom: 15px;
-}
-
-.batch-desc {
-    font-size: 12px;
-    color: #333;
-    margin-bottom: 10px;
-    font-weight: normal;
-}
-
-.batch-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    max-height: 350px;
-    overflow-y: auto;
-    padding-right: 4px;
-    padding-bottom: 5px;
-}
-
-.batch-label {
-    font-size: 11px;
-    font-weight: bold;
-    color: #555;
-    display: block;
-    /* 텍스트 에어리어랑 줄바꿈되도록 */
-    margin-bottom: 4px;
-}
-
-.batch-textarea {
-    width: 100%;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-    padding: 6px;
-    font-size: 12px;
-    resize: none;
-    /* 유저가 크기 조절 못하게 막기 */
-    box-sizing: border-box;
-    background-color: #fff;
-    color: #333;
-    font-family: inherit;
-}
-
-.batch-textarea:focus {
-    outline: none;
-    border-color: #1967d2;
-    /* 클릭하면 파란색 테두리 */
-}
-
-/* 10일 연재 전용 스타일 */
-.batch-label-10day {
-    color: #333;
-}
-
-.batch-textarea-10day {
-    border: 1px solid #27ae60;
-    background-color: #f0fdf4;
-}
-
-/* 격주 연재 전용 스타일 */
-.batch-span-2 {
-    grid-column: span 2;
-}
-
-.batch-label-biweekly {
-    color: #333;
-}
-
-.batch-textarea-biweekly {
-    border: 1px solid #e67e22;
-    background-color: #fff8f2;
-}
-
-.batch-footer-desc {
-    font-size: 11px;
-    color: #888;
-    margin: 8px 0 0 0;
-    line-height: 1.4;
-}
-
-
-/* ======================================================
-   🌙 다크 모드 (Dark Mode) 일괄 추가 UI 스타일
-====================================================== */
-body.dark-mode .batch-desc {
-    color: #ddd;
-}
-
-body.dark-mode .batch-label {
-    color: #bbb;
-}
-
-body.dark-mode .batch-textarea {
-    background-color: #2c2c2e;
-    /* 다크모드용 어두운 메모장 배경 */
-    border-color: #444;
-    color: #eee;
-}
-
-body.dark-mode .batch-textarea:focus {
-    border-color: #eee;
-    /* 다크모드용 밝은 파란색 포커스 */
-}
-
-/* 10일 연재 전용 다크모드 스타일 */
-body.dark-mode .batch-label-10day {
-    color: #eee;
-    /* 눈에 띄게 살짝 더 밝은 초록 */
-}
-
-body.dark-mode .batch-textarea-10day {
-    background-color: #1a2f24;
-    /* 아주 어두운 초록 틴트 배경 */
-    border-color: #27ae60;
-}
-
-/* 격주 연재 전용 다크모드 스타일 */
-body.dark-mode .batch-label-biweekly {
-    color: #eee;
-    /* 눈에 띄게 살짝 더 밝은 주황 */
-}
-
-body.dark-mode .batch-textarea-biweekly {
-    background-color: #33261a;
-    /* 아주 어두운 주황 틴트 배경 */
-    border-color: #e67e22;
-}
-
-/* 라이트 모드 (기본 색상) */
-.batch-theme-text {
-    color: #333;
-}
-
-/* 🔥 일괄 추가 가이드 텍스트 (인라인 스타일 대체) */
-.batch-guide-text {
-    font-size: 12px;
-    margin-top: 2px;
-    margin-bottom: 16px;
-    font-weight: normal;
-    color: #888888;
-}
-
-body.dark-mode .batch-guide-text {
-    color: #bdbdbd;
-}
-
-/* 🌙 다크모드 대응 (important 없이 우선순위로 자연스럽게 덮어쓰기!) */
-body.dark-mode .batch-theme-text {
-    color: #eee;
-}
-
-/* 🔥 해시태그(칩) 겉 포장지 (크기 완벽 고정 & 투명 스크롤) */
-#custom-modal .tag-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    width: 100%;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-    padding: 6px;
-    height: 75px;
-    /* 🔥 세로 크기 75px로 꽉 고정 (뚱뚱해짐 방지!) */
-    overflow-y: auto;
-    /* 안에서만 투명 스크롤! */
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    background-color: #fff;
-    box-sizing: border-box;
-    cursor: text;
-    align-content: flex-start;
-    transition: 0.2s;
-}
-
-#custom-modal .tag-wrapper::-webkit-scrollbar {
-    display: none;
-}
-
-#custom-modal .tag-wrapper:focus-within {
-    border-color: #1967d2;
-    box-shadow: 0 0 0 2px rgba(25, 103, 210, 0.1);
-}
-
-.tag-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-}
-
-/* 🌟 칩 글자색 #333 통일 (파란색 제거) */
-.tag-chip {
-    background: #e8f0fe;
-    color: #333;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: normal;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    animation: popIn 0.2s ease-out forwards;
-}
-
-/* 🌟 X 버튼 글자색 #333 통일 & 호버 시 빨간색 제거 (투명도만 조절) */
-.tag-chip-del {
-    cursor: pointer;
-    color: #333;
-    opacity: 0.5;
-    font-weight: normal;
-    font-size: 14px;
-    line-height: 1;
-    padding: 0 4px;
-    margin-right: -4px;
-}
-
-.tag-chip-del:hover {
-    opacity: 1;
-}
-
-/* 🌟 입력창(textarea) 가로세로 폭주 완벽 차단! */
-#custom-modal .tag-wrapper .tag-input {
-    border: none;
-    outline: none;
-    background: transparent;
-    box-shadow: none;
-    flex: 1;
-    min-width: 30px;
-    /* 🔥 textarea 기본 가로 고집 꺾기 (가로 팽창 방지!) */
-    max-width: 100%;
-    font-size: 12px;
-    color: #333;
-    padding: 0;
-    margin: 0;
-    font-family: inherit;
-    resize: none;
-    /* 유저가 크기 조절 못하게 막기 */
-    height: 18px;
-    /* 🔥 한 줄 높이로 꽉 누르기 (세로 팽창 방지!) */
-    line-height: 18px;
-    overflow: hidden;
-    white-space: nowrap;
-}
-
-@keyframes popIn {
-    from {
-        transform: scale(0.8);
-        opacity: 0;
-    }
-
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-/* 🌟 특수 컬러 (배경과 테두리만 변경) */
-.tag-wrapper.wrapper-10day {
-    border-color: #27ae60;
-    background: #f0fdf4;
-}
-
-.tag-wrapper.wrapper-biweekly {
-    border-color: #e67e22;
-    background: #fff8f2;
-}
-
-/* ====================================
-   🌙 다크모드 대응 (글자색 #eee 통일!)
-==================================== */
-/* 🌙 다크모드 대응 (important 없이 우선순위로 제압) */
-body.dark-mode #custom-modal .tag-wrapper {
-    background-color: #2c2c2e;
-    border-color: #444;
-}
-
-body.dark-mode #custom-modal .tag-wrapper:focus-within {
-    border-color: #8ab4f8;
-}
-
-body.dark-mode #custom-modal .tag-wrapper .tag-input {
-    color: #eee;
-    background: transparent;
-}
-
-body.dark-mode .tag-chip {
-    background: #1a233a;
-    color: #eee;
-}
-
-body.dark-mode .tag-chip-del {
-    color: #eee;
-}
-
-/* 🌟 다크모드 특수 컬러 */
-body.dark-mode .tag-wrapper.wrapper-10day {
-    background-color: #1a2f24;
-    border-color: #27ae60;
-}
-
-body.dark-mode .tag-wrapper.wrapper-biweekly {
-    background-color: #33261a;
-    border-color: #e67e22;
-}
-
-
-/* 🌟 입력창 기본 테두리 완벽 박멸 + 한 줄처럼 위장! */
-#custom-modal #batch-add-section .tag-wrapper .tag-input {
-    border: none;
-    outline: none;
-    background: transparent;
-    box-shadow: none;
-    flex: 1;
-    width: 10px;
-    min-width: 30px;
-    font-size: 12px;
-    color: #333;
-    padding: 0;
-    margin: 0;
-    font-family: inherit;
-    /* 🔥 다중줄 입력창(textarea)을 한 줄처럼 보이게 꽉 압축! */
-    resize: none;
-    height: 18px;
-    overflow: hidden;
-    white-space: nowrap;
-}
-
-/* 🌙 다크모드 대응 */
-body.dark-mode #custom-modal #batch-add-section .tag-wrapper .tag-input {
-    color: #eee;
-    background: transparent;
-}
-
-/* ======================================================
-   🔥 글로벌 이벤트 알림창 스타일 (Light & Dark)
-====================================================== */
-#global-event-alert {
-    text-align: center;
-    font-size: 12px;
-    color: #333;
-    /* 기본 빨간 글씨 */
-    background-color: #fff0f0;
-    /* 연한 핑크빛 배경 */
-    border: 1px solid #ffcccc;
-    padding: 4px 12px;
-    border-radius: 20px;
-    width: fit-content;
-    margin: 0 auto 16px auto;
-    font-weight: normal;
-}
-
-/* 🌙 다크모드 대응 (눈부시지 않게 톤 다운된 빨간색으로!) */
-body.dark-mode #global-event-alert {
-    color: #eee;
-    /* 다크모드용 밝은 빨강 */
-    background-color: #3a1c1c;
-    /* 어두운 버건디 배경 */
-    border-color: #5c2e2e;
-    /* 어두운 테두리 */
-}
-
-/* 🌟 알림창 내 강조 텍스트 (이벤트 이름) */
-#global-event-alert .event-highlight-text {
-    color: #333;
-    /* 기존의 진한 빨간색 유지! */
-}
-
-/* 🌙 다크모드 대응 (어두운 배경에서 더 잘 보이도록 살짝 밝은 빨간색으로!) */
-body.dark-mode #global-event-alert .event-highlight-text {
-    color: #fff;
-}
-
-/* ======================================================
-   🧮 계산기 모달창 스타일 (Light & Dark)
-====================================================== */
-
-/* 버튼 여백 및 크기 공통 설정 */
-.calc-btn-full {
-    width: 100%;
-}
-
-.calc-mb-15 {
-    margin-bottom: 15px;
-}
-
-.calc-mt-15 {
-    margin-top: 15px;
-}
-
-/* 🌟 계산 결과 박스 기본 바탕 */
-#calc-result-box {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 10px;
-    text-align: center;
-}
-
-/* 텍스트 1: 남은 화수 */
-.calc-text-remain {
-    margin: 0;
-    font-size: 14px;
-    color: #7c7a7a;
-}
-
-#calc-remain-ep {
-    font-weight: bold;
-    color: #333;
-}
-
-/* 텍스트 2: 필요한 금액 */
-.calc-text-need {
-    margin: 5px 0 0 0;
-    font-size: 16px;
-    font-weight: normal;
-    color: #7c7a7a;
-}
-
-body.dark-mode .calc-text-need {
-    color: #d5d5d5;
-}
-
-#calc-need-coin {
-    font-weight: bold;
-    color: #333;
-    font-size: 20px;
-}
-
-/* 🌟 코인백 결과 박스 (점선 테두리) */
-#calc-coinback-result {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px dashed #ccc;
-}
-
-/* 텍스트 3: 돌려받는 금액 */
-.calc-text-coinback {
-    margin: 0;
-    font-size: 13px;
-    color: #333;
-}
-
-#calc-back-coin {
-    font-weight: bold;
-}
-
-/* 텍스트 4: N화 더 볼 수 있어요 */
-.calc-text-extra {
-    margin: 5px 0 0 0;
-    font-size: 15px;
-    font-weight: bold;
-    color: #333;
-}
-
-#calc-extra-ep {
-    color: #333;
-    font-size: 18px;
-}
-
-/* 🌟 지갑에서 바로 차감 버튼 */
-#calc-deduct-btn {
-    margin-top: 15px;
-    width: 100%;
-    padding: 12px;
-    background: #e74c3c;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-weight: normal;
-    cursor: pointer;
-    font-size: 14px;
-    transition: 0.2s;
-}
-
-#calc-deduct-btn:hover {
-    background: #c0392b;
-    /* 마우스 올렸을 때 살짝 진해지게 */
-}
-
-
-/* ======================================================
-   🌙 계산기 모달창 다크모드 대응
-====================================================== */
-body.dark-mode #calc-result-box {
-    background: #2c2c2e;
-}
-
-body.dark-mode .calc-text-remain {
-    color: #dcdcdc;
-}
-
-body.dark-mode #calc-remain-ep {
-    color: #eee;
-}
-
-body.dark-mode .calc-text-need {
-    color: #eee;
-}
-
-body.dark-mode #calc-need-coin {
-    color: #fff;
-}
-
-/* 다크모드용 밝은 빨강 */
-
-body.dark-mode #calc-coinback-result {
-    border-top-color: #555;
-}
-
-body.dark-mode .calc-text-coinback {
-    color: #eee;
-}
-
-/* 다크모드용 핑크 */
-body.dark-mode .calc-text-extra {
-    color: #eee;
-}
-
-/* 다크모드용 파랑 */
-body.dark-mode #calc-extra-ep {
-    color: #eee;
-}
-
-body.dark-mode #calc-deduct-btn {
-    background: #d63031;
-}
-
-body.dark-mode #calc-deduct-btn:hover {
-    background: #ff5252;
 }
 
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
