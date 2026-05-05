@@ -1590,7 +1590,7 @@ body.dark-mode #coin-update-modal input {
 }
 
 .expire-warning-box .expire-label {
-    color: #e60012;
+    color: #333;
 }
 
 .expire-warning-box .expire-input {
@@ -1598,7 +1598,7 @@ body.dark-mode #coin-update-modal input {
 }
 
 .expire-warning-box .expire-desc {
-    color: #d63031;
+    color: #333;
 }
 
 /* --- 소멸 예정 박스 (다크 모드) --- */
@@ -1610,7 +1610,7 @@ body.dark-mode .expire-warning-box {
 }
 
 body.dark-mode .expire-warning-box .expire-label {
-    color: #ff6b81;
+    color: #fff;
     /* 다크모드에서 잘 보이면서 눈 안 아픈 파스텔톤 빨강 */
 }
 
@@ -1622,7 +1622,7 @@ body.dark-mode .expire-warning-box .expire-input {
 }
 
 body.dark-mode .expire-warning-box .expire-desc {
-    color: #ff9999;
+    color: #eee;
     /* 아래쪽 안내 글씨도 눈에 잘 띄는 연분홍으로 */
 }
 
