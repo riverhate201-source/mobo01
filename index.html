@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
-    <link rel="stylesheet" href="./css/style.css?v=1.7">
+    <link rel="stylesheet" href="./css/style.css?v=3.3">
 
 
 
@@ -54,7 +54,7 @@
 
             <div class="nav-section">
                 <h4>보기 설정</h4>
-                <button onclick="handleMenuAction('toggleOrder')" class="menu-item">플랫폼 순서 변경</button>
+                <button onclick="openPlatformSettingModal()" class="menu-item">플랫폼 순서 변경</button>
                 <button onclick="handleMenuAction('darkMode')" id="menu-dark-mode-btn" class="menu-item">다크
                     모드</button>
                 <button onclick="openLinkSettingModal()" class="menu-item">출석 링크 직접 설정</button>
@@ -75,7 +75,7 @@
                 <h4>편의 기능</h4>
                 <button onclick="openSearchModal()" class="menu-item">작품 검색하기</button>
                 <button onclick="openCalcModal()" class="menu-item">정주행 코인 및 페이 계산기</button>
-                <button onclick="deductToday()" class="menu-item">오늘 작품 당일 정산</button>
+                <button onclick="deductToday()" class="menu-item">오늘 작품 미리 정산</button>
                 <button class="menu-item" onclick="showMonthlyReport()">이번 달 월말정산 보기
                 </button>
 
@@ -131,8 +131,7 @@
         &lt;경고&gt; 백업을 안 한 지 7일이 넘었어요! 안전하게 데이터를 백업해 주세요.
     </div>
 
-    <div id="global-event-alert"
-        style="display:none; text-align:center; font-size:12px; color:#e60012; background-color:#fff0f0; border:1px solid #ffcccc; padding:4px 12px; border-radius:20px; width:fit-content; margin:0 auto 10px auto; font-weight:bold;">
+    <div id="global-event-alert" style="display: none;">
         옆으로 넘겨보세요! 플랫폼 이벤트 진행 중!
     </div>
 
@@ -154,7 +153,7 @@
                         </div>
                     </div>
 
-                    <span class="platform-name" style="margin-bottom: 2px;">봄툰 코인</span>
+                    <span class="platform-name">봄툰 코인</span>
                     <span class="coin-amount" onclick="updateCoin('bomtoon')" style="cursor:pointer;"><span
                             id="bomtoon-wallet-val">0</span> C</span>
 
@@ -171,12 +170,14 @@
                         style="display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 18px; margin-top: -15px; margin-bottom: 8px; width: 100%;">
                         <div id="lezhin-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">20일 코인 할인!
                         </div>
-                        <div id="lezhin-expire-badge"
-                            style="display:none; color:#e60012; font-size:11px; font-weight:bold; background:#ffebee; padding:2px 8px; border-radius:12px;">
+                        <div id="lezhin-expire-badge" style="display:none; color:#333; font-size:11px; font-weight:bold; background:#ffebee; 
+                            
+                            border: 1px dashed #e60012;
+                            padding:4px 8px; border-radius:12px;">
                         </div>
                     </div>
 
-                    <span class="platform-name" style="margin-bottom: 2px;">레진 코인</span>
+                    <span class="platform-name">레진 코인</span>
                     <span class="coin-amount" onclick="updateCoin('lezhin')" style="cursor:pointer;"><span
                             id="lezhin-wallet-val">0</span> C</span>
 
@@ -198,7 +199,7 @@
                         </div>
                     </div>
 
-                    <span class="platform-name" style="margin-bottom: 2px;">리디 캐시</span>
+                    <span class="platform-name">리디 캐시</span>
                     <span class="coin-amount" onclick="updateCoin('ridi')" style="cursor:pointer;"><span
                             id="ridi-wallet-val">0</span>원</span>
 
@@ -221,7 +222,7 @@
                         </div>
                     </div>
 
-                    <span class="platform-name" style="margin-bottom: 2px;">미블 머니</span>
+                    <span class="platform-name">미블 머니</span>
                     <span class="coin-amount" onclick="updateCoin('mrblue')" style="cursor:pointer;"><span
                             id="mrblue-wallet-val">0</span>원</span>
 
@@ -255,7 +256,7 @@
                 <h2 class="platform-header lezhin-title">레진 (<span id="lezhin-day-display">요일</span>)</h2>
                 <button class="add-work-btn" onclick="openAddModal('lezhin')">+ 추가</button>
             </div>
-            <div class="total-coin-banner">오늘의 필요 코인: <span id="lezhin-needed-val">0</span>개 <span id="lezhin-count-val"
+            <div class="total-coin-banner">오늘의 필요 코인: <span id="lezhin-needed-val">0</span>개<span id="lezhin-count-val"
                     class="work-count-text">(작품 총 0개)</span>
                 <button class="filter-btn" onclick="toggleFilterMenu('lezhin')">
                     <i data-lucide="sliders-horizontal" style="width: 18px; height: 18px;"></i>
@@ -341,16 +342,116 @@
         2026 우니 @s_euni_
     </footer>
 
-    <div id="custom-modal" class="modal-overlay" style="display: none;">
+    <!-- 🎛️ 작품 추가/수정 모달창 (최종 진화형) -->
+    <div id="custom-modal" class="modal-overlay" style="display: none; z-index: 6000;">
         <div class="modal-content">
             <h3 id="modal-title-label">작품 추가</h3>
-            <input type="text" id="input-title" placeholder="작품 제목">
-            <input type="text" id="input-url" placeholder="작품 바로가기 링크 (선택)" style="margin-top: 2px;">
-            <input type="text" id="input-time" placeholder="업로드 시간 (예: 오전 7시 업로드 / 웹소설의 경우에만)" style="flex: 1;">
 
-            <div style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- 🌟 단일/일괄 스위치 버튼 -->
+            <div id="add-mode-toggle-container"
+                style="display: flex; gap: 10px; margin-bottom: 16px; background: #f1f3f5; padding: 4px; border-radius: 8px;">
+                <button id="btn-mode-single" onclick="setAddMode('single')"
+                    style="flex: 1; padding: 8px; border: none; background: #fff; border-radius: 6px; font-weight: normal; color: #333; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer;">단일
+                    추가</button>
+                <button id="btn-mode-batch" onclick="setAddMode('batch')"
+                    style="flex: 1; padding: 8px; border: none; background: transparent; border-radius: 6px; font-weight: normal; color: #888; cursor: pointer;">요일별
+                    일괄 추가</button>
+            </div>
+
+            <!-- 🌟 [최종 진화] 요일별 일괄 추가 해시태그 바둑판! -->
+            <div id="batch-add-section" style="display: none; margin-bottom: 15px;">
+                <p class="batch-guide-text">제목을 적고 엔터, 쉼표, 또는 스페이스바 2번을 누르세요!</p>
+
+                <!-- 🔥 1fr 대신 minmax(0, 1fr)로 바꿔서 바둑판 팽창을 완벽 차단! -->
+                <div class="hide-scrollbar"
+                    style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; max-height: 350px; overflow-y: auto; padding-right: 4px; padding-bottom: 5px; scrollbar-width: none; -ms-overflow-style: none;">
+
+                    <!-- 🔥 각 요일 박스마다 style="min-width: 0;" 을 넣어서 튀어나가는 걸 막았습니다! -->
+                    <div style="min-width: 0;"><label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 8px; font-weight: normal;">월요일</label>
+                        <div class="tag-wrapper" onclick="document.getElementById('batch-input-월요일').focus()">
+                            <div id="tag-list-월요일" class="tag-list"></div><textarea id="batch-input-월요일"
+                                class="tag-input" placeholder="제목을 입력하세요" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div style="min-width: 0;"><label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 2px; font-weight: normal;">화요일</label>
+                        <div class="tag-wrapper" onclick="document.getElementById('batch-input-화요일').focus()">
+                            <div id="tag-list-화요일" class="tag-list"></div><textarea id="batch-input-화요일"
+                                class="tag-input" placeholder="제목을 입력하세요" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div style="min-width: 0;"><label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 2px; font-weight: normal;">수요일</label>
+                        <div class="tag-wrapper" onclick="document.getElementById('batch-input-수요일').focus()">
+                            <div id="tag-list-수요일" class="tag-list"></div><textarea id="batch-input-수요일"
+                                class="tag-input" placeholder="제목을 입력하세요" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div style="min-width: 0;"><label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 2px; font-weight: normal;">목요일</label>
+                        <div class="tag-wrapper" onclick="document.getElementById('batch-input-목요일').focus()">
+                            <div id="tag-list-목요일" class="tag-list"></div><textarea id="batch-input-목요일"
+                                class="tag-input" placeholder="제목을 입력하세요" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div style="min-width: 0;"><label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 2px; font-weight: normal;">금요일</label>
+                        <div class="tag-wrapper" onclick="document.getElementById('batch-input-금요일').focus()">
+                            <div id="tag-list-금요일" class="tag-list"></div><textarea id="batch-input-금요일"
+                                class="tag-input" placeholder="제목을 입력하세요" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div style="min-width: 0;"><label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 2px; font-weight: normal;">토요일</label>
+                        <div class="tag-wrapper" onclick="document.getElementById('batch-input-토요일').focus()">
+                            <div id="tag-list-토요일" class="tag-list"></div><textarea id="batch-input-토요일"
+                                class="tag-input" placeholder="제목을 입력하세요" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div style="min-width: 0;"><label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 2px; font-weight: normal;">일요일</label>
+                        <div class="tag-wrapper" onclick="document.getElementById('batch-input-일요일').focus()">
+                            <div id="tag-list-일요일" class="tag-list"></div><textarea id="batch-input-일요일"
+                                class="tag-input" placeholder="제목을 입력하세요" rows="1"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 특수 요일 상자 -->
+                    <div style="min-width: 0;">
+                        <label class="batch-theme-text"
+                            style="font-size: 12px; padding-right: 2px; font-weight: normal;">10일 연재</label>
+                        <div class="tag-wrapper wrapper-10day"
+                            onclick="document.getElementById('batch-input-10일 연재').focus()">
+                            <div id="tag-list-10일 연재" class="tag-list"></div><textarea id="batch-input-10일 연재"
+                                class="tag-input" placeholder="제목을 입력하세요" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div style="grid-column: span 2; min-width: 0;">
+                        <label class="batch-theme-text"
+                            style="font-size: 12px; font-weight: normal; padding-right: 2px;">격주 연재</label>
+                        <div class="tag-wrapper wrapper-biweekly"
+                            onclick="document.getElementById('batch-input-격주 연재').focus()">
+                            <div id="tag-list-격주 연재" class="tag-list"></div><textarea id="batch-input-격주 연재"
+                                class="tag-input" placeholder="제목을 입력하세요" rows="1"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="batch-footer-desc">* 기본 가격(레진/봄툰 3C, 리디 600캐시/미블 500머니)과 진도 '1화'로 자동세팅됩니다. 10일/격주 날짜는 임의설정되며
+                    추후 수정 가능합니다.</p>
+            </div>
+
+            <!-- 1️⃣ 단일 추가 전용 윗부분 (제목, 링크, 시간) -->
+            <div id="single-add-section-1">
+                <input type="text" id="input-title" placeholder="작품 제목">
+                <input type="text" id="input-url" placeholder="작품 바로가기 링크 (선택)" style="margin-top: 2px;">
+                <input type="text" id="input-time" placeholder="업로드 시간 (예: 오전 7시 업로드 / 웹소설의 경우에만)" style="flex: 1;">
+            </div>
+
+            <!-- 2️⃣ 공통 영역 (요일 체크박스 + 상태) -->
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 5px;">
                 <div id="day-selection-area" style="width: 100%;">
-
                     <div
                         style="display: flex; flex-wrap: wrap; gap: 6px; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
                         <label class="chk-label"><input type="checkbox" name="day-chk" value="월요일"
@@ -381,49 +482,47 @@
                 </select>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 12px; margin-bottom: 12px;">
-                <select id="input-cycle-type" class="modal-select" style="flex: 2; margin-bottom: 0;"
-                    onchange="toggleCycleInputs(this)">
-                    <option value="">연재 주기 선택 (없음)</option>
-                    <option value="5연 1휴">5연 1휴</option>
-                    <option value="4연 1휴">4연 1휴</option>
-                    <option value="3연 1휴">3연 1휴</option>
-                    <option value="2연 1휴">2연 1휴</option>
-                    <option value="매월 특정 주 휴재">매월 특정 주 휴재</option>
-                    <option value="격주 연재">격주 연재</option>
-                </select>
-                <input type="text" id="input-cycle-week" placeholder="n주차 (숫자)"
-                    style="display: none; flex: 1; margin-bottom: 0; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+            <!-- 3️⃣ 단일 추가 전용 아랫부분 (주기, 코인, 결제, 사진) -->
+            <div id="single-add-section-2">
+                <div style="display: flex; gap: 10px; margin-top: 12px; margin-bottom: 12px;">
+                    <select id="input-cycle-type" class="modal-select" style="flex: 2; margin-bottom: 0;"
+                        onchange="toggleCycleInputs(this)">
+                        <option value="">연재 주기 선택 (없음)</option>
+                        <option value="5연 1휴">5연 1휴</option>
+                        <option value="4연 1휴">4연 1휴</option>
+                        <option value="3연 1휴">3연 1휴</option>
+                        <option value="2연 1휴">2연 1휴</option>
+                        <option value="매월 특정 주 휴재">매월 특정 주 휴재</option>
+                        <option value="격주 연재">격주 연재</option>
+                    </select>
+                    <input type="text" id="input-cycle-week" placeholder="n주차 (숫자)"
+                        style="display: none; flex: 1; margin-bottom: 0; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="input-coin" placeholder="코인"
+                        style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+                    <input type="text" id="input-progress" placeholder="진도 (예: 1화)"
+                        style="flex: 2; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+                </div>
+
+                <label id="add-deduct-label"
+                    style="display:flex; align-items:center; gap:8px; margin-bottom:10px; border: 1px solid #ddd; font-size:14px; color:#555; cursor:pointer; background: #f8f9fa; padding: 10px; border-radius: 8px;">
+                    <input type="checkbox" id="add-deduct-chk" style="width:16px; height:16px; margin:0;">
+                    <span style="font-weight: normal; color: #333;">구매한 화수만큼 지갑에서 차감하기</span>
+                </label>
+
+                <p id="image-status-text" style="text-align: center; font-size: 12px; margin-bottom: 5px;">📷 사진은 선택
+                    사항입니다.</p>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button onclick="document.getElementById('image-input').click()" class="img-pick-btn"
+                        style="margin-bottom: 0; flex: 1;">사진 선택하기</button>
+                    <button id="remove-img-btn" onclick="removeSelectedImage()" class="cancel-btn"
+                        style="margin-bottom: 0; display: none; flex: 1; font-weight: normal; border: 1px dashed rgb(255, 204, 204); background: #FDFDFD; border-radius: 10px;">사진
+                        삭제</button>
+                </div>
             </div>
-
-            <div style="display: flex; gap: 10px;">
-                <input type="number" id="input-coin" placeholder="코인"
-                    style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
-                <input type="text" id="input-progress" placeholder="진도 (예: 1화)"
-                    style="flex: 2; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
-            </div>
-
-            <label id="add-deduct-label"
-                style="display:flex; align-items:center; gap:8px;  margin-bottom:10px; border: 1px solid #ddd; font-size:13px; color:#555; cursor:pointer; background: #f8f9fa; padding: 10px; border-radius: 8px;">
-                <input type="checkbox" id="add-deduct-chk" style="width:16px; height:16px; margin:0;">
-                <span style="font-weight: bold;">구매한 화수만큼 지갑에서 차감하기</span>
-            </label>
-
-            <p id="image-status-text" style="text-align: center; font-size: 12px; margin-bottom: 5px;">
-                📷
-                사진은 선택
-                사항입니다.
-            </p>
-
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <button onclick="document.getElementById('image-input').click()" class="img-pick-btn"
-                    style="margin-bottom: 0; flex: 1;">사진 선택하기</button>
-                <button id="remove-img-btn" onclick="removeSelectedImage()" class="cancel-btn"
-                    style="margin-bottom: 0; display: none; flex: 1; background: #ffebee; color: #d32f2f;">사진
-                    삭제</button>
-            </div>
-
-
 
             <div class="modal-btns">
                 <button onclick="closeAddModal()" class="cancel-btn">취소</button>
@@ -439,8 +538,9 @@
             <h3 id="action-title" style="text-align:center; margin-top:0;">작품명</h3>
             <div class="action-btns-container">
                 <button class="act-btn edit-btn" onclick="editFromAction()">작품 상세 수정</button>
+                <button class="act-btn dup-btn" onclick="duplicateFromAction()">이 작품 템플릿으로 복제</button>
                 <button onclick="moveFromAction()" class="act-btn move-btn">다른 플랫폼으로 이동</button>
-                <button class="act-btn del-btn" onclick="deleteFromAction()"> 서랍에서 영구 삭제</button>
+                <button class="act-btn del-btn" onclick="deleteFromAction()">서랍에서 영구 삭제</button>
             </div>
             <button onclick="closeActionModal()" class="cancel-btn" style="margin-top:15px; width:100%;">닫기</button>
         </div>
@@ -491,7 +591,7 @@
 
             <div class="coinback-box" style="margin-bottom: 15px; padding: 12px; border-radius: 8px;">
                 <label class="coinback-label"
-                    style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: bold; cursor: pointer;">
+                    style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: normal; cursor: pointer;">
                     <input type="checkbox" id="calc-coinback-toggle" onchange="toggleCoinbackInput()"
                         style="margin: 0; width: 16px; height: 16px;">
                     코인백 / 페이백(이벤트) 적용하기
@@ -503,32 +603,22 @@
                 </div>
             </div>
 
-            <button onclick="calculateCoins()" class="save-btn" style="width: 100%; margin-bottom: 15px;">얼마나
-                필요할까?</button>
+            <button onclick="calculateCoins()" class="save-btn calc-btn-full calc-mb-15">얼마나 필요할까?</button>
 
-            <div id="calc-result-box"
-                style="display: none; background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;">
-                <p style="margin: 0; font-size: 14px; color: #555;">남은 화수: <span id="calc-remain-ep"
-                        style="font-weight: bold; color: #333;">0</span>화</p>
-                <p style="margin: 5px 0 0 0; font-size: 16px;">필요한 금액: <span id="calc-need-coin"
-                        style="font-weight: bold; color: #e60012; font-size: 20px;">0</span></p>
+            <div id="calc-result-box" style="display: none;">
+                <p class="calc-text-remain">남은 화수: <span id="calc-remain-ep">0</span>화</p>
+                <p class="calc-text-need">필요한 금액: <span id="calc-need-coin">0</span></p>
 
-                <div id="calc-coinback-result"
-                    style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ccc;">
-                    <p style="margin: 0; font-size: 13px; color: #e84393;">돌려받는 금액: <span id="calc-back-coin"
-                            style="font-weight: bold;">0</span></p>
-                    <p style="margin: 5px 0 0 0; font-size: 15px; font-weight: bold; color: #1967d2;">👉
-                        <span id="calc-extra-ep" style="color:#e60012; font-size:18px;">0</span>화 더 볼 수
-                        있어요!
-                    </p>
+                <div id="calc-coinback-result" style="display: none;">
+                    <p class="calc-text-coinback">돌려받는 금액: <span id="calc-back-coin">0</span></p>
+                    <p class="calc-text-extra">👉 <span id="calc-extra-ep">0</span>화 더 볼 수 있어요!</p>
                 </div>
-                <button id="calc-deduct-btn" onclick="deductFromCalculator()"
-                    style="margin-top: 15px; width: 100%; padding: 12px; background: #e74c3c; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px;">
+                <button id="calc-deduct-btn" onclick="deductFromCalculator()">
                     지갑에서 바로 차감하기
                 </button>
             </div>
 
-            <button onclick="closeCalcModal()" class="cancel-btn" style="width: 100%; margin-top: 15px;">닫기</button>
+            <button onclick="closeCalcModal()" class="cancel-btn calc-btn-full calc-mt-15">닫기</button>
         </div>
     </div>
 
@@ -575,7 +665,7 @@
 
             <div class="expire-warning-box"
                 style="margin-bottom: 15px; text-align: left; padding: 12px; border-radius: 8px;">
-                <label id="expire-modal-label" class="expire-label" style="font-size: 13px; font-weight: bold;">🚨
+                <label id="expire-modal-label" class="expire-label" style="font-size: 13px; font-weight: normal;">🚨
                     소멸 예정
                     코인 (선택)</label>
                 <div style="display: flex; gap: 8px; margin-top: 8px;">
@@ -633,7 +723,7 @@
     <div id="filter-modal" class="filter-modal-overlay">
         <div class="filter-modal-content">
             <div class="filter-modal-header">
-                <h3>작품 순서 설정</h3>
+                <h3>작품 카드 설정</h3>
             </div>
 
             <div class="filter-modal-body">
@@ -665,13 +755,10 @@
 
             <h3 id="reorder-title" style="margin-top: 0; text-align: center; padding-bottom: 2px;">순서 편집</h3>
 
-            <!-- 🔠 가나다 자동 정렬 버튼 그룹 -->
+            <!-- 🔠 가나다 자동 정렬 탭 메뉴 -->
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <button class="save-btn" style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px;"
-                    onclick="sortListAZ()">가나다 나열</button>
-                <button class="cancel-btn"
-                    style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px; margin-bottom: 0;"
-                    onclick="sortListZA()">다가나 나열</button>
+                <button id="btn-sort-az" class="sort-tab-btn" onclick="sortListAZ()">가나다 나열</button>
+                <button id="btn-sort-za" class="sort-tab-btn" onclick="sortListZA()">다나가 나열</button>
             </div>
 
             <!-- 📜 세로 리스트가 그려질 공간 -->
@@ -682,9 +769,38 @@
         </div>
     </div>
 
+    <!-- 🎛️ 플랫폼 순서 및 토글 설정 모달창 -->
+    <div id="platform-setting-modal" class="modal-overlay" style="display: none; z-index: 7000;">
+        <div class="modal-content" style="max-width: 320px; position: relative; padding: 25px 20px;">
+            <button onclick="closePlatformSettingModal()"
+                style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
+            <h3 style="margin-top: 0; text-align: center; padding-bottom: 2px;">플랫폼 설정</h3>
+            <p style="text-align: center; color: #888; font-size: 12px; margin-bottom: 15px;">순서를 꾹 눌러 바꾸거나 스위치를 끄고 켤 수
+                있어요!</p>
+
+            <!-- 📜 플랫폼 리스트가 들어갈 공간 -->
+            <div id="platform-sort-list"
+                style="border: 1px solid #eee; border-radius: 8px; padding: 10px; background: #fdfdfd;">
+            </div>
+
+            <button onclick="savePlatformSetting()" class="save-btn"
+                style="width: 100%; margin-top: 15px;">저장하기</button>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
+
+        // 📊 GA4 클릭 추적용 공통 함수
+        function trackClick(eventName, eventDetails) {
+            // gtag(구글 애널리틱스)가 정상적으로 로드되었을 때만 실행! (에러 방지)
+            if (typeof gtag === 'function') {
+                gtag('event', eventName, eventDetails);
+            } else {
+                console.log('클릭 추적됨 (GA 미연결):', eventName, eventDetails);
+            }
+        }
 
         function isWorkOnAutoBreak(work) {
             if (!work.cycle) return false;
@@ -863,6 +979,8 @@
             }
         }
 
+
+
         function isDateMatch(cycleStr, dateObj) {
             if (!cycleStr || !cycleStr.includes("10일 연재")) return false;
             let match = cycleStr.match(/\((.*?)\)/);
@@ -936,6 +1054,7 @@
             cleanupIncorrectHistoryV2();
             applyTheme();
             lucide.createIcons();
+            checkCoinExpiration();
             checkSaleDays();
             checkAttendanceReset();
             checkAndShowAttendPopup();
@@ -947,6 +1066,114 @@
             autoUpdatePastBiweeklyDates(); // 🔥 앱 처음 켤 때도 날짜 갱신 검사!
         };
 
+        // 🪄 태그(칩) 생성 함수
+        function addTag(day, text) {
+            text = text.trim();
+            if (!text) return;
+            const tagList = document.getElementById(`tag-list-${day}`);
+            const span = document.createElement('span');
+            span.className = 'tag-chip';
+            span.dataset.val = text; // 나중에 저장할 때 빼갈 데이터!
+            span.innerHTML = `${text} <span class="tag-chip-del" onclick="this.parentElement.remove()">×</span>`;
+            tagList.appendChild(span);
+            // 🌟 [핵심 마법] 칩이 추가될 때마다 스크롤을 맨 아래로 끌어내려서 입력창을 무조건 보여주기!
+            setTimeout(() => {
+                const wrapper = tagList.parentElement;
+                if (wrapper) wrapper.scrollTop = wrapper.scrollHeight;
+            }, 10);
+        }
+
+        // 🪄 엔터, 쉼표, 더블스페이스, 백스페이스 감지 센서 설치!
+        document.addEventListener("DOMContentLoaded", () => {
+            const dayList = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일', '10일 연재', '격주 연재'];
+            dayList.forEach(day => {
+                const input = document.getElementById(`batch-input-${day}`);
+                const tagList = document.getElementById(`tag-list-${day}`);
+                if (!input || !tagList) return;
+
+                // 1. [키보드 누를 때] 폼 제출 방지 및 백스페이스 삭제
+                input.addEventListener('keydown', function (e) {
+                    if (e.isComposing) return;
+
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addTag(day, this.value);
+                        this.value = '';
+                    } else if (e.key === 'Backspace' && this.value === '') {
+                        if (tagList.lastChild) {
+                            tagList.removeChild(tagList.lastChild);
+                        }
+                    }
+                });
+
+                // 2. 🌟 [핵심] 글자가 입력될 때 (복붙 포함) 줄바꿈(\n), 쉼표(,), 더블스페이스 즉시 감지!
+                input.addEventListener('input', function (e) {
+                    if (this.value.includes('\n') || this.value.includes(',') || this.value.includes('  ')) {
+                        // 엔터나 쉼표가 들어오면 싹 다 쪼개버리기!
+                        const parts = this.value.split(/[\n,]+|\s{2,}/).map(t => t.trim()).filter(t => t !== "");
+                        this.value = ''; // 입력창 싹 비우기
+                        parts.forEach(p => addTag(day, p));
+                    }
+                });
+            });
+        });
+
+        // 🎛️ 모달창 단일/일괄 스위치 변신 함수!
+        function setAddMode(mode) {
+            const btnSingle = document.getElementById('btn-mode-single');
+            const btnBatch = document.getElementById('btn-mode-batch');
+            const sectionSingle1 = document.getElementById('single-add-section-1');
+            const sectionSingle2 = document.getElementById('single-add-section-2');
+            const sectionBatch = document.getElementById('batch-add-section');
+            const templateArea = document.getElementById('template-recommend-area');
+
+            // 🌟 요일/상태 공통 부모 박스와 모달창 제목 찾기!
+            const commonArea = document.getElementById('day-selection-area').parentElement;
+            const modalTitle = document.getElementById('modal-title-label'); // 👈 제목 요소 가져오기
+
+            // 🌟 현재 선택된 플랫폼의 한글 이름 변환기
+            const pltNames = { lezhin: '레진', bomtoon: '봄툰', ridi: '리디', mrblue: '미블' };
+            const currentPltName = pltNames[currentPlatform] || '';
+
+            if (mode === 'single') {
+                // 단일 추가 버튼 불 켜기
+                btnSingle.style.background = '#fff'; btnSingle.style.color = '#333'; btnSingle.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                btnBatch.style.background = 'transparent'; btnBatch.style.color = '#888'; btnBatch.style.boxShadow = 'none';
+
+                sectionSingle1.style.display = 'block';
+                sectionSingle2.style.display = 'block';
+                sectionBatch.style.display = 'none';
+
+                // 단일 모드일 땐 다시 보여주기!
+                if (commonArea) commonArea.style.display = 'flex';
+
+                if (templateArea && document.getElementById('template-chips-container').innerHTML.trim() !== "") {
+                    templateArea.style.display = 'block';
+                }
+
+                // 🌟 [핵심] 단일 추가 탭일 때는 원래대로 "작품 추가"로 복구!
+                modalTitle.textContent = "작품 추가";
+
+            } else {
+                // 일괄 추가 버튼 불 켜기
+                btnBatch.style.background = '#fff'; btnBatch.style.color = '#333'; btnBatch.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                btnSingle.style.background = 'transparent'; btnSingle.style.color = '#888'; btnSingle.style.boxShadow = 'none';
+
+                sectionSingle1.style.display = 'none';
+                sectionSingle2.style.display = 'none';
+                // 바둑판 그리드 활성화
+                sectionBatch.style.display = 'grid';
+
+                // 일괄 모드일 땐 헷갈리는 요일/상태 선택창 싹 숨기기!
+                if (commonArea) commonArea.style.display = 'none';
+
+                if (templateArea) templateArea.style.display = 'none';
+
+                // 🌟 [핵심] 일괄 추가 탭일 때는 제목 옆에 (플랫폼) 이름 딱 박아주기!
+                modalTitle.textContent = `작품 추가 (${currentPltName})`;
+            }
+        }
+
 
         function checkAndShowAttendPopup() {
             const lAttend = localStorage.getItem('lezhinAttend') === 'true';
@@ -956,6 +1183,32 @@
             if (missing.length > 0) {
                 document.getElementById('attend-missing-text').innerHTML = `(현재 <b>${missing.join(', ')}</b> 출석 전입니다)`;
                 document.getElementById('attend-warning-modal').style.display = 'flex';
+            }
+        }
+
+        // 📊 24시간 레진 보너스 코인 소멸 검사기
+        function checkCoinExpiration() {
+            const expireTime = localStorage.getItem('lezhinBonusExpire');
+
+            // 1. 타이머가 존재하고 & 2. 현재 시간이 타이머 시간을 넘어섰다면?!
+            if (expireTime && Date.now() > parseInt(expireTime)) {
+
+                // 유저의 현재 레진 코인 잔액을 가져옵니다. (우니님 변수명 lWallet)
+                let currentLezhinCoins = parseInt(localStorage.getItem('lWallet') || 0);
+
+                // 코인이 0보다 클 때만 1코인을 뺏어옵니다. (마이너스 통장 방지)
+                if (currentLezhinCoins > 0) {
+                    localStorage.setItem('lWallet', currentLezhinCoins - 1); // 1코인 뺏어서 저장
+
+                    // 유저에게 친절하게(하지만 슬프게) 알려주기
+                    alert('레진 출석 보너스(1C)를 24시간 내에 사용하지 않아 소멸되었어요.');
+
+                    // 화면 지갑 잔액 즉시 새로고침
+                    refreshBalance();
+                }
+
+                // 폭탄이 터졌으니 타이머 기록은 지워줍니다.
+                localStorage.removeItem('lezhinBonusExpire');
             }
         }
 
@@ -987,38 +1240,88 @@
             closeNav();
         }
 
-        // 온오프 & 순서 변경 기능 (1개~4개 내 맘대로 입력!)
-        function changePlatformOrder() {
-            const input = prompt("사용할 플랫폼과 순서를 정해주세요!\n\n[1] 레진 [2] 봄툰 [3] 리디 [4] 미블\n\n사용할 플랫폼의 숫자만 원하는 순서대로 입력하세요.\n(예: 레진, 리디만 쓰면 👉 13)");
+        // 💡 마법의 드래그 변수 하나 더 준비!
+        let pltSortable = null;
 
-            if (!input) return;
+        // 1. 플랫폼 설정 모달창 열기
+        function openPlatformSettingModal() {
+            closeNav();
+            const listEl = document.getElementById('platform-sort-list');
+            listEl.innerHTML = '';
 
-            // 4개가 아니라 1~4개 자유롭게 입력 가능!
-            if (input.length < 1 || input.length > 4) {
-                alert("❌ 최소 1개에서 최대 4개의 숫자를 입력해주세요!");
-                return;
-            }
+            const pltNames = { lezhin: '레진 코믹스', bomtoon: '봄툰', ridi: '리디', mrblue: '미스터블루' };
+            const allPlts = ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
 
-            const map = { '1': 'lezhin', '2': 'bomtoon', '3': 'ridi', '4': 'mrblue' };
-            const newOrder = [];
+            // 켜져 있는 애들을 먼저 위로 올리고, 꺼진 애들은 밑에 배치
+            let activePlts = [...platformOrder];
+            let inactivePlts = allPlts.filter(p => !platformOrder.includes(p));
+            let displayPlts = [...activePlts, ...inactivePlts];
 
-            for (let char of input) {
-                if (!map[char] || newOrder.includes(map[char])) {
-                    alert("❌ 1부터 4까지의 숫자를 한 번씩만 중복 없이 입력해주세요!");
-                    return;
+            displayPlts.forEach(plt => {
+                const isChecked = activePlts.includes(plt) ? 'checked' : '';
+                const div = document.createElement('div');
+                div.className = 'plt-setting-item';
+                div.dataset.plt = plt; // 플랫폼 아이디 기억하기
+
+                div.innerHTML = `
+                    <div class="plt-setting-left">
+                        <span class="drag-handle">≡</span>
+                        <span class="plt-setting-name">${pltNames[plt]}</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" class="plt-toggle" value="${plt}" ${isChecked}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                `;
+                listEl.appendChild(div);
+            });
+
+            // 🪄 여기서 작품 드래그할 때 썼던 SortableJS 재활용!!!
+            if (pltSortable) pltSortable.destroy();
+            pltSortable = new Sortable(listEl, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost'
+            });
+
+            document.getElementById('platform-setting-modal').style.display = 'flex';
+        }
+
+        // 2. 모달 닫기
+        function closePlatformSettingModal() {
+            document.getElementById('platform-setting-modal').style.display = 'none';
+        }
+
+        // 3. 변경된 순서와 스위치 상태 저장하기!
+        function savePlatformSetting() {
+            const listEl = document.getElementById('platform-sort-list');
+            const items = listEl.querySelectorAll('.plt-setting-item');
+
+            let newOrder = [];
+
+            // 위에서부터 순서대로 쭉 읽으면서, 스위치 켜진 애들만 장바구니에 담기
+            items.forEach(item => {
+                const plt = item.dataset.plt;
+                const isChecked = item.querySelector('.plt-toggle').checked;
+                if (isChecked) {
+                    newOrder.push(plt);
                 }
-                newOrder.push(map[char]);
+            });
+
+            // 🚨 전부 다 끄면 앱이 고장 나니까 막아주기!
+            if (newOrder.length === 0) {
+                return alert("최소 1개 이상의 플랫폼은 켜두셔야 합니다!");
             }
 
-            localStorage.setItem('platformOrder', JSON.stringify(newOrder));
+            // 진짜 저장!
             platformOrder = newOrder;
-
+            localStorage.setItem('platformOrder', JSON.stringify(platformOrder));
             saveData();
 
-            // 바뀐 설정으로 화면 즉시 새로고침!
+            // 화면 레이아웃 즉시 새로고침
             updatePlatformOrder();
             renderAll();
-            alert("설정 완료! 선택하신 플랫폼만 화면에 표시되며 정산됩니다!");
+            closePlatformSettingModal();
         }
 
         function openCalcModal() {
@@ -1056,18 +1359,34 @@
             }
         }
 
-        // 신규: 드롭다운 선택 시 글씨(코인/캐시/원) 알아서 바꿔주기
+        // 신규: 드롭다운 선택 시 글씨(코인/캐시/원) 알아서 바꿔주고, 입력창 싹 초기화!
         function updateCalcLabels() {
             const plt = document.getElementById('calc-platform').value;
             const priceLabel = document.getElementById('calc-price-label');
             if (plt === 'cash') priceLabel.textContent = '1화당 캐시 (리디)';
             else if (plt === 'won') priceLabel.textContent = '1화당 머니 (미블)';
             else priceLabel.textContent = '1화당 코인 (레진/봄툰)';
+
+            // 🌟 [추가] 플랫폼이 바뀔 때마다 모든 입력창과 결과창을 아주 깨끗하게 초기화합니다!
+            document.getElementById('calc-total').value = '';
+            document.getElementById('calc-current').value = '';
+            document.getElementById('calc-price').value = '';
+
+            // 코인백 체크박스와 퍼센트도 끄기
+            const coinbackToggle = document.getElementById('calc-coinback-toggle');
+            if (coinbackToggle) {
+                coinbackToggle.checked = false;
+                toggleCoinbackInput(); // 체크 풀렸으니 알아서 숨겨주는 함수 실행!
+            }
+            document.getElementById('calc-coinback-percent').value = '';
+
+            // 열려있던 결과창 닫기
+            document.getElementById('calc-result-box').style.display = 'none';
         }
 
         let currentCalcCoin = 0;
 
-        // 수정: 계산기 로직 (선택한 플랫폼에 맞게 쉼표 + 단위 + 색상 싹 다 적용!)
+        // 수정: 계산기 로직 (JS에 숨어있던 인라인 색상 주입 로직 완전 제거!)
         function calculateCoins() {
             const total = parseInt(document.getElementById('calc-total').value) || 0;
             const current = parseInt(document.getElementById('calc-current').value) || 0;
@@ -1083,31 +1402,18 @@
             const needCoin = remainEp * price;
             currentCalcCoin = needCoin;
 
-            const isDark = document.body.classList.contains('dark-mode');
-
-            // 플랫폼별 단위와 맞춤 색상 세팅
+            // 🌟 플랫폼별 단위 세팅 (복잡했던 색상 로직은 싹 지웠습니다!)
             let unit = 'C';
-            let color = '';
+            if (plt === 'cash') { unit = '캐시'; }
+            else if (plt === 'won') { unit = '머니'; }
 
-            if (isDark) {
-                // 🌙 다크모드일 때: 까만 배경에서 눈에 확 띄고 예쁜 파스텔톤!
-                if (plt === 'cash') { unit = '캐시'; color = '#74b9ff'; } // 리디 (밝은 하늘색)
-                else if (plt === 'won') { unit = '머니'; color = '#82ccdd'; } // 미블 (밝은 청록/회파랑)
-                else { color = '#ff7675'; } // 레진, 봄툰 (밝은 코랄/핑크)
-            } else {
-                // ☀️ 라이트모드일 때: 하얀 배경에서 뚜렷하게 보이는 원래 색상!
-                if (plt === 'cash') { unit = '캐시'; color = '#1e90ff'; } // 리디 (블루)
-                else if (plt === 'won') { unit = '머니'; color = '#004e9a'; } // 미블 (네이비)
-                else { color = '#e60012'; } // 레진, 봄툰 (기본 빨강)
-            }
-
-            // 결과 적용 (쉼표 포맷팅 + 맞춤 단위 글씨 + 맞춤 색상)
+            // 🌟 결과 적용 (쉼표 포맷팅 + 맞춤 단위 글씨)
             document.getElementById('calc-remain-ep').textContent = formatNum(remainEp);
             const needCoinEl = document.getElementById('calc-need-coin');
             needCoinEl.textContent = formatNum(needCoin) + ' ' + unit;
-            needCoinEl.style.color = color; // 결과창 색깔도 플랫폼에 맞게
+            // 🚨 숨어있던 인라인 스타일 (needCoinEl.style.color = color;) 박멸!
 
-            // 코인백 로직 계산
+            // 🌟 코인백 로직 계산
             const isCoinback = document.getElementById('calc-coinback-toggle').checked;
             const coinbackResultArea = document.getElementById('calc-coinback-result');
 
@@ -1118,10 +1424,10 @@
                 // 돌려받은 코인으로 더 볼 수 있는 화수 계산
                 const extraEp = Math.floor(backCoin / price);
 
-                // 코인백 결과에도 쉼표와 맞춤 단위 적용!
                 document.getElementById('calc-back-coin').textContent = formatNum(backCoin) + ' ' + unit;
                 document.getElementById('calc-extra-ep').textContent = formatNum(extraEp);
-                document.getElementById('calc-extra-ep').style.color = color;
+                // 🚨 숨어있던 인라인 스타일 (calc-extra-ep.style.color = color;) 박멸!
+
                 coinbackResultArea.style.display = 'block';
             } else {
                 coinbackResultArea.style.display = 'none';
@@ -1155,6 +1461,11 @@
                 addWeeklySpent(0, amount); // 원/캐시는 뒤쪽으로
             } else {
                 addWeeklySpent(amount, 0); // 코인은 앞쪽으로
+            }
+
+            // 🌟 [여기에 추가!] 결제한 플랫폼이 레진이라면, 폭탄 타이머를 해체(삭제)합니다!
+            if (plt === 'lezhin') {
+                localStorage.removeItem('lezhinBonusExpire');
             }
 
             // 마무리 저장 및 갱신
@@ -1290,8 +1601,8 @@
                 ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
                     Object.keys(state[plt]).forEach(day => {
                         state[plt][day].forEach(work => {
-                            // 🌟 안전장치: 'n연 m휴' 주차만 자동으로 올리고, '격주 연재'나 '10일 연재'는 절대 건드리지 마!!
-                            if (work.cycle && /\d+연\s*\d+휴/.test(work.cycle) && !work.cycle.includes('격주 연재') && !work.cycle.includes('10일 연재')) {
+                            // 🌟 [수정] 10일 연재가 섞여 있든 말든, 'N연 M휴'라는 글씨만 있으면 무조건 통과!
+                            if (work.cycle && /\d+연\s*\d+휴/.test(work.cycle)) {
                                 work.cycle = autoIncrementCycleText(work.cycle);
                             }
                         });
@@ -1384,25 +1695,21 @@
 
 
 
-        // 🌟 [최종 진화] 주차도 올려주고, 격주 날짜도 14일 더해주는 만능 계산기
+        // 🌟 [최종 진화] 주차도 올려주고, 격주 날짜도 14일 더해주는 짬짜면 만능 계산기
         function autoIncrementCycleText(cyc) {
             if (!cyc) return cyc;
 
-            if (/(\d+)주차/.test(cyc)) {
-                let maxCycle = 5;
-                let cycleParts = cyc.match(/(\d+)연\s*(\d+)휴/);
-                if (cycleParts) {
-                    let runOn = parseInt(cycleParts[1]);
-                    let restOn = parseInt(cycleParts[2]);
-                    maxCycle = runOn + restOn;
-                }
-                return cyc.replace(/(\d+)주차/, (m, p1) => {
-                    let nextWeek = parseInt(p1) + 1;
-                    return nextWeek > maxCycle ? "1주차" : nextWeek + "주차";
+            // 1. 'N연 M휴 K주차' 숫자 올리기 (🚨 return 하지 않고 cyc 변수에 덮어쓰기만 합니다!)
+            if (/\d+연\s*\d+휴/.test(cyc)) {
+                cyc = cyc.replace(/(\d+)연\s*(\d+)휴\s*(\d+)주차/, (match, run, rest, currentWeek) => {
+                    let maxCycle = parseInt(run) + parseInt(rest);
+                    let nextWeek = parseInt(currentWeek) + 1;
+                    // 주차가 최대치를 넘어가면 다시 1주차로 롤백!
+                    return `${run}연 ${rest}휴 ${nextWeek > maxCycle ? 1 : nextWeek}주차`;
                 });
             }
 
-            // 🔥 격주 연재 날짜(4/10)에 14일 더하기 로직!
+            // 2. 격주 연재 날짜(4/10)에 14일 더하기 (🚨 마찬가지로 cyc 변수에 덮어쓰기!)
             if (cyc.includes('격주 연재')) {
                 let match = cyc.match(/\((.*?)\)/);
                 if (match) {
@@ -1411,16 +1718,20 @@
                         let today = getWebtoonDate();
                         let tempDate = new Date(today.getFullYear(), parseInt(parts[0]) - 1, parseInt(parts[1]));
 
-                        // 🌟 [추가] 1월인데 카드에 12월이 적혀있다면 작년으로 인식하게 보정
+                        // 🌟 해가 바뀌었을 때 보정
                         if (tempDate.getTime() - today.getTime() > 180 * 24 * 60 * 60 * 1000) {
                             tempDate.setFullYear(today.getFullYear() - 1);
                         }
 
                         tempDate.setDate(tempDate.getDate() + 14);
-                        return `격주 연재 (${tempDate.getMonth() + 1}/${tempDate.getDate()})`;
+
+                        // 🌟 다른 글씨(10일 연재 등)는 가만히 두고, 격주 연재 부분만 쏙 바꿔치기!
+                        cyc = cyc.replace(/격주 연재\s*\((.*?)\)/, `격주 연재 (${tempDate.getMonth() + 1}/${tempDate.getDate()})`);
                     }
                 }
             }
+
+            // 3. 모든 계산이 끝난 최종 결과물을 여기서 딱 한 번만 반환! 퇴근! 🏃‍♂️💨
             return cyc;
         }
 
@@ -1656,7 +1967,8 @@
             // 4. 알림바 띄우기
             if (globalAlert) {
                 if (hiddenEvents.length > 0) {
-                    globalAlert.innerHTML = `옆으로 넘겨보세요! <b style="color:#d32f2f;">${hiddenEvents.join(', ')}</b> 진행 중!`;
+                    // 🌟 인라인 스타일 제거하고 class 이름표 달아주기!
+                    globalAlert.innerHTML = `옆으로 넘겨보세요! <b class="event-highlight-text">${hiddenEvents.join(', ')}</b> 진행 중!`;
                     globalAlert.style.display = 'block';
                 } else {
                     globalAlert.style.display = 'none';
@@ -1677,6 +1989,10 @@
                 const currentWallet = parseInt(localStorage.getItem('lWallet') || 0);
                 localStorage.setItem('lWallet', currentWallet + 1); // 기존 잔액 + 1 저장
                 refreshBalance(); // 화면 지갑 잔액 즉시 업데이트!
+
+                // 🌟 [핵심 추가] 지금부터 24시간(밀리초) 뒤에 폭탄이 터지도록 시간 기록!
+                const expireTime = Date.now() + (24 * 60 * 60 * 1000);
+                localStorage.setItem('lezhinBonusExpire', expireTime);
             }
 
             // 3. 코인 검사가 끝났으니, 이제 출석 도장 쾅! (다음에 또 누르면 alreadyAttended가 true가 됨)
@@ -1685,6 +2001,8 @@
             // 4. 화면 버튼을 '출석완료'로 바꾸고 통합 금고에 저장
             updateAttendUI();
             saveData();
+
+            trackClick('attend_check', { 'platform': plt });
         }
 
 
@@ -1934,14 +2252,15 @@
 
 
             // 🌟 [여기에 추가!] 숨기기 모드가 켜져 있다면, 휴재/완결/자동휴재 카드 걸러내기!
-            if (isHidingFinished[platform]) {
+            // 🚨 단, 유저가 메뉴에서 직접 '휴재'나 '완결' 탭을 눌러서 들어온 거라면 숨기지 않기!
+            if (isHidingFinished[platform] && viewDay !== '휴재' && viewDay !== '완결') {
                 displayWorks = displayWorks.filter(work => !isWorkOnBreak(work));
             }
 
             // [추가] 만약 오늘 볼 작품이 0개라면? 안내 문구 띄우기!
             if (displayWorks.length === 0) {
                 listEl.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; padding: 40px 0;">
+        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; padding: 30px 0;">
     <p style="margin: 0; font-size: 15px; font-weight: bold; color: #555;">오늘은 연재 작품이 없어요!</p>
     <p style="margin: 5px 0 0 0; font-size: 13px; color: #aaa;">여유롭게 정주행은 어떠신가요?</p>
 </div>
@@ -2038,7 +2357,11 @@
                     card.style.border = `2px solid ${borderColor}`;
                 }
 
-                if (viewDay !== '휴재' && viewDay !== '완결') { card.draggable = true; card.dataset.idx = work.origIdx; card.dataset.plt = platform; card.dataset.day = work.origDay; card.addEventListener('dragstart', handleDragStart); card.addEventListener('dragover', handleDragOver); card.addEventListener('dragenter', handleDragEnter); card.addEventListener('dragleave', handleDragLeave); card.addEventListener('drop', handleDrop); card.addEventListener('dragend', handleDragEnd); }
+                if (viewDay !== '휴재' && viewDay !== '완결') {
+                    card.dataset.idx = work.origIdx;
+                    card.dataset.plt = platform;
+                    card.dataset.day = work.origDay;
+                }
 
                 let isStrike = (work.status !== '연재중' || isBreak);
                 let unit = 'C';
@@ -2065,7 +2388,7 @@
     
     <div class="card-info">
         
-        <div class="cycle-wrapper" style="margin-bottom: 8px; text-align: left;">
+        <div class="cycle-wrapper" style="text-align: left;">
             ${cycleTag}
         </div>
         
@@ -2090,38 +2413,7 @@
             });
         }
 
-        function handleDragStart(e) { draggedIdx = parseInt(this.dataset.idx); draggedPlt = this.dataset.plt; draggedDay = this.dataset.day; this.style.opacity = '0.4'; }
-        // 카드를 들고 움직일 때 스크롤을 자동으로 밀어주는 마법! (모바일 부스터 장착)
-        function handleDragOver(e) {
-            e.preventDefault();
 
-            const scrollContainer = this.closest('.webtoon-list');
-            if (!scrollContainer) return;
-
-            const clientX = e.clientX || e.touches?.[0]?.clientX;
-            const containerRect = scrollContainer.getBoundingClientRect();
-
-            // 현재 화면이 모바일(가로 768px 이하)인지 확인합니다.
-            const isMobile = window.innerWidth <= 768;
-
-            // 모바일이면 터치 민감도(edgeSize)와 스크롤 속도(scrollSpeed)를 확! 올립니다!
-            const edgeSize = isMobile ? 100 : 80;    // 모바일은 화면 끝에서 좀 더 일찍 반응하게!
-            const scrollSpeed = isMobile ? 50 : 20;  // 모바일은 스크롤 속도를 2.5배 뻥튀기!
-
-            // 왼쪽 끝에 닿았을 때 -> 왼쪽으로 밀기
-            if (clientX - containerRect.left < edgeSize) {
-                scrollContainer.scrollLeft -= scrollSpeed;
-            }
-            // 오른쪽 끝에 닿았을 때 -> 오른쪽으로 밀기
-            else if (containerRect.right - clientX < edgeSize) {
-                scrollContainer.scrollLeft += scrollSpeed;
-            }
-        }
-
-        function handleDragEnter(e) { e.preventDefault(); this.style.transform = 'scale(1.03)'; this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)'; }
-        function handleDragLeave(e) { this.style.transform = 'scale(1)'; this.style.boxShadow = 'none'; }
-        function handleDrop(e) { e.stopPropagation(); this.style.transform = 'scale(1)'; this.style.boxShadow = 'none'; const targetIdx = parseInt(this.dataset.idx); const targetPlt = this.dataset.plt; const targetDay = this.dataset.day; if (draggedPlt === targetPlt && draggedDay === targetDay && draggedIdx !== targetIdx) { const arr = state[draggedPlt][draggedDay]; const draggedItem = arr.splice(draggedIdx, 1)[0]; arr.splice(targetIdx, 0, draggedItem); saveData(); } }
-        function handleDragEnd(e) { this.style.opacity = '1'; renderAll(); }
 
         function incrementProgress(plt, day, idx) {
             let work = state[plt][day][idx];
@@ -2137,6 +2429,8 @@
             }
 
             saveData();
+
+            trackClick('click_plus_one', { 'platform': plt, 'title': work.title });
             let badge = document.getElementById(`prog-${plt}-${day}-${idx}`); if (badge) { const activeColor = plt === 'lezhin' ? '#ff7675' : plt === 'bomtoon' ? '#ff78cb' : plt === 'ridi' ? '#5dade2' : '#66a3ff'; badge.style.transform = "scale(1.2)"; badge.style.backgroundColor = activeColor; setTimeout(() => { badge.style.transform = "scale(1)"; badge.style.backgroundColor = "rgba(0, 0, 0, 0.6)"; }, 250); }
         }
 
@@ -2338,6 +2632,9 @@
             const work = state[actionPlt][actionOrigDay][actionIdx];
 
             document.getElementById('modal-title-label').textContent = "작품 수정";
+            // 🌟 [추가] 수정할 땐 스위치 감추고 단일 모드 고정!
+            document.getElementById('add-mode-toggle-container').style.display = 'none';
+            setAddMode('single');
             document.getElementById('input-title').value = work.title;
             document.getElementById('input-url').value = work.url || '';
 
@@ -2446,12 +2743,143 @@
         }
 
 
+        // 🌟 [신규 추가] 작품 복제 (껍데기 템플릿) 함수!
+        function duplicateFromAction() {
+            closeActionModal();
+
+            // 🚨 핵심 1: 수정 모드가 아니라 '새 작품 추가' 모드라고 브라우저를 속입니다!
+            editMode = false;
+            currentPlatform = actionPlt;
+            const work = state[actionPlt][actionOrigDay][actionIdx];
+
+            document.getElementById('modal-title-label').textContent = "작품 복제 (새로 추가)";
+
+            // 🌟 [추가] 수정할 땐 스위치 감추고 단일 모드 고정!
+            document.getElementById('add-mode-toggle-container').style.display = 'none';
+            setAddMode('single');
+
+            // 🚨 핵심 2: 우니님 기획대로 4가지는 완벽하게 '백지화' 합니다!
+            document.getElementById('input-title').value = ''; // 제목 비우기
+            document.getElementById('input-url').value = '';   // 링크 비우기
+            document.getElementById('input-progress').value = ''; // 진도 비우기
+            document.getElementById('input-time').value = ''; // 🌟 [추가] 업로드 시간 비우기!
+
+            // 사진(이미지) 완벽하게 초기화
+            tempImg = "";
+            document.getElementById('image-input').value = "";
+            document.getElementById('image-status-text').textContent = "📷 사진은 선택 사항입니다.";
+            document.getElementById('image-status-text').style.color = "#888";
+            document.getElementById('remove-img-btn').style.display = 'none';
+
+            // 🌟 3. 나머지 유용한 설정(주기, 코인, 시간, 상태)은 알뜰하게 훔쳐옵니다!
+            let savedCyc = work.cycle || "";
+            let tenDayDates = "";
+            let cType = "";
+            let cWeek = "";
+
+            if (savedCyc) {
+                if (savedCyc.includes("10일 연재")) {
+                    let match10 = savedCyc.match(/10일 연재\s*\((.*?)\)/);
+                    if (match10) tenDayDates = match10[1];
+                    savedCyc = savedCyc.replace(/\+?\s*10일 연재\s*\(.*?\)/, '').trim();
+                    if (savedCyc.endsWith('+')) savedCyc = savedCyc.slice(0, -1).trim();
+                }
+
+                if (savedCyc) {
+                    if (savedCyc.includes("격주 연재")) {
+                        cType = "격주 연재";
+                        let match = savedCyc.match(/\((.*?)\)/);
+                        if (match) {
+                            const parts = match[1].split('/');
+                            if (parts.length === 2) {
+                                const year = new Date().getFullYear();
+                                const month = parts[0].padStart(2, '0');
+                                const day = parts[1].padStart(2, '0');
+                                cWeek = `${year}-${month}-${day}`;
+                            } else {
+                                cWeek = match[1];
+                            }
+                        }
+                    }
+                    else if (savedCyc.includes("매월")) {
+                        cType = "매월 특정 주 휴재";
+                        let match = savedCyc.match(/매월\s*(\d+)주차\s*휴재/);
+                        if (match) cWeek = match[1];
+                    }
+                    else {
+                        let match = savedCyc.match(/^(.*?)(?:\s+(\d+)주차)?$/);
+                        if (match) { cType = match[1].trim(); cWeek = match[2] || ""; }
+                    }
+                }
+            }
+
+            const tenDayInput = document.getElementById('input-10day-dates');
+            if (tenDayInput) tenDayInput.value = tenDayDates;
+
+            const typeSelect = document.getElementById('input-cycle-type');
+            if (typeSelect) {
+                const typeExists = Array.from(typeSelect.options).some(o => o.value === cType);
+                typeSelect.value = typeExists ? cType : "";
+            }
+
+            const weekInput = document.getElementById('input-cycle-week');
+            if (weekInput) weekInput.value = cWeek;
+
+            // 요일 체크박스 동기화 복사
+            let activeDays = [];
+            if (work.id) {
+                Object.keys(state[actionPlt]).forEach(d => {
+                    if (state[actionPlt][d].some(w => w.id === work.id)) activeDays.push(d);
+                });
+            } else {
+                activeDays.push(actionOrigDay);
+            }
+            document.querySelectorAll('input[name="day-chk"]').forEach(chk => {
+                chk.checked = activeDays.includes(chk.value);
+            });
+
+            // 코인, 시간, 상태 복사
+            const coinInput = document.getElementById('input-coin');
+            if (actionPlt === 'ridi') coinInput.placeholder = "예: 600 (캐시)";
+            else if (actionPlt === 'mrblue') coinInput.placeholder = "예: 500 (머니)";
+            else coinInput.placeholder = "예: 3 (코인)";
+
+            document.getElementById('input-coin').value = work.coin;
+            document.getElementById('input-time').value = work.time || '';
+            document.getElementById('input-status').value = work.status || '연재중';
+
+            const deductLabel = document.getElementById('add-deduct-label');
+            if (deductLabel) {
+                deductLabel.style.display = 'flex';
+                const deductChk = document.getElementById('add-deduct-chk');
+                if (deductChk) deductChk.checked = false;
+            }
+
+            if (typeof toggleCycleInputs === "function") toggleCycleInputs();
+            if (cWeek) document.getElementById('input-cycle-week').value = cWeek;
+
+            document.getElementById('custom-modal').style.display = 'flex';
+        }
+
+
         // 새 작품 추가 창 열기 (단위 자동 변경 적용! + 알람 뱃지 + 요일 다중 선택)
         function openAddModal(platform) {
             editMode = false; currentPlatform = platform; tempImg = "";
             document.getElementById('modal-title-label').textContent = "작품 추가";
             document.getElementById('input-title').value = '';
             document.getElementById('input-url').value = '';
+            // 🌟 [추가] 새 작품 추가할 땐 스위치 보이게 하고 무조건 '단일 추가'로 세팅!
+            document.getElementById('add-mode-toggle-container').style.display = 'flex';
+            setAddMode('single');
+            // 🌟 9개의 일괄 추가 태그 상자 전부 깨끗하게 지우기!
+            const dayList = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일', '10일 연재', '격주 연재'];
+            dayList.forEach(day => {
+                const tagList = document.getElementById(`tag-list-${day}`);
+                if (tagList) tagList.innerHTML = ''; // 칩들 날리기
+                const input = document.getElementById(`batch-input-${day}`);
+                if (input) input.value = ''; // 적던 글자 날리기
+            });
+
 
             // 🌟 에러 안 나게 안전장치 걸어서 초기화
             const cycleType = document.getElementById('input-cycle-type');
@@ -2509,6 +2937,72 @@
         function closeAddModal() { document.getElementById('custom-modal').style.display = 'none'; }
 
         function saveWorkFinal() {
+            const batchSection = document.getElementById('batch-add-section');
+            const isBatchMode = batchSection && batchSection.style.display !== 'none';
+
+            if (isBatchMode) {
+                const targetStatus = '연재중';
+
+                // 🌟 [핵심 복구] 플랫폼별 맞춤 기본 가격 세팅 (우니님 기획 완벽 복원!)
+                let defaultCoin = 0;
+                if (currentPlatform === 'lezhin' || currentPlatform === 'bomtoon') {
+                    defaultCoin = 3;
+                } else if (currentPlatform === 'ridi') {
+                    defaultCoin = 600;
+                } else if (currentPlatform === 'mrblue') {
+                    defaultCoin = 500;
+                }
+
+                let addedCount = 0;
+                const dayList = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일', '10일 연재', '격주 연재'];
+
+                dayList.forEach(day => {
+                    const tagList = document.getElementById(`tag-list-${day}`);
+                    const input = document.getElementById(`batch-input-${day}`);
+
+                    let titles = [];
+                    // 🌟 1. 만들어진 칩(태그)들의 데이터 쏙쏙 빼오기
+                    if (tagList) {
+                        Array.from(tagList.children).forEach(span => {
+                            if (span.dataset.val) titles.push(span.dataset.val);
+                        });
+                    }
+                    // 🌟 2. 실수로 엔터 안 치고 입력칸에 남겨둔 글자도 살려주기!
+                    if (input && input.value.trim() !== "") {
+                        titles.push(input.value.trim());
+                    }
+
+                    if (titles.length > 0) {
+                        titles.forEach(title => {
+                            const workId = Date.now().toString() + "_" + Math.random().toString(36).substr(2, 5);
+                            let defaultCycle = "";
+                            if (day === '10일 연재') defaultCycle = "10일 연재 (10/20/30)";
+                            else if (day === '격주 연재') defaultCycle = "격주 연재";
+
+                            const workData = {
+                                id: workId, title: title, url: "", cycle: defaultCycle,
+                                coin: defaultCoin, progress: "1화", status: targetStatus,
+                                img: "", time: "", lastDeductDate: ""
+                            };
+                            state[currentPlatform][day].push({ ...workData });
+                            addedCount++;
+                        });
+                    }
+                });
+
+                if (addedCount === 0) return alert("추가할 작품 제목을 하나 이상 적어주세요!");
+
+                saveData();
+                autoUpdatePastBiweeklyDates();
+                renderAll();
+
+                trackClick('batch_add_works_tags', { 'platform': currentPlatform, 'count': addedCount });
+                alert(`총 ${addedCount}개의 작품이 요일별로 완벽하게 추가되었습니다!`);
+                closeAddModal();
+                return;
+            }
+
+
             const title = document.getElementById('input-title').value;
             const url = document.getElementById('input-url').value;
 
@@ -2646,6 +3140,10 @@
             // 🌟 [핵심 추가] 작품을 저장하자마자 즉시 격주 날짜 갱신 및 화면 새로고침!
             autoUpdatePastBiweeklyDates();
             renderAll();
+
+
+            trackClick(editMode ? 'edit_work' : 'add_new_work', { 'platform': currentPlatform, 'title': title });
+
             closeAddModal();
         }
 
@@ -2831,15 +3329,15 @@
 
         function checkBackupStatus() { const lastBackup = localStorage.getItem('lastBackupDate'); const alertEl = document.getElementById('backup-alert'); if (!lastBackup || (Date.now() - parseInt(lastBackup)) / 86400000 >= 7) alertEl.style.display = 'block'; else alertEl.style.display = 'none'; }
 
-        // 주간 누적 통계 UI 업데이트 (코인 색상 파란색으로 통일!)
+        // 주간 누적 통계 UI 업데이트
         function updateWeeklyStatUI() {
             const coinSpent = formatNum(localStorage.getItem('weeklySpent') || 0);
             const wonSpent = formatNum(localStorage.getItem('weeklySpentWon') || 0);
 
             const el = document.getElementById('weekly-spent-val');
             if (el) {
-
-                el.innerHTML = `<span style="color:#4d96ea; font-weight:bold;">${coinSpent} C</span> <span style="color:#ccc; margin:0 6px;">|</span> <span style="color:#4d96ea; font-weight:bold;">${wonSpent} 원</span>`;
+                // 🌟 가운데 있던 구분선 태그를 통째로 삭제! 딱 알맹이(값) 두 개만 남깁니다!
+                el.innerHTML = `<span class="stat-val">${coinSpent} C</span><span class="stat-val">${wonSpent} 원</span>`;
             }
         }
 
@@ -3212,10 +3710,10 @@
 
             const isDark = document.body.classList.contains('dark-mode');
             const pltInfo = {
-                lezhin: { name: '레진', unit: 'C', color: isDark ? '#ff6b76' : '#e60012' },
-                bomtoon: { name: '봄툰', unit: 'C', color: isDark ? '#ff85c0' : '#e84393' },
-                ridi: { name: '리디', unit: '캐시', color: isDark ? '#5dade2' : '#1e90ff' },
-                mrblue: { name: '미블', unit: '머니', color: isDark ? '#8ab4f8' : '#004e9a' }
+                lezhin: { name: '레진', unit: 'C', bgColor: isDark ? '#333' : '#f9f9f9', textColor: isDark ? '#fff' : '#333', themeColor: '#e60012' },
+                bomtoon: { name: '봄툰', unit: 'C', bgColor: isDark ? '#333' : '#f9f9f9', textColor: isDark ? '#fff' : '#333', themeColor: '#ff69b4' },
+                ridi: { name: '리디', unit: '캐시', bgColor: isDark ? '#333' : '#f9f9f9', textColor: isDark ? '#fff' : '#333', themeColor: '#1e90ff' },
+                mrblue: { name: '미블', unit: '머니', bgColor: isDark ? '#333' : '#f9f9f9', textColor: isDark ? '#fff' : '#333', themeColor: '#004e9a' }
             };
 
             platformOrder.forEach(plt => {
@@ -3231,12 +3729,12 @@
 
                     // 🌟 개별 캡처를 위해 id를 달고 예쁜 카드 박스로 감싸줍니다!
                     htmlContent += `
-                    <div class="report-plt-section" id="receipt-mini-${plt}" style="background: ${isDark ? '#2c2c2e' : '#fff'}; padding: 16px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative;">
+                    <div class="report-plt-section" id="receipt-mini-${plt}" style="background: ${info.bgColor}; padding: 16px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; color: ${info.textColor};">
                         
-                        <div class="report-plt-title" style="display: flex; justify-content: space-between; align-items: center; color: ${info.color}; border-bottom: 2px solid ${info.color}40; padding-bottom: 8px; margin-bottom: 12px;">
+                        <div class="report-plt-title" style="display: flex; justify-content: space-between; align-items: center; color: ${info.textColor}; border-bottom: 2px solid ${isDark ? '#555' : '#ccc'}; padding-bottom: 8px; margin-bottom: 12px;">
                             <span style="font-weight: 900; font-size: 15px;">${info.name} 정산</span>
                             
-                            <button onclick="saveSingleReceipt('${plt}', '${info.name}')" style="background: ${info.color}15; border: none; color: ${info.color}; cursor: pointer; padding: 6px 10px; border-radius: 8px; display: flex; align-items: center; font-size: 11px; font-weight: bold; gap: 4px;" title="${info.name}만 사진 저장">
+                            <button onclick="saveSingleReceipt('${plt}', '${info.name}')" style="background: ${info.themeColor}; border: none; color: #fff; cursor: pointer; padding: 6px 10px; border-radius: 8px; display: flex; align-items: center; font-size: 11px; font-weight: normal; gap: 4px;" title="${info.name}만 사진 저장">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                 저장
                             </button>
@@ -3246,16 +3744,16 @@
                         const spent = works[title];
                         totalPltSpent += spent;
                         htmlContent += `
-                        <div class="report-item">
+                        <div class="report-item" style="color: ${info.textColor};">
                             <span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-right:10px;">${title}</span>
                             <span>${formatNum(spent)}<span style="font-size:11px; margin-left:3px;">${info.unit}</span></span>
                         </div>`;
                     });
 
                     htmlContent += `
-                        <div class="report-total" style="display: flex; justify-content: space-between; font-weight: 900; font-size: 15px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed ${isDark ? '#444' : '#ddd'};">
+                        <div class="report-total" style="display: flex; justify-content: space-between; font-weight: 900; font-size: 15px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed ${isDark ? '#555' : '#ccc'}; color: ${info.textColor};">
                             <span>소계</span>
-                            <span style="color: ${info.color};">${formatNum(totalPltSpent)} ${info.unit}</span>
+                            <span>${formatNum(totalPltSpent)} ${info.unit}</span>
                         </div>
                     </div>`;
                 }
@@ -3546,12 +4044,20 @@
         // --- 🎛️ 필터 및 정렬 모달창 관련 기능 ---
 
 
+        let horizontalSortables = {}; // 🌟 가로 스크롤 마법사 바구니
 
         // 💡 방금 누른 필터 버튼이 어떤 플랫폼인지 기억할 변수(메모장)
         let currentFilterPlt = '';
 
         // 🌟 [업그레이드] 숨기기 스위치를 플랫폼별로 4개 달아줍니다!
         let isHidingFinished = { lezhin: false, bomtoon: false, ridi: false, mrblue: false };
+
+        // 🌟 [핵심 로직] 페이지를 처음 켤 때, 로컬 스토리지에서 저장된 필터 기억을 꺼내옵니다!
+        const savedHideData = localStorage.getItem('mobo_hide_works_plt');
+        if (savedHideData) {
+            // 포장지(문자열)를 뜯어서 다시 자바스크립트 주머니(객체)로 복구!
+            isHidingFinished = JSON.parse(savedHideData);
+        }
 
         // 1. 모달창 열기
         function toggleFilterMenu(plt) {
@@ -3568,22 +4074,50 @@
             document.getElementById('filter-modal').style.display = 'flex';
         }
 
-        // 2. 순서 편집 버튼 눌렀을 때
+        // 1. 순서 편집 창 열 때 불 켜기/끄기 자동 판독!
         function startReorder() {
-            closeFilterMenu(); // 원래 있던 작은 필터 모달은 닫고!
-
+            closeFilterMenu();
             let pltName = '';
             if (currentFilterPlt === 'lezhin') pltName = '레진';
             else if (currentFilterPlt === 'bomtoon') pltName = '봄툰';
             else if (currentFilterPlt === 'ridi') pltName = '리디';
             else if (currentFilterPlt === 'mrblue') pltName = '미블';
 
-            // 🌟 제목에 요일도 같이 보여주면 유저가 안 헷갈려요!
             document.getElementById('reorder-title').textContent = `${pltName} (${viewDay}) 순서 편집`;
 
-            document.getElementById('reorder-modal').style.display = 'flex';
+            // 🌟 [핵심] 현재 리스트가 가나다순인지 다가나순인지 똑똑하게 스캔하는 로직!
+            const arr = state[currentFilterPlt][viewDay] || [];
+            let isAZ = true;
+            let isZA = true;
 
-            // 🌟 모달창을 열면서 세로 리스트를 쫙 그려줍니다!
+            // 카드가 2개 이상일 때만 앞뒤 글자 비교
+            if (arr.length > 1) {
+                for (let i = 0; i < arr.length - 1; i++) {
+                    let compare = arr[i].title.localeCompare(arr[i + 1].title, 'ko');
+                    if (compare > 0) isAZ = false; // 앞글자가 더 뒤쪽(ㅎ)이면 가나다(AZ) 아님
+                    if (compare < 0) isZA = false; // 앞글자가 더 앞쪽(ㄱ)이면 다가나(ZA) 아님
+                }
+            } else {
+                isAZ = false; isZA = false; // 1개 이하면 굳이 불 켤 필요 없음
+            }
+
+            // 🌟 스캔 결과에 따라 똑똑하게 버튼 불 켜주기!
+            const btnAZ = document.getElementById('btn-sort-az');
+            const btnZA = document.getElementById('btn-sort-za');
+
+            if (isAZ) {
+                btnAZ.classList.add('active');
+                btnZA.classList.remove('active');
+            } else if (isZA) {
+                btnZA.classList.add('active');
+                btnAZ.classList.remove('active');
+            } else {
+                // 섞여 있으면 둘 다 끄기
+                btnAZ.classList.remove('active');
+                btnZA.classList.remove('active');
+            }
+
+            document.getElementById('reorder-modal').style.display = 'flex';
             renderReorderList();
         }
 
@@ -3593,32 +4127,36 @@
             renderAll(); // 혹시 순서가 바뀌었을지 모르니 닫을 때 메인 화면 새로고침!
         }
 
-        // 🔠 가나다 자동 정렬 버튼 기능
+        // 2. 가나다 정렬 버튼 기능
         function sortListAZ() {
             if (viewDay === '휴재' || viewDay === '완결') return alert("이 탭에선 자동 정렬을 할 수 없어요!");
 
             const arr = state[currentFilterPlt][viewDay];
             if (arr.length === 0) return;
 
-            // 한글 가나다순으로 똑똑하게 정렬!
             arr.sort((a, b) => a.title.localeCompare(b.title, 'ko'));
-
             saveData();
-            renderReorderList(); // 바뀐 순서로 즉시 새로고침
+            renderReorderList();
+
+            // 🌟 탭 색상 변경 로직 (가나다에 불 켜고, 다가나 불 끄기)
+            document.getElementById('btn-sort-az').classList.add('active');
+            document.getElementById('btn-sort-za').classList.remove('active');
         }
 
-        // 🔡 다가나 자동 정렬 버튼 기능
+        // 3. 다가나 정렬 버튼 기능
         function sortListZA() {
             if (viewDay === '휴재' || viewDay === '완결') return alert("이 탭에선 자동 정렬을 할 수 없어요!");
 
             const arr = state[currentFilterPlt][viewDay];
             if (arr.length === 0) return;
 
-            // 다가나(역순)으로 정렬!
             arr.sort((a, b) => b.title.localeCompare(a.title, 'ko'));
-
             saveData();
-            renderReorderList(); // 바뀐 순서로 즉시 새로고침
+            renderReorderList();
+
+            // 🌟 탭 색상 변경 로직 (다가나에 불 켜고, 가나다 불 끄기)
+            document.getElementById('btn-sort-za').classList.add('active');
+            document.getElementById('btn-sort-az').classList.remove('active');
         }
 
 
@@ -3636,13 +4174,32 @@
 
 
 
-        // 🌟 [업그레이드] 현재 선택한 플랫폼의 숨기기 스위치만 똑딱! 켜고 끄는 함수
+        // 🌟 [최종 완성본] 현재 선택한 플랫폼의 숨기기 스위치만 똑딱! 켜고 끄는 함수
         function toggleHideWorks() {
-            // 해당 플랫폼의 상태만 반대로 뒤집기 (true <-> false)
+            // 1. 해당 플랫폼의 상태만 반대로 뒤집기 (true <-> false)
             isHidingFinished[currentFilterPlt] = !isHidingFinished[currentFilterPlt];
 
-            // 상태가 바뀌었으니 화면 전체를 다시 그려서 즉시 반영!
+            // 🌟 2. 핵심!! 플랫폼 4개의 상태가 담긴 주머니를 통째로 포장해서 장기 기억장치에 저장!
+            localStorage.setItem('mobo_hide_works_plt', JSON.stringify(isHidingFinished));
+
+            // 3. 버튼 글씨 바꾸기
+            const hideTextBtn = document.getElementById('hide-text');
+            if (isHidingFinished[currentFilterPlt]) {
+                hideTextBtn.textContent = '휴재 및 완결 작품 꺼내기';
+            } else {
+                hideTextBtn.textContent = '휴재 및 완결 작품 숨기기';
+            }
+
+            // 🌟 4. 상태가 바뀌었으니 화면 전체를 다시 그려서 (renderAll) 숨김/표시 즉시 반영!
             renderAll();
+
+            // 🌟 [여기에 추가!] 숨기기 토글 이벤트 쏘기! (켜졌는지 꺼졌는지 상태도 같이 보냄)
+            trackClick('toggle_hide_works', {
+                'platform': currentFilterPlt,
+                'status': isHidingFinished[currentFilterPlt] ? 'hidden' : 'shown'
+            });
+
+            // 모달창 닫기
             closeFilterMenu();
         }
 
@@ -3713,6 +4270,10 @@
                     // 배열에서 옛날 자리(oldIndex)에 있던 걸 뽑아서, 새 자리(newIndex)에 끼워 넣기!
                     const draggedItem = arr.splice(evt.oldIndex, 1)[0];
                     arr.splice(evt.newIndex, 0, draggedItem);
+
+                    // 🚨 [디테일] 유저가 직접 드래그해서 섞었으니, 더 이상 가나다순이 아님! 탭 버튼 불 끄기!
+                    document.getElementById('btn-sort-az').classList.remove('active');
+                    document.getElementById('btn-sort-za').classList.remove('active');
 
                     // 데이터 영구 저장! (이때 만능 청소기가 뒤에서 휴재작을 쓸어 내림)
                     saveData();
