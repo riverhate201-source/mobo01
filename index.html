@@ -3326,6 +3326,18 @@
                 localStorage.removeItem(currentCoinPlt + 'Expire');
             }
 
+            // ... (위쪽 코드들) ...
+
+            // 🌟 [핵심 방어막 추가!] 레진 지갑을 수동으로 수정했다면 24시간 보너스 폭탄 해체!
+            if (currentCoinPlt === 'lezhin') {
+                localStorage.removeItem('lezhinBonusExpire');
+            }
+
+            closeCoinModal(); // 창 닫기
+            if (typeof saveData === "function") saveData(); // 전체 데이터 저장 함수 실행
+            if (typeof refreshBalance === "function") refreshBalance(); // 화면 잔액 및 뱃지 즉시 갱신
+
+
             closeCoinModal(); // 창 닫기
             if (typeof saveData === "function") saveData(); // 전체 데이터 저장 함수 실행
             if (typeof refreshBalance === "function") refreshBalance(); // 화면 잔액 및 뱃지 즉시 갱신
