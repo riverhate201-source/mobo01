@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
-    <link rel="stylesheet" href="./css/style.css?v=3.5">
+    <link rel="stylesheet" href="./css/style.css?v=3.6">
 
 
 
@@ -113,7 +113,7 @@
         <div class="modal-content" style="max-width: 400px; position: relative;">
             <button onclick="closeDeductionModal()"
                 style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
-            <h3 style="margin-top: 0; text-align: center; color: #1967d2;">모든 작품 정산</h3>
+            <h3 class="deduction-modal-title">모든 작품 정산</h3>
             <p id="deduction-msg" style="font-size: 14px; text-align: center; color: #555; margin-bottom: 15px;"></p>
 
             <div id="deduction-list"
@@ -549,7 +549,7 @@
         <div class="modal-content" style="max-width: 400px; position: relative;">
             <button onclick="closeSearchModal()"
                 style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
-            <h3 style="margin-top: 0; text-align: center; color: #1967d2;"> 작품 검색</h3>
+            <h3 class="search-modal-title">작품 검색</h3>
 
             <input type="text" id="search-input" placeholder="웹툰 제목을 입력하세요" onkeyup="performSearch()"
                 style="width: 100%; box-sizing: border-box; margin-bottom: 15px; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
@@ -626,7 +626,7 @@
         <div class="modal-content" style="max-width: 400px; position: relative;">
             <button onclick="closeLinkSettingModal()"
                 style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
-            <h3 style="margin-top: 0; text-align: center; color: #1967d2;"> 출석 링크 설정</h3>
+            <h3 class="link-setting-modal-title">출석 링크 설정</h3>
             <p style="font-size: 12px; color: gray; text-align: center; margin-bottom: 15px; line-height: 1.4;">
                 기본 출석 버튼
                 링크를 바꾸시려는<br>유저분들만 입력해 주세요!</p>
@@ -1548,9 +1548,10 @@
             const webtoonDate = getWebtoonDate();
             const nowStr = formatDate(webtoonDate);
             let last = localStorage.getItem('lastCheckDate');
+            let lastPartial = localStorage.getItem('lastPartialDeductDate'); // 🌟 [신규] 일부 정산 메모장 확인!
 
-            // 🌟 [추가] 아까 '당일 정산'을 눌러서 완료한 적이 있는지 확인
-            let alreadyFinishedToday = (last && last > nowStr);
+            // 🌟 [수정] 싹 다 정산해서 내일로 넘어간 경우 OR 오늘 일부만 정산한 경우 둘 다 감지!
+            let alreadyFinishedToday = (last && last > nowStr) || (lastPartial === nowStr);
 
             isTodayDeduction = true;
             pendingDeductions = { lezhin: [], bomtoon: [], ridi: [], mrblue: [] };
@@ -1558,12 +1559,11 @@
             const todayObj = getWebtoonDate();
             const d = days[todayObj.getDay()];
 
-            let hasUnpaidWorks = false; // 🌟 결제 안 한 작품이 남아있는지 체크용
+            let hasUnpaidWorks = false;
 
             // [핵심] platformOrder(사용자가 켠 플랫폼)만 순회합니다!
             platformOrder.forEach(plt => {
                 (state[plt][d] || []).forEach((w, i) => {
-                    // 🌟 오늘 이미 정산 도장(lastDeductDate)이 찍힌 작품은 빼고 가져옵니다!
                     if (!isWorkOnBreak(w) && w.lastDeductDate !== nowStr) {
                         pendingDeductions[plt].push({ day: d, idx: i, work: w });
                         hasUnpaidWorks = true;
@@ -1576,12 +1576,10 @@
                     }
                 });
 
-                // 🌟 [최종 추가 1] 수금원아, 격주 연재 방도 확인해라!
                 (state[plt]["격주 연재"] || []).forEach((w, i) => {
                     if (!isWorkOnBreak(w) && w.cycle && w.cycle.includes('격주 연재') && w.lastDeductDate !== nowStr) {
                         let match = w.cycle.match(/\((.*?)\)/);
                         if (match) {
-                            // 🌟 연도 보정 포함된 날짜 생성
                             const cd = new Date(todayObj.getFullYear(), parseInt(match[1].split('/')[0]) - 1, parseInt(match[1].split('/')[1]));
                             if (cd.getTime() - todayObj.getTime() > 180 * 24 * 60 * 60 * 1000) cd.setFullYear(todayObj.getFullYear() - 1);
 
@@ -1601,9 +1599,9 @@
                 return;
             }
 
-            // 2. 남은 게 있는데, 아까 '당일 정산'을 완료했던 상태일 때 (경고창 띄우기)
+            // 🌟 [수정] 팝업 멘트를 조금 더 자연스럽게 통합했습니다!
             if (alreadyFinishedToday) {
-                if (!confirm("이미 오늘 정산을 완료하셨습니다.\n새로 추가되거나 누락된 작품을 마저 정산하시겠습니까?")) {
+                if (!confirm("오늘 이미 미리 정산을 진행하셨습니다.\n남은 작품이나 새로 추가된 작품을 마저 정산하시겠습니까?")) {
                     isTodayDeduction = false;
                     return;
                 }
@@ -1819,7 +1817,7 @@
         function processDeduction() {
             let tL = 0, tB = 0, tR = 0, tM = 0;
             let checkedCount = 0;
-            let totalPendingCount = 0; // 🌟 [핵심 부활 1] 모달창에 뜬 전체 대기 작품 개수 확인용!
+            let totalPendingCount = 0; // 🌟 [핵심] 모달창에 뜬 전체 작품 개수 확인용!
 
             const todayKST = getKSTDate();
             const webtoonDate = getWebtoonDate();
@@ -1832,25 +1830,21 @@
                 monthlyHistory[monthKey] = { lezhin: {}, bomtoon: {}, ridi: {}, mrblue: {} };
             }
 
-            // [핵심] 실제 정산 계산
             platformOrder.forEach(plt => {
                 totalPendingCount += pendingDeductions[plt].length; // 🌟 대기 중인 전체 작품 갯수 합산!
 
                 pendingDeductions[plt].forEach((item, i) => {
                     const chk = document.getElementById(`deduct-chk-${plt}-${i}`);
 
-                    // ✅ 체크박스에 체크를 했다면?!
                     if (chk && chk.checked) {
-                        checkedCount++; // 체크 개수 1개 추가!
+                        checkedCount++;
                         const costVal = parseInt(item.work.coin) || 0;
 
-                        // 1. 돈 계산
                         if (plt === 'lezhin') tL += costVal;
                         else if (plt === 'bomtoon') tB += costVal;
                         else if (plt === 'ridi') tR += costVal;
                         else if (plt === 'mrblue') tM += costVal;
 
-                        // 2. 가계부에 돈 쓴 내역 추가
                         if (costVal > 0) {
                             if (!monthlyHistory[monthKey][plt][item.work.title]) {
                                 monthlyHistory[monthKey][plt][item.work.title] = 0;
@@ -1858,7 +1852,6 @@
                             monthlyHistory[monthKey][plt][item.work.title] += costVal;
                         }
 
-                        // 3. 돈을 썼든 안 썼든 체크했으면 무조건 영구 도장 쾅!
                         if (item.work.id) {
                             Object.keys(state[plt]).forEach(d => {
                                 state[plt][d].forEach(w => {
@@ -1872,10 +1865,8 @@
                 });
             });
 
-            // [최종 보스 방어막] 하나라도 체크를 했다면 무조건 저장해라!
             if (checkedCount > 0) {
                 if (tL > 0 || tB > 0 || tR > 0 || tM > 0) {
-                    // 일괄 정산 시에도 소멸 코인 먼저 까고 남은 것만 본 지갑 차감
                     const deductFromWallet = (plt, totalAmount, prefix) => {
                         if (totalAmount <= 0) return;
                         let remaining = totalAmount;
@@ -1933,9 +1924,13 @@
                 alert("선택된 작품이 없어 정산되지 않았습니다.");
             }
 
-            // 🌟 [핵심 로직 부활 1] 유저가 체크박스를 끄고 일부만 정산했다면, 당일 정산 완료(내일로 미루기) 취소!
+            // 🌟 [수정] 유저가 체크박스를 끄고 일부만 정산했다면!
             if (checkedCount < totalPendingCount) {
-                isTodayDeduction = false;
+                isTodayDeduction = false; // 내일로 넘어가는 건 막아두되,
+                localStorage.setItem('lastPartialDeductDate', nowStr); // 🌟 '오늘 일부 정산했다'는 흔적을 남겨서 다음 번에 경고 팝업을 띄우게 만듭니다!
+            } else {
+                // 전부 다 정산했으면 찌꺼기 기록 청소!
+                localStorage.removeItem('lastPartialDeductDate');
             }
 
             finishDeduction();
@@ -3061,11 +3056,12 @@
                 autoUpdatePastBiweeklyDates();
                 renderAll();
 
-                // 🌟 [핵심 로직 부활 2] 일괄 추가 후, 혹시 오늘 정산이 끝났었더라도 다시 정산 창이 뜨도록 시간 되돌리기!
+                // 🌟 [핵심] 일괄 추가 후, 혹시 오늘 정산이 끝났었더라도 다시 정산 창이 뜨도록 시간 되돌리기!
                 const nowStr = formatDate(getWebtoonDate());
                 if (localStorage.getItem('lastCheckDate') > nowStr) {
                     localStorage.setItem('lastCheckDate', nowStr);
                 }
+                localStorage.removeItem('lastPartialDeductDate'); // 🌟 새 작품이 생겼으니 팝업 안 뜨고 편하게 바로 정산되게 흔적 삭제!
 
                 trackClick('batch_add_works_tags', { 'platform': currentPlatform, 'count': addedCount });
                 alert(`총 ${addedCount}개의 작품이 요일별로 완벽하게 추가되었습니다!`);
@@ -3194,16 +3190,15 @@
             }
 
             saveData();
-
-            // 🌟 [핵심 추가] 작품을 저장하자마자 즉시 격주 날짜 갱신
             autoUpdatePastBiweeklyDates();
             renderAll();
 
-            // 🌟 [핵심 로직 부활 3] 단일 추가나 복제를 했을 때도 똑같이 시간을 되돌려줍니다!
+            // 🌟 [핵심] 단일 추가나 복제를 했을 때도 똑같이 시간을 되돌려줍니다!
             const nowStrSingle = formatDate(getWebtoonDate());
             if (localStorage.getItem('lastCheckDate') > nowStrSingle) {
                 localStorage.setItem('lastCheckDate', nowStrSingle);
             }
+            localStorage.removeItem('lastPartialDeductDate'); // 🌟 새 작품 생겼으니 흔적 깔끔하게 지우기
 
             trackClick(editMode ? 'edit_work' : 'add_new_work', { 'platform': currentPlatform, 'title': title });
 

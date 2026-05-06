@@ -2799,6 +2799,48 @@ body.dark-mode #calc-deduct-btn:hover {
     background: #ff5252;
 }
 
+/* 🌟 작품 검색 모달 제목 (라이트 모드 기본) */
+.search-modal-title {
+    margin-top: 0;
+    text-align: center;
+    color: #333;
+    /* 라이트 모드 색상 */
+}
+
+/* 🌙 작품 검색 모달 제목 (다크 모드) */
+body.dark-mode .search-modal-title {
+    color: #eee;
+    /* 다크 모드 색상 */
+}
+
+/* 🌟 정산 모달 제목 (라이트 모드 기본) */
+.deduction-modal-title {
+    margin-top: 0;
+    text-align: center;
+    color: #333;
+    /* 라이트 모드 색상 */
+}
+
+/* 🌙 정산 모달 제목 (다크 모드) */
+body.dark-mode .deduction-modal-title {
+    color: #eee;
+    /* 다크 모드 색상 */
+}
+
+/* 🌟 출석 링크 설정 모달 제목 (라이트 모드 기본) */
+.link-setting-modal-title {
+    margin-top: 0;
+    text-align: center;
+    color: #333;
+    /* 라이트 모드 색상 */
+}
+
+/* 🌙 출석 링크 설정 모달 제목 (다크 모드) */
+body.dark-mode .link-setting-modal-title {
+    color: #eee;
+    /* 다크 모드 색상 */
+}
+
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
 a[x-apple-data-detectors] {
     color: inherit !important;
