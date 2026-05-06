@@ -20,6 +20,11 @@ body {
     word-break: keep-all;
 }
 
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
 body.dark-mode {
     background-color: #1a1a1b;
     color: #e0e0e0;
@@ -383,7 +388,7 @@ body.dark-mode .day-btn.active {
 .my-wallet-container {
     max-width: 100%;
     margin: 0 auto 30px auto;
-    padding: 35px 18px 18px 18px !important;
+    padding: 45px 18px 18px 18px !important;
     background: #fff;
     border-radius: 20px;
     box-shadow: 0 4px 4px rgba(0, 0, 0, 0.05);

@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
-    <link rel="stylesheet" href="./css/style.css?v=3.3">
+    <link rel="stylesheet" href="./css/style.css?v=3.4">
 
 
 
@@ -37,7 +37,9 @@
 
 <body>
 
-    <h1 class="main-page-title">모아보기 mobo<br>나의 웹툰 스케줄러</h1>
+    <h1 class="main-page-title">
+        <a href="/">모아보기 mobo<br>나의 웹툰 스케줄러</a>
+    </h1>
 
     <div class="top-util-bar">
         <button onclick="openNav()" class="menu-btn">
@@ -139,70 +141,67 @@
         <div class="wallet-swipe-wrapper" id="wallet-slider" onscroll="updateWalletDots()">
 
             <div class="my-wallet-container snap-page">
-
+                <!-- 🌟 봄툰 지갑 (position: relative; 추가됨!) -->
                 <div class="wallet-item bomtoon-wallet"
-                    style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+                    style="text-align: center; display: flex; flex-direction: column; align-items: center; position: relative;">
 
+                    <!-- 🚀 뱃지 영역 완전 공중부양! (position: absolute; top: -15px;) -->
                     <div
-                        style="display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 18px; margin-top: -15px; margin-bottom: 8px; width: 100%;">
+                        style="position: absolute; top: -33px; width: 100%; display: flex; gap: 6px; justify-content: center; align-items: flex-end;">
                         <div id="bomtoon-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">22일 코인
-                            할인!
-                        </div>
+                            할인!</div>
                         <div id="bomtoon-expire-badge"
-                            style="display:none; color:#e60012; font-size:11px; font-weight:bold; background:#ffebee; padding:2px 8px; border-radius:12px;">
+                            style="display:none; color:#333; font-size:11px; font-weight:bold; background:#ffebee; border: 1px dashed #e60012; padding:4px 8px; border-radius:12px;">
                         </div>
                     </div>
 
                     <span class="platform-name">봄툰 코인</span>
                     <span class="coin-amount" onclick="updateCoin('bomtoon')" style="cursor:pointer;"><span
                             id="bomtoon-wallet-val">0</span> C</span>
-
                     <button id="bomtoon-attend-btn" class="attend-btn" onclick="goToAttendance('bomtoon')">봄툰 출석
                         전</button>
                 </div>
 
                 <div class="wallet-divider"></div>
 
+                <!-- 🌟 레진 지갑 -->
                 <div class="wallet-item lezhin-wallet"
-                    style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+                    style="text-align: center; display: flex; flex-direction: column; align-items: center; position: relative;">
 
                     <div
-                        style="display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 18px; margin-top: -15px; margin-bottom: 8px; width: 100%;">
+                        style="position: absolute; top: -33px; width: 100%; display: flex; gap: 6px; justify-content: center; align-items: flex-end;">
                         <div id="lezhin-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">20일 코인 할인!
                         </div>
-                        <div id="lezhin-expire-badge" style="display:none; color:#333; font-size:11px; font-weight:bold; background:#ffebee; 
-                            
-                            border: 1px dashed #e60012;
-                            padding:4px 8px; border-radius:12px;">
+                        <div id="lezhin-expire-badge"
+                            style="display:none; color:#333; font-size:11px; font-weight:bold; background:#ffebee; border: 1px dashed #e60012; padding:4px 8px; border-radius:12px;">
                         </div>
                     </div>
 
                     <span class="platform-name">레진 코인</span>
                     <span class="coin-amount" onclick="updateCoin('lezhin')" style="cursor:pointer;"><span
                             id="lezhin-wallet-val">0</span> C</span>
-
                     <button id="lezhin-attend-btn" class="attend-btn" onclick="goToAttendance('lezhin')">레진 출석
                         전</button>
                 </div>
             </div>
 
             <div class="my-wallet-container snap-page">
+                <!-- 🌟 리디 지갑 -->
                 <div class="wallet-item ridi-wallet"
-                    style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+                    style="text-align: center; display: flex; flex-direction: column; align-items: center; position: relative;">
 
                     <div
-                        style="display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 18px; margin-top: -15px; margin-bottom: 8px; width: 100%;">
+                        style="position: absolute; top: -33px; width: 100%; display: flex; gap: 6px; justify-content: center; align-items: flex-end;">
                         <div id="ridi-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">십오야 이벤트!
                         </div>
                         <div id="ridi-expire-badge"
-                            style="display:none; color:#e60012; font-size:11px; font-weight:bold; background:#ffebee; padding:2px 8px; border-radius:12px;">
+                            style="display:none; color:#333; font-size:11px; font-weight:bold; background:#ffebee; border: 1px dashed #e60012; padding:4px 8px; border-radius:12px;">
                         </div>
                     </div>
 
                     <span class="platform-name">리디 캐시</span>
                     <span class="coin-amount" onclick="updateCoin('ridi')" style="cursor:pointer;"><span
                             id="ridi-wallet-val">0</span>원</span>
-
                     <button class="attend-btn"
                         onclick="window.open('https://ridibooks.com/event/romance_serial?fresh=1777376451519')">리디 이벤트
                         보기</button>
@@ -210,22 +209,22 @@
 
                 <div class="wallet-divider"></div>
 
+                <!-- 🌟 미블 지갑 -->
                 <div class="wallet-item mrblue-wallet"
-                    style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+                    style="text-align: center; display: flex; flex-direction: column; align-items: center; position: relative;">
 
                     <div
-                        style="display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 18px; margin-top: -15px; margin-bottom: 8px; width: 100%;">
+                        style="position: absolute; top: -33px; width: 100%; display: flex; gap: 6px; justify-content: center; align-items: flex-end;">
                         <div id="mrblue-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">메가 블루데이!
                         </div>
                         <div id="mrblue-expire-badge"
-                            style="display:none; color:#e60012; font-size:11px; font-weight:bold; background:#ffebee; padding:2px 8px; border-radius:12px;">
+                            style="display:none; color:#333; font-size:11px; font-weight:bold; background:#ffebee; border: 1px dashed #e60012; padding:4px 8px; border-radius:12px;">
                         </div>
                     </div>
 
                     <span class="platform-name">미블 머니</span>
                     <span class="coin-amount" onclick="updateCoin('mrblue')" style="cursor:pointer;"><span
                             id="mrblue-wallet-val">0</span>원</span>
-
                     <button id="mrblue-attend-btn" class="attend-btn"
                         onclick="window.open('https://m.mrblue.com/event/list.asp', '_blank')">미블 이벤트 보기</button>
                 </div>
@@ -487,7 +486,7 @@
                 <div style="display: flex; gap: 10px; margin-top: 12px; margin-bottom: 12px;">
                     <select id="input-cycle-type" class="modal-select" style="flex: 2; margin-bottom: 0;"
                         onchange="toggleCycleInputs(this)">
-                        <option value="">연재 주기 선택 (없음)</option>
+                        <option value="">특정 연재주기 선택 (없음)</option>
                         <option value="5연 1휴">5연 1휴</option>
                         <option value="4연 1휴">4연 1휴</option>
                         <option value="3연 1휴">3연 1휴</option>
@@ -1441,12 +1440,42 @@
         function executeDeduction(plt, title, amount) {
             if (amount <= 0) return;
 
-            // 1. 지갑 잔액 깎기
-            const prefix = plt.charAt(0); // l, b, r, m
-            let currentWallet = parseInt(localStorage.getItem(prefix + 'Wallet') || 0);
-            localStorage.setItem(prefix + 'Wallet', currentWallet - amount);
+            let remainingAmount = amount; // 🌟 깎아야 할 '남은 결제 금액' (처음엔 총 금액)
 
-            // 2. 이번 달 가계부(영수증)에 내역 적기
+            // 1. 소멸 예정 코인 먼저 확인 및 최우선 차감!
+            let expireData = JSON.parse(localStorage.getItem(plt + 'Expire'));
+            if (expireData && expireData.amount) {
+                let expAmt = parseInt(expireData.amount) || 0;
+
+                if (expAmt > 0) {
+                    if (expAmt >= remainingAmount) {
+                        // 🟢 소멸 코인이 더 많거나 같을 때: 소멸 코인으로 전액 방어!
+                        expAmt -= remainingAmount;
+                        remainingAmount = 0; // 본 지갑에서 뺄 돈은 0원이 됨!
+                    } else {
+                        // 🔴 소멸 코인이 부족할 때: 소멸 코인 싹 다 긁어 쓰고, 남은 금액 갱신
+                        remainingAmount -= expAmt;
+                        expAmt = 0;
+                    }
+
+                    // 소멸 코인 잔액 업데이트 (다 썼으면 영구 삭제)
+                    if (expAmt <= 0) {
+                        localStorage.removeItem(plt + 'Expire');
+                    } else {
+                        expireData.amount = expAmt;
+                        localStorage.setItem(plt + 'Expire', JSON.stringify(expireData));
+                    }
+                }
+            }
+
+            // 2. 소멸 코인으로 막고 '남은 금액'만 본 지갑에서 깎기!
+            if (remainingAmount > 0) {
+                const prefix = plt.charAt(0); // l, b, r, m
+                let currentWallet = parseInt(localStorage.getItem(prefix + 'Wallet') || 0);
+                localStorage.setItem(prefix + 'Wallet', currentWallet - remainingAmount);
+            }
+
+            // 3. 이번 달 월말정산에 내역 적기 (기록은 본 지갑, 소멸 코인 합친 총액(amount)으로 기록!)
             const todayKST = getKSTDate();
             const monthKey = `${todayKST.getFullYear()}-${String(todayKST.getMonth() + 1).padStart(2, '0')}`;
             let monthlyHistory = JSON.parse(localStorage.getItem('monthlyHistory')) || {};
@@ -1456,14 +1485,14 @@
             monthlyHistory[monthKey][plt][title] += amount;
             localStorage.setItem('monthlyHistory', JSON.stringify(monthlyHistory));
 
-            // 3. 주간 통계(홈 화면)에 누적하기
+            // 4. 주간 통계(홈 화면)에 누적하기
             if (plt === 'ridi' || plt === 'mrblue') {
                 addWeeklySpent(0, amount); // 원/캐시는 뒤쪽으로
             } else {
                 addWeeklySpent(amount, 0); // 코인은 앞쪽으로
             }
 
-            // 🌟 [여기에 추가!] 결제한 플랫폼이 레진이라면, 폭탄 타이머를 해체(삭제)합니다!
+            // 5. 결제한 플랫폼이 레진이라면, 폭탄 타이머를 해체(삭제)합니다!
             if (plt === 'lezhin') {
                 localStorage.removeItem('lezhinBonusExpire');
             }
@@ -1475,7 +1504,7 @@
             let unitStr = '코인';
             if (plt === 'ridi') unitStr = '캐시';
             else if (plt === 'mrblue') unitStr = '머니';
-            alert(`성공! [${title}] 작품에 ${formatNum(amount)} 만큼 지갑에서 차감되고 영수증에 기록되었습니다!`);
+            alert(`성공! [${title}] 작품에 ${formatNum(amount)} 만큼 차감되고 월말정산에 기록되었습니다!`);
         }
 
         // 🌟 [신규] 계산기에서 바로 차감 버튼 눌렀을 때 작동하는 함수
@@ -1501,7 +1530,7 @@
             else if (exactPlt === 'mrblue') unitStr = '머니';
 
             // 🌟 [수정] '원' 대신 진짜 단위(unitStr)를 넣어서 자연스럽게 물어보기!
-            const workTitle = prompt(`총 ${formatNum(currentCalcCoin)} ${unitStr} 차감됩니다.\n영수증에 기록될 '작품 이름'을 적어주세요!`);
+            const workTitle = prompt(`총 ${formatNum(currentCalcCoin)} ${unitStr} 차감됩니다.\n월말정산에 기록될 '작품 이름'을 적어주세요!`);
 
             if (!workTitle) return alert("작품 이름이 없어 차감이 취소되었습니다.");
 
@@ -1789,7 +1818,8 @@
 
         function processDeduction() {
             let tL = 0, tB = 0, tR = 0, tM = 0;
-            let checkedCount = 0; // 🌟 [신규] 돈이 안 나가더라도 체크했는지 확인하는 카운터!
+            let checkedCount = 0;
+            let totalPendingCount = 0; // 🌟 [핵심 부활 1] 모달창에 뜬 전체 대기 작품 개수 확인용!
 
             const todayKST = getKSTDate();
             const webtoonDate = getWebtoonDate();
@@ -1804,6 +1834,8 @@
 
             // [핵심] 실제 정산 계산
             platformOrder.forEach(plt => {
+                totalPendingCount += pendingDeductions[plt].length; // 🌟 대기 중인 전체 작품 갯수 합산!
+
                 pendingDeductions[plt].forEach((item, i) => {
                     const chk = document.getElementById(`deduct-chk-${plt}-${i}`);
 
@@ -1818,7 +1850,7 @@
                         else if (plt === 'ridi') tR += costVal;
                         else if (plt === 'mrblue') tM += costVal;
 
-                        // 2. 가계부에 돈 쓴 내역 추가 (돈을 썼을 때만!)
+                        // 2. 가계부에 돈 쓴 내역 추가
                         if (costVal > 0) {
                             if (!monthlyHistory[monthKey][plt][item.work.title]) {
                                 monthlyHistory[monthKey][plt][item.work.title] = 0;
@@ -1826,7 +1858,7 @@
                             monthlyHistory[monthKey][plt][item.work.title] += costVal;
                         }
 
-                        // 🌟 3. [핵심] 돈을 0원 썼든 100원 썼든 체크했으면 무조건 영구 도장 쾅!
+                        // 3. 돈을 썼든 안 썼든 체크했으면 무조건 영구 도장 쾅!
                         if (item.work.id) {
                             Object.keys(state[plt]).forEach(d => {
                                 state[plt][d].forEach(w => {
@@ -1840,28 +1872,58 @@
                 });
             });
 
-            // 🌟 [최종 보스 방어막] 하나라도 체크를 했다면 무조건 저장해라!
+            // [최종 보스 방어막] 하나라도 체크를 했다면 무조건 저장해라!
             if (checkedCount > 0) {
-                // 돈을 썼을 때만 지갑 잔액 깎기
                 if (tL > 0 || tB > 0 || tR > 0 || tM > 0) {
-                    localStorage.setItem('lWallet', parseInt(localStorage.getItem('lWallet') || 0) - tL);
-                    localStorage.setItem('bWallet', parseInt(localStorage.getItem('bWallet') || 0) - tB);
-                    localStorage.setItem('rWallet', parseInt(localStorage.getItem('rWallet') || 0) - tR);
-                    localStorage.setItem('mWallet', parseInt(localStorage.getItem('mWallet') || 0) - tM);
+                    // 일괄 정산 시에도 소멸 코인 먼저 까고 남은 것만 본 지갑 차감
+                    const deductFromWallet = (plt, totalAmount, prefix) => {
+                        if (totalAmount <= 0) return;
+                        let remaining = totalAmount;
+
+                        let expireData = JSON.parse(localStorage.getItem(plt + 'Expire'));
+                        if (expireData && expireData.amount) {
+                            let expAmt = parseInt(expireData.amount) || 0;
+                            if (expAmt > 0) {
+                                if (expAmt >= remaining) {
+                                    expAmt -= remaining;
+                                    remaining = 0;
+                                } else {
+                                    remaining -= expAmt;
+                                    expAmt = 0;
+                                }
+
+                                if (expAmt <= 0) localStorage.removeItem(plt + 'Expire');
+                                else {
+                                    expireData.amount = expAmt;
+                                    localStorage.setItem(plt + 'Expire', JSON.stringify(expireData));
+                                }
+                            }
+                        }
+
+                        if (remaining > 0) {
+                            let currentWallet = parseInt(localStorage.getItem(prefix + 'Wallet') || 0);
+                            localStorage.setItem(prefix + 'Wallet', currentWallet - remaining);
+                        }
+                    };
+
+                    deductFromWallet('lezhin', tL, 'l');
+                    deductFromWallet('bomtoon', tB, 'b');
+                    deductFromWallet('ridi', tR, 'r');
+                    deductFromWallet('mrblue', tM, 'm');
 
                     const addedWon = tR + tM;
                     addWeeklySpent(tL + tB, addedWon);
                     localStorage.setItem('monthlyHistory', JSON.stringify(monthlyHistory));
                 }
 
-                saveData(); // 🚨 어떤 일이 있어도 금고(saveData)에 저장하도록 밖으로 뺐습니다!
+                saveData();
 
                 let msg = "성공적으로 정산되었습니다!\n";
-                if (tL + tB > 0) msg += `- 코인 차감: ${tL + tB} C\n`;
-                if (tR > 0) msg += `- 리디 차감: ${tR} 캐시\n`;
-                if (tM > 0) msg += `- 미블 차감: ${tM} 머니\n`;
+                if (tL > 0) msg += `- 레진 정산: ${tL} C\n`;
+                if (tB > 0) msg += `- 봄툰 정산: ${tB} C\n`;
+                if (tR > 0) msg += `- 리디 정산: ${tR} 캐시\n`;
+                if (tM > 0) msg += `- 미블 정산: ${tM} 머니\n`;
 
-                // 0원으로 정산했을 때 안내 멘트 추가
                 if (tL === 0 && tB === 0 && tR === 0 && tM === 0) {
                     msg += "(무료 감상 등 0원 정산 완료!)";
                 }
@@ -1870,6 +1932,12 @@
             } else {
                 alert("선택된 작품이 없어 정산되지 않았습니다.");
             }
+
+            // 🌟 [핵심 로직 부활 1] 유저가 체크박스를 끄고 일부만 정산했다면, 당일 정산 완료(내일로 미루기) 취소!
+            if (checkedCount < totalPendingCount) {
+                isTodayDeduction = false;
+            }
+
             finishDeduction();
         }
 
@@ -2943,7 +3011,6 @@
             if (isBatchMode) {
                 const targetStatus = '연재중';
 
-                // 🌟 [핵심 복구] 플랫폼별 맞춤 기본 가격 세팅 (우니님 기획 완벽 복원!)
                 let defaultCoin = 0;
                 if (currentPlatform === 'lezhin' || currentPlatform === 'bomtoon') {
                     defaultCoin = 3;
@@ -2961,13 +3028,11 @@
                     const input = document.getElementById(`batch-input-${day}`);
 
                     let titles = [];
-                    // 🌟 1. 만들어진 칩(태그)들의 데이터 쏙쏙 빼오기
                     if (tagList) {
                         Array.from(tagList.children).forEach(span => {
                             if (span.dataset.val) titles.push(span.dataset.val);
                         });
                     }
-                    // 🌟 2. 실수로 엔터 안 치고 입력칸에 남겨둔 글자도 살려주기!
                     if (input && input.value.trim() !== "") {
                         titles.push(input.value.trim());
                     }
@@ -2996,22 +3061,24 @@
                 autoUpdatePastBiweeklyDates();
                 renderAll();
 
+                // 🌟 [핵심 로직 부활 2] 일괄 추가 후, 혹시 오늘 정산이 끝났었더라도 다시 정산 창이 뜨도록 시간 되돌리기!
+                const nowStr = formatDate(getWebtoonDate());
+                if (localStorage.getItem('lastCheckDate') > nowStr) {
+                    localStorage.setItem('lastCheckDate', nowStr);
+                }
+
                 trackClick('batch_add_works_tags', { 'platform': currentPlatform, 'count': addedCount });
                 alert(`총 ${addedCount}개의 작품이 요일별로 완벽하게 추가되었습니다!`);
                 closeAddModal();
                 return;
             }
 
-
             const title = document.getElementById('input-title').value;
             const url = document.getElementById('input-url').value;
 
-            // 1. 체크된 요일 싹 쓸어담기
             const selectedDays = Array.from(document.querySelectorAll('input[name="day-chk"]:checked')).map(el => el.value);
 
             let cycleParts = [];
-
-            // 2. 드롭다운 주기 챙기기
             const cType = document.getElementById('input-cycle-type').value;
             const cWeek = document.getElementById('input-cycle-week').value;
 
@@ -3033,7 +3100,6 @@
                 }
             }
 
-            // 3. 10일 지정석 챙기기
             if (selectedDays.includes("10일 연재")) {
                 const tenDayDates = document.getElementById('input-10day-dates').value.trim() || '10/20/30';
                 cycleParts.push(`10일 연재 (${tenDayDates})`);
@@ -3049,7 +3115,6 @@
 
             const isDateBased = cycleStr.includes('10일 연재') || cycleStr.includes('격주 연재');
 
-            // 🌟 10일/격주 연재 락(Lock) 유지 완료!
             let finalSelectedDays = [...selectedDays];
             if (cycleStr.includes('10일 연재')) finalSelectedDays = ['10일 연재'];
             else if (cycleStr.includes('격주 연재')) finalSelectedDays = ['격주 연재'];
@@ -3063,7 +3128,7 @@
 
             let workId = "";
             let isOldGhost = false;
-            let oldDeductDate = ""; // 🛡️ 방어막 1: 기존에 찍혀있던 도장 기억하기
+            let oldDeductDate = "";
 
             if (editMode) {
                 const originalWork = state[currentPlatform][actionOrigDay][actionIdx];
@@ -3073,12 +3138,11 @@
                     isOldGhost = true;
                     workId = Date.now().toString();
                 }
-                oldDeductDate = originalWork.lastDeductDate || ""; // 🌟 기존 작품의 결제 도장 챙기기
+                oldDeductDate = originalWork.lastDeductDate || "";
             } else {
                 workId = Date.now().toString() + "_" + Math.random().toString(36).substr(2, 5);
             }
 
-            // 🛡️ 방어막 2: 서랍에 넣기 전에 선결제부터 처리하고 도장 확실히 받아두기
             let finalDeductDate = oldDeductDate;
 
             const deductChk = document.getElementById('add-deduct-chk');
@@ -3094,7 +3158,7 @@
                 if (cost > 0) {
                     if (confirm(`총 ${formatNum(cost)} ${unitStr}이(가) 차감됩니다.\n정말 지갑에서 차감하시겠습니까?`)) {
                         executeDeduction(currentPlatform, title, cost);
-                        finalDeductDate = formatDate(getWebtoonDate()); // 🌟 선결제 완료! 오늘 도장 쾅!
+                        finalDeductDate = formatDate(getWebtoonDate());
                     } else {
                         alert("지갑 차감이 취소되었습니다.\n(작품 내용은 정상적으로 저장됩니다!)");
                     }
@@ -3103,10 +3167,8 @@
                 }
             }
 
-            // 🛡️ 방어막 3: 도장이 완벽하게 포함된 최종 데이터 장바구니 생성!
             const workData = { id: workId, title, url, cycle: cycleStr, coin, progress, status: targetStatus, img: tempImg, time, lastDeductDate: finalDeductDate };
 
-            // 🌟 분신술 방어 로직 유지 완료!
             if (editMode) {
                 Object.keys(state[currentPlatform]).forEach(day => {
                     const arr = state[currentPlatform][day];
@@ -3131,16 +3193,17 @@
                 });
             }
 
-
-
-
-
             saveData();
 
-            // 🌟 [핵심 추가] 작품을 저장하자마자 즉시 격주 날짜 갱신 및 화면 새로고침!
+            // 🌟 [핵심 추가] 작품을 저장하자마자 즉시 격주 날짜 갱신
             autoUpdatePastBiweeklyDates();
             renderAll();
 
+            // 🌟 [핵심 로직 부활 3] 단일 추가나 복제를 했을 때도 똑같이 시간을 되돌려줍니다!
+            const nowStrSingle = formatDate(getWebtoonDate());
+            if (localStorage.getItem('lastCheckDate') > nowStrSingle) {
+                localStorage.setItem('lastCheckDate', nowStrSingle);
+            }
 
             trackClick(editMode ? 'edit_work' : 'add_new_work', { 'platform': currentPlatform, 'title': title });
 
