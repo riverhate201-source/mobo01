@@ -2855,6 +2855,26 @@ body.dark-mode .img-status-success {
     color: #eee;
 }
 
+/* 🌟 서랍 모달 - 특수 요일 뱃지 기본색 통일 (라이트 모드) */
+.day-badge.badge-10day,
+.day-badge.badge-biweekly,
+.day-badge.badge-finished {
+    background: #f0f4ff;
+    /* 깔끔한 연한 회색 배경 */
+    color: #333;
+    /* 차분한 진회색 글씨 */
+}
+
+/* 🌙 서랍 모달 - 특수 요일 뱃지 기본색 통일 (다크 모드) */
+body.dark-mode .day-badge.badge-10day,
+body.dark-mode .day-badge.badge-biweekly,
+body.dark-mode .day-badge.badge-finished {
+    background: #1a233a;
+    /* 다크모드용 어두운 배경 */
+    color: #eee;
+    /* 다크모드용 밝은 회색 글씨 */
+}
+
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
 a[x-apple-data-detectors] {
     color: inherit !important;

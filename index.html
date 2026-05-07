@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
-    <link rel="stylesheet" href="./css/style.css?v=4.1">
+    <link rel="stylesheet" href="./css/style.css?v=4.2">
 
 
 
@@ -4017,12 +4017,14 @@
                     headerDiv.className = 'drawer-day-header';
                     headerDiv.style.top = '45px';
 
-                    let badgeStyle = '';
-                    if (groupName === '10일 연재') badgeStyle = 'background: #e8f5e9; color: #27ae60;';
-                    else if (groupName === '격주 연재') badgeStyle = 'background: #fdf2e9; color: #e67e22;';
-                    else if (groupName === '휴재 및 완결') badgeStyle = 'background: #f2f4f4; color: #7f8c8d;';
+                    // 🌟 인라인 스타일 삭제! 대신 종류별로 이름표(class)를 달아줍니다.
+                    let extraClass = '';
+                    if (groupName === '10일 연재') extraClass = ' badge-10day';
+                    else if (groupName === '격주 연재') extraClass = ' badge-biweekly';
+                    else if (groupName === '휴재 및 완결') extraClass = ' badge-finished';
 
-                    headerDiv.innerHTML = `<span class="day-badge" style="${badgeStyle}">${groupName}</span> <span class="day-count">${works.length}개</span>`;
+                    // 🌟 style 속성을 빼고 class 안에 쏙 넣어줍니다!
+                    headerDiv.innerHTML = `<span class="day-badge${extraClass}">${groupName}</span> <span class="day-count">${works.length}개</span>`;
                     groupDiv.appendChild(headerDiv);
 
                     const itemsBox = document.createElement('div');
