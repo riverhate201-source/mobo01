@@ -249,7 +249,7 @@ body.dark-mode .mini-bar {
 }
 
 #storage-bar-fill {
-    background: #f75757;
+    background: #fb9292;
     height: 100%;
     width: 0%;
     transition: width 0.5s;
