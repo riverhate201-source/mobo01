@@ -319,15 +319,7 @@ body.dark-mode .mini-bar {
     transition: 0.2s;
 
 
-    /* 1. 하드웨어 가속을 통해 브라우저가 더 매끄럽게 렌더링하게 합니다. */
-    transform: translateZ(0);
 
-    /* 2. 아주 미세하고 투명한 테두리를 주어 곡선 계산을 유도합니다. */
-    outline: 1px solid transparent;
-
-    /* 3. 버튼과 같은 색상의 미세한 그림자를 주어 경계선을 부드럽게 합니다. */
-    box-shadow: 0 0 1px rgba(0, 0, 0, 0.2);
-    /* 🚨 스와이프할 때 동그라미가 찌그러지거나 글씨가 꺾이는 것 방지 */
 
     flex-shrink: 0 !important;
     display: flex !important;
@@ -678,7 +670,7 @@ body.dark-mode .filter-close-bottom-btn span {
     gap: 12px;
     overflow-x: auto;
     scrollbar-width: none;
-    padding: 24px 0;
+    padding: 24px 2px;
     min-height: 180px;
     scroll-behavior: smooth;
 }

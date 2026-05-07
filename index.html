@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
-    <link rel="stylesheet" href="./css/style.css?v=3.7">
+    <link rel="stylesheet" href="./css/style.css?v=3.8">
 
 
 
@@ -2419,7 +2419,11 @@
                         else if (platform === 'ridi') borderColor = '#99ccff';
                         else if (platform === 'mrblue') borderColor = '#99b3e6';
                     }
-                    card.style.border = `2px solid ${borderColor}`;
+                    // 1. 진짜 두께는 일반 카드와 똑같이 1px로 유지해서 덜컹거림 100% 방지!
+                    card.style.border = `1px solid ${borderColor}`;
+
+                    // 2. 바깥쪽으로 1px 그림자를 싸악 둘러서 시각적으로만 2px처럼 보이게 뻥튀기!
+                    card.style.boxShadow = `0 0 0 1px ${borderColor}`;
                 }
 
                 if (viewDay !== '휴재' && viewDay !== '완결') {
@@ -2464,8 +2468,11 @@
             <p class="coin" style="${isStrike ? 'text-decoration: line-through; color: #ccc;' : ''}; margin-bottom:0;">${work.coin} ${unit}</p>
             
             <div class="quick-btn-group">
+                
+                ${work.cycle && (/\d+연\s*\d+휴/.test(work.cycle) || work.cycle.includes('격주 연재')) ? `<button class="quick-btn" onclick="event.stopPropagation(); incrementCycle('${platform}', '${work.origDay}', ${work.origIdx})">+1주</button>` : ''} 
+
                 <button class="quick-btn" onclick="event.stopPropagation(); incrementProgress('${platform}', '${work.origDay}', ${work.origIdx})">+1화</button>
-                ${work.cycle && (/\d+연\s*\d+휴/.test(work.cycle) || work.cycle.includes('격주 연재')) ? `<button class="quick-btn" onclick="event.stopPropagation(); incrementCycle('${platform}', '${work.origDay}', ${work.origIdx})">+1주</button>` : ''}
+
             </div>
         </div>
     </div>`;
