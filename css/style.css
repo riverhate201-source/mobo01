@@ -18,6 +18,8 @@ body {
     transition: background-color 0.3s, color 0.3s;
     overflow-x: hidden;
     word-break: keep-all;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -304,38 +306,33 @@ body.dark-mode .mini-bar {
 .day-btn {
 
     background: #fff;
-
     border: 1px dashed #ddd;
-
     width: 40px;
     /* '전체' 글씨가 예쁘게 들어가도록 아주 살짝만 키움 */
-
     height: 40px;
-
     border-radius: 14px;
-
     color: #797979;
-
     cursor: pointer;
-
     font-size: 13px;
-
     font-weight: normal;
 
     transition: 0.2s;
 
 
+    /* 1. 하드웨어 가속을 통해 브라우저가 더 매끄럽게 렌더링하게 합니다. */
+    transform: translateZ(0);
 
+    /* 2. 아주 미세하고 투명한 테두리를 주어 곡선 계산을 유도합니다. */
+    outline: 1px solid transparent;
+
+    /* 3. 버튼과 같은 색상의 미세한 그림자를 주어 경계선을 부드럽게 합니다. */
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0.2);
     /* 🚨 스와이프할 때 동그라미가 찌그러지거나 글씨가 꺾이는 것 방지 */
 
     flex-shrink: 0 !important;
-
     display: flex !important;
-
     justify-content: center !important;
-
     align-items: center !important;
-
     white-space: nowrap !important;
 
 }
@@ -361,6 +358,8 @@ body.dark-mode .day-btn {
     color: #fff !important;
 
     border-color: #333 !important;
+    box-shadow: 0 0 1px rgba(51, 51, 51, 0.5);
+
 
 }
 
@@ -373,6 +372,8 @@ body.dark-mode .day-btn.active {
     color: #333 !important;
 
     border-color: #fff !important;
+    box-shadow: 0 0 1px rgba(51, 51, 51, 0.5);
+
 
 }
 
@@ -972,6 +973,13 @@ body.dark-mode .img-pick-btn {
 .save-btn {
     background: #333;
     color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 4px;
+}
+
+body.dark-mode .save-btn {
+    background: #474747;
 }
 
 .work-count-text {
@@ -1063,7 +1071,7 @@ body.dark-mode .weekly-highlight {
 .stat-val+.stat-val::before {
     content: "|";
     color: #ccc;
-    margin: 0 8px;
+    margin: 0 16px;
     font-weight: normal;
 }
 
@@ -2179,7 +2187,7 @@ body.dark-mode .sort-tab-btn.active {
 
 .plt-setting-name {
     font-size: 14px;
-    font-weight: bold;
+    font-weight: normal;
     color: #333333;
 }
 
@@ -2841,6 +2849,20 @@ body.dark-mode .link-setting-modal-title {
     /* 다크 모드 색상 */
 }
 
+/* 🌟 사진 선택 완료 텍스트 (라이트 모드) */
+.img-status-success {
+    color: #333;
+    /* 기존의 산뜻한 초록색 */
+    transition: color 0.3s ease;
+    /* 색상이 바뀔 때 부드럽게 스르륵 변하는 애니메이션 */
+}
+
+/* 🌙 사진 선택 완료 텍스트 (다크 모드) */
+body.dark-mode .img-status-success {
+    /* 다크 모드의 어두운 배경(#333 등)에서는 너무 밝은 형광 초록보다 살짝 차분한 초록이 가독성이 좋습니다! */
+    color: #eee;
+}
+
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
 a[x-apple-data-detectors] {
     color: inherit !important;
@@ -2849,6 +2871,19 @@ a[x-apple-data-detectors] {
     font-family: inherit !important;
     font-weight: inherit !important;
     line-height: inherit !important;
+}
+
+/* 🌟 숫자 입력창(number)의 기본 화살표 숨기기 */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+    /* 파이어폭스용 */
+    appearance: textfield;
 }
 
 /* 아이폰 홈 화면(PWA) 키보드 증발 방지 방어막 */

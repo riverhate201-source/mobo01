@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
-    <link rel="stylesheet" href="./css/style.css?v=3.6">
+    <link rel="stylesheet" href="./css/style.css?v=3.7">
 
 
 
@@ -102,9 +102,9 @@
     <div id="attend-warning-modal" class="modal-overlay" style="display: none; z-index: 9999;">
         <div class="modal-content" style="text-align: center; border: 3px solid #ff4757;">
             <h2 style="color: #ff4757; margin-top: 0;">🚨 잠깐만요! 🚨</h2>
-            <p style="font-size: 16px; font-weight: bold; line-height: 1.5;">오늘 무료 코인 받을 수 있는<br>출석체크를 아직 안 하셨어요!</p>
+            <p style="font-size: 16px; font-weight: normal; line-height: 1.5;">오늘 무료 코인 받을 수 있는<br>출석체크를 아직 안 하셨어요!</p>
             <p id="attend-missing-text" style="color: #747d8c; margin-bottom: 20px; font-size: 14px;"></p>
-            <button onclick="closeAttendWarning()" class="save-btn" style="width: 100%; font-size: 16px;">지금 출석하러 가기
+            <button onclick="closeAttendWarning()" class="save-btn" style="width: 100%; font-size: 14px;">지금 출석하러 가기
             </button>
         </div>
     </div>
@@ -150,8 +150,8 @@
                         style="position: absolute; top: -33px; width: 100%; display: flex; gap: 6px; justify-content: center; align-items: flex-end;">
                         <div id="bomtoon-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">22일 코인
                             할인!</div>
-                        <div id="bomtoon-expire-badge"
-                            style="display:none; color:#333; font-size:11px; font-weight:bold; background:#ffebee; border: 1px dashed #e60012; padding:4px 8px; border-radius:12px;">
+                        <div id="bomtoon-expire-badge" onclick="updateCoin('bomtoon')"
+                            style="display:none; color:#333; font-size:11px; font-weight:bold; background:#ffebee; border: 1px dashed rgba(230, 0, 19, 0.767); padding:4px 8px; border-radius:12px; cursor: pointer;">
                         </div>
                     </div>
 
@@ -172,8 +172,8 @@
                         style="position: absolute; top: -33px; width: 100%; display: flex; gap: 6px; justify-content: center; align-items: flex-end;">
                         <div id="lezhin-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">20일 코인 할인!
                         </div>
-                        <div id="lezhin-expire-badge"
-                            style="display:none; color:#333; font-size:11px; font-weight:bold; background:#ffebee; border: 1px dashed #e60012; padding:4px 8px; border-radius:12px;">
+                        <div id="lezhin-expire-badge" onclick="updateCoin('lezhin')"
+                            style="display:none; color:#333; font-size:11px; font-weight:bold; background:#ffebee; border: 1px dashed rgba(230, 0, 19, 0.767); padding:4px 8px; border-radius:12px; cursor: pointer;">
                         </div>
                     </div>
 
@@ -194,8 +194,8 @@
                         style="position: absolute; top: -33px; width: 100%; display: flex; gap: 6px; justify-content: center; align-items: flex-end;">
                         <div id="ridi-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">십오야 이벤트!
                         </div>
-                        <div id="ridi-expire-badge"
-                            style="display:none; color:#333; font-size:11px; font-weight:bold; background:#ffebee; border: 1px dashed #e60012; padding:4px 8px; border-radius:12px;">
+                        <div id="ridi-expire-badge" onclick="updateCoin('ridi')"
+                            style="display:none; color:#333; font-size:11px; font-weight:bold; background:#ffebee; border: 1px dashed rgba(230, 0, 19, 0.767); padding:4px 8px; border-radius:12px; cursor: pointer;">
                         </div>
                     </div>
 
@@ -217,8 +217,8 @@
                         style="position: absolute; top: -33px; width: 100%; display: flex; gap: 6px; justify-content: center; align-items: flex-end;">
                         <div id="mrblue-sale-badge" class="sale-badge" style="display:none; padding:2px 8px;">메가 블루데이!
                         </div>
-                        <div id="mrblue-expire-badge"
-                            style="display:none; color:#333; font-size:11px; font-weight:bold; background:#ffebee; border: 1px dashed #e60012; padding:4px 8px; border-radius:12px;">
+                        <div id="mrblue-expire-badge" onclick="updateCoin('mrblue')"
+                            style="display:none; color:#333; font-size:11px; font-weight:bold; background:#ffebee; border: 1px dashed rgba(230, 0, 19, 0.767); padding:4px 8px; border-radius:12px; cursor: pointer;">
                         </div>
                     </div>
 
@@ -444,7 +444,7 @@
             <!-- 1️⃣ 단일 추가 전용 윗부분 (제목, 링크, 시간) -->
             <div id="single-add-section-1">
                 <input type="text" id="input-title" placeholder="작품 제목">
-                <input type="text" id="input-url" placeholder="작품 바로가기 링크 (선택)" style="margin-top: 2px;">
+                <input type="url" id="input-url" placeholder="작품 바로가기 링크 (선택)" style="margin-top: 2px;">
                 <input type="text" id="input-time" placeholder="업로드 시간 (예: 오전 7시 업로드 / 웹소설의 경우에만)" style="flex: 1;">
             </div>
 
@@ -511,8 +511,7 @@
                     <span style="font-weight: normal; color: #333;">구매한 화수만큼 지갑에서 차감하기</span>
                 </label>
 
-                <p id="image-status-text" style="text-align: center; font-size: 12px; margin-bottom: 5px;">📷 사진은 선택
-                    사항입니다.</p>
+                <p id="image-status-text" style="text-align: center; font-size: 12px; margin-bottom: 5px;"></p>
 
                 <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                     <button onclick="document.getElementById('image-input').click()" class="img-pick-btn"
@@ -551,7 +550,7 @@
                 style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
             <h3 class="search-modal-title">작품 검색</h3>
 
-            <input type="text" id="search-input" placeholder="웹툰 제목을 입력하세요" onkeyup="performSearch()"
+            <input type="search" id="search-input" placeholder="웹툰 제목을 입력하세요" onkeyup="performSearch()"
                 style="width: 100%; box-sizing: border-box; margin-bottom: 15px; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
 
             <div id="search-result-list" style="max-height: 300px; overflow-y: auto; padding-right: 5px;">
@@ -632,14 +631,14 @@
                 링크를 바꾸시려는<br>유저분들만 입력해 주세요!</p>
 
             <div style="margin-bottom: 15px;">
-                <label style="font-size: 13px; font-weight: bold; color: #333;">봄툰 출석 링크</label>
-                <input type="text" id="bomtoonCustomLink" placeholder="예: https://www.bomtoon.com/play"
+                <label style="font-size: 13px; font-weight: normal; color: #333;">봄툰 출석 링크</label>
+                <input type="url" id="bomtoonCustomLink" placeholder="예: https://www.bomtoon.com/play"
                     style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px;">
             </div>
 
             <div style="margin-bottom: 15px;">
-                <label style="font-size: 13px; font-weight: bold; color: #333;">레진 출석 링크</label>
-                <input type="text" id="lezhinCustomLink" placeholder="예: https://www.lezhin.com/ko/arcade/attendance"
+                <label style="font-size: 13px; font-weight: normal; color: #333;">레진 출석 링크</label>
+                <input type="url" id="lezhinCustomLink" placeholder="예: https://www.lezhin.com/ko/arcade/attendance"
                     style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px;">
             </div>
 
@@ -1341,6 +1340,9 @@
 
             document.getElementById('calc-result-box').style.display = 'none';
             document.getElementById('calc-modal').style.display = 'flex';
+
+            // 🌟 [추가] 창 열리면 '작품 총 화수' 칸에 바로 숫자 입력할 수 있게!
+            setTimeout(() => document.getElementById('calc-total').focus(), 100);
         }
 
         function closeCalcModal() {
@@ -2792,7 +2794,7 @@
 
             tempImg = work.img || "";
             document.getElementById('image-input').value = "";
-            document.getElementById('image-status-text').textContent = tempImg ? "기존 사진 유지" : "📷 사진은 선택 사항입니다.";
+            document.getElementById('image-status-text').textContent = tempImg ? "기존 사진 유지" : "";
             document.getElementById('image-status-text').style.color = tempImg ? "#2ecc71" : "#888";
             document.getElementById('remove-img-btn').style.display = tempImg ? 'block' : 'none';
 
@@ -2830,7 +2832,7 @@
             // 사진(이미지) 완벽하게 초기화
             tempImg = "";
             document.getElementById('image-input').value = "";
-            document.getElementById('image-status-text').textContent = "📷 사진은 선택 사항입니다.";
+            document.getElementById('image-status-text').textContent = "";
             document.getElementById('image-status-text').style.color = "#888";
             document.getElementById('remove-img-btn').style.display = 'none';
 
@@ -2984,7 +2986,7 @@
 
             document.getElementById('input-status').value = (viewDay === '휴재' || viewDay === '완결') ? viewDay : '연재중';
             document.getElementById('image-input').value = "";
-            document.getElementById('image-status-text').textContent = "📷 사진은 선택 사항입니다.";
+            document.getElementById('image-status-text').textContent = "";
             document.getElementById('image-status-text').style.color = "#888";
             document.getElementById('remove-img-btn').style.display = 'none';
 
@@ -2993,6 +2995,9 @@
 
             // 🚨 [핵심] 옛날 함수 말고, 아까 만든 만능 함수 호출!
             if (typeof toggleCycleInputs === "function") toggleCycleInputs();
+
+            // 🌟 [추가] 창 열리면 제목 칸에 바로 커서 깜빡이게 하기!
+            setTimeout(() => document.getElementById('input-title').focus(), 100);
         }
 
 
@@ -3230,12 +3235,13 @@
 
                         tempImg = canvas.toDataURL('image/jpeg', 0.7);
 
-                        document.getElementById('image-status-text').textContent = "사진 선택 완료! ✅";
-                        document.getElementById('image-status-text').style.color = "#2ecc71";
+                        document.getElementById('image-status-text').textContent = "사진 선택 완료!";
+                        document.getElementById('image-status-text').style.color = "";
+                        statusText.className = "img-status-success";
                         document.getElementById('remove-img-btn').style.display = 'block';
                     } catch (err) {
                         alert("사진 용량이 너무 크거나 처리할 수 없는 형식입니다.");
-                        document.getElementById('image-status-text').textContent = "📷 사진 처리에 실패했습니다.";
+                        document.getElementById('image-status-text').textContent = "사진 처리에 실패했습니다.";
                         document.getElementById('image-status-text').style.color = "#e60012";
                     }
                     // 입력창 초기화 (같은 사진 다시 고를 수 있게!)
@@ -3332,11 +3338,6 @@
             if (currentCoinPlt === 'lezhin') {
                 localStorage.removeItem('lezhinBonusExpire');
             }
-
-            closeCoinModal(); // 창 닫기
-            if (typeof saveData === "function") saveData(); // 전체 데이터 저장 함수 실행
-            if (typeof refreshBalance === "function") refreshBalance(); // 화면 잔액 및 뱃지 즉시 갱신
-
 
             closeCoinModal(); // 창 닫기
             if (typeof saveData === "function") saveData(); // 전체 데이터 저장 함수 실행
@@ -3578,13 +3579,30 @@
         function saveCustomLinks() {
             const bLink = document.getElementById('bomtoonCustomLink').value.trim();
             const lLink = document.getElementById('lezhinCustomLink').value.trim();
+            // 기존에 저장되어 있던 링크 꺼내오기
+            const oldB = localStorage.getItem('bomtoonLink') || '';
+            const oldL = localStorage.getItem('lezhinLink') || '';
 
+            // 🌟 [핵심 1] 유저가 아무것도 안 바꾸고 그냥 '저장'을 눌렀다면?
+            if (bLink === oldB && lLink === oldL) {
+                closeLinkSettingModal(); // 잔소리 없이 창만 조용히 닫아줍니다!
+                return;
+            }
+
+            // 진짜 변경된 값이 있다면 금고에 저장
             localStorage.setItem('bomtoonLink', bLink);
             localStorage.setItem('lezhinLink', lLink);
-
             saveData();
 
-            alert('출석 링크가 성공적으로 저장되었습니다!');
+            // 🌟 [핵심 2] 상황에 맞는 맞춤형 팝업 멘트 띄우기!
+            if (!bLink && !lLink) {
+                // 둘 다 빈칸으로 지워버린 경우
+                alert('기본 출석 링크로 초기화되었습니다!');
+            } else {
+                // 하나라도 새로운 링크를 적어 넣은 경우
+                alert('출석 링크가 성공적으로 저장되었습니다!');
+            }
+
             closeLinkSettingModal();
         }
 
