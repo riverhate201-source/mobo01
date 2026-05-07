@@ -3068,12 +3068,12 @@
                 autoUpdatePastBiweeklyDates();
                 renderAll();
 
-                // 🌟 [핵심] 일괄 추가 후, 혹시 오늘 정산이 끝났었더라도 다시 정산 창이 뜨도록 시간 되돌리기!
-                const nowStr = formatDate(getWebtoonDate());
-                if (localStorage.getItem('lastCheckDate') > nowStr) {
-                    localStorage.setItem('lastCheckDate', nowStr);
+                // 🌟 [핵심] 단일 추가나 복제를 했을 때도 똑같이 시간을 되돌려줍니다!
+                const nowStrSingle = formatDate(getWebtoonDate());
+                if (localStorage.getItem('lastCheckDate') > nowStrSingle) {
+                    localStorage.setItem('lastCheckDate', nowStrSingle);
                 }
-                localStorage.removeItem('lastPartialDeductDate'); // 🌟 새 작품이 생겼으니 팝업 안 뜨고 편하게 바로 정산되게 흔적 삭제!
+                localStorage.removeItem('lastPartialDeductDate'); // 🌟 새 작품 생겼으니 흔적 깔끔하게 지우기
 
                 trackClick('batch_add_works_tags', { 'platform': currentPlatform, 'count': addedCount });
                 alert(`총 ${addedCount}개의 작품이 요일별로 완벽하게 추가되었습니다!`);
