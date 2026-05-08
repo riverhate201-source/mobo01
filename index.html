@@ -3244,7 +3244,7 @@
 
                         document.getElementById('image-status-text').textContent = "사진 선택 완료!";
                         document.getElementById('image-status-text').style.color = "";
-                        statusText.className = "img-status-success";
+                        document.getElementById('image-status-text').className = "img-status-success"; // 🌟 완벽 해결!
                         document.getElementById('remove-img-btn').style.display = 'block';
                     } catch (err) {
                         alert("사진 용량이 너무 크거나 처리할 수 없는 형식입니다.");
