@@ -1649,15 +1649,20 @@
 
                 while (formatDate(check) < nowStr) {
                     let d = days[check.getDay()]; if (!ds.includes(d)) ds.push(d);
+                    const checkStr = formatDate(check); // 🌟 [핵심] 영수증 날짜 생성!
 
                     // [핵심] 여기서도 켠 플랫폼만 밀린 정산 체크!
                     platformOrder.forEach(plt => {
-                        (state[plt][d] || []).forEach((w, i) => { if (!isWorkOnBreak(w)) pendingDeductions[plt].push({ day: d, idx: i, work: w }); });
-                        (state[plt]["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, check)) pendingDeductions[plt].push({ day: "10일 연재", idx: i, work: w }); });
+                        // 🚨🚨 요일 일반 연재: && w.lastDeductDate !== checkStr 추가!
+                        (state[plt][d] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && w.lastDeductDate !== checkStr) pendingDeductions[plt].push({ day: d, idx: i, work: w }); });
+
+                        // 🚨🚨 10일 연재: && w.lastDeductDate !== checkStr 추가!
+                        (state[plt]["10일 연재"] || []).forEach((w, i) => { if (!isWorkOnBreak(w) && isDateMatch(w.cycle, check) && w.lastDeductDate !== checkStr) pendingDeductions[plt].push({ day: "10일 연재", idx: i, work: w }); });
 
                         // 🌟 [최종 추가 2] 밀린 정산 할 때도 격주 연재 방 확인해!
                         (state[plt]["격주 연재"] || []).forEach((w, i) => {
-                            if (!isWorkOnBreak(w) && w.cycle && w.cycle.includes('격주 연재')) {
+                            // 🚨🚨 격주 연재: && w.lastDeductDate !== checkStr 추가!
+                            if (!isWorkOnBreak(w) && w.cycle && w.cycle.includes('격주 연재') && w.lastDeductDate !== checkStr) {
                                 let match = w.cycle.match(/\((.*?)\)/);
                                 if (match) {
                                     // 🌟 연도 보정 포함된 날짜 생성
@@ -1671,7 +1676,6 @@
                             }
                         });
                     });
-
 
                     check.setDate(check.getDate() + 1);
                 }
