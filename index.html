@@ -4381,6 +4381,49 @@
             });
         }
 
+        // ==========================================
+        // 🚀 안드로이드/스와이프 뒤로가기 완벽 방어 시스템
+        // ==========================================
+        window.addEventListener('load', () => {
+            // 1. 앱이 켜질 때 '가짜 페이지'를 하나 밀어넣어서 뒤로가기 함정을 파둡니다.
+            history.pushState(null, null, location.href);
+        });
+
+        window.addEventListener('popstate', (e) => {
+            // 2. 유저가 '뒤로가기'를 누르면, 현재 열려있는 모든 모달창과 메뉴를 스캔합니다.
+            const modals = document.querySelectorAll('.modal-overlay, #side-nav, .filter-modal-overlay');
+            let isAnyModalOpen = false;
+
+            modals.forEach(m => {
+                if (m.style.display === 'flex' || m.style.display === 'block') {
+                    m.style.display = 'none'; // 열려있는 창을 조용히 닫아줍니다.
+                    isAnyModalOpen = true;
+                }
+            });
+
+            if (isAnyModalOpen) {
+                // 3. 창이 열려있었다면? 앱이 안 꺼지게 가짜 페이지를 다시 꽉 채워넣습니다! (함정 리필)
+                history.pushState(null, null, location.href);
+
+                // 덤으로 햄버거 버튼과 서랍장 탭 색상 원래대로 살려주기
+                const topBar = document.querySelector('.top-util-bar');
+                if (topBar) topBar.style.opacity = '1';
+
+                if (typeof isTodayDeduction !== 'undefined') isTodayDeduction = false;
+
+                document.querySelectorAll('.day-btn').forEach(btn => {
+                    if (typeof viewDay !== 'undefined' && btn.dataset.day === viewDay) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            } else {
+                // 4. 열려있는 창이 아무것도 없다면? 그때는 진짜로 앱을 끕니다.
+                history.back();
+            }
+        });
+
     </script>
 
 </body>
