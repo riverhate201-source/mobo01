@@ -2968,6 +2968,15 @@ body.dark-mode .day-badge.badge-finished {
     /* 다크모드용 밝은 회색 글씨 */
 }
 
+/* 🚨 새로고침 시 지갑 할인 뱃지 & 이벤트 알림바 깜빡임 원천 차단 (기본값 숨김) */
+#lezhin-sale-badge,
+#bomtoon-sale-badge,
+#ridi-sale-badge,
+#mrblue-sale-badge,
+#global-event-alert {
+    display: none;
+}
+
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
 a[x-apple-data-detectors] {
     color: inherit !important;

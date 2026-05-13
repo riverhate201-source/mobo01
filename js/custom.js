@@ -1397,6 +1397,7 @@ function saveData() {
 function toggleDarkMode() { const isDark = document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); updateDarkModeBtn(); saveData(); }
 
 function updateDarkModeBtn() { const isDark = document.body.classList.contains('dark-mode'); const btn = document.getElementById('menu-dark-mode-btn'); if (btn) btn.textContent = isDark ? "라이트 모드" : "다크 모드"; }
+
 function changeDay(day) {
     // 🌟 [전체] 버튼을 눌렀을 때는 메인 화면은 놔두고 모달창만 띄우기!
     if (day === '전체') {
@@ -1415,6 +1416,8 @@ function changeDay(day) {
     // 🌟 월~일 버튼을 눌렀을 때는 기존처럼 메인 화면 리스트 바꾸기!
     viewDay = day;
     renderAll();
+    checkScrollArrows();
+    setTimeout(checkScrollArrows, 20);
 }
 
 function updatePlatformOrder() {
@@ -2645,7 +2648,62 @@ function addWeeklySpent(coinAmount, wonAmount = 0) {
     updateWeeklyStatUI();
 }
 
-function initScroll() { document.querySelectorAll('.scroll-wrapper').forEach(wrapper => { const list = wrapper.querySelector('.webtoon-list'); wrapper.querySelector('.left-btn').onclick = () => list.scrollBy({ left: -160, behavior: 'smooth' }); wrapper.querySelector('.right-btn').onclick = () => list.scrollBy({ left: 160, behavior: 'smooth' }); }); }
+/* =========================================
+   🚨 가로 스크롤 화살표 (메모리 누수 해결 완벽판!)
+========================================= */
+
+// 1. 앱 켜질 때 딱 한 번만! 센서와 버튼을 달아주는 함수
+function initScroll() {
+    document.querySelectorAll('.scroll-wrapper').forEach(wrapper => {
+        const list = wrapper.querySelector('.webtoon-list');
+        const leftBtn = wrapper.querySelector('.left-btn');
+        const rightBtn = wrapper.querySelector('.right-btn');
+
+        if (!list || !leftBtn || !rightBtn) return; // 에러 방어막
+
+        // 오리지널 디테일 완벽 복구! (160px 이동)
+        leftBtn.onclick = () => list.scrollBy({ left: -160, behavior: 'smooth' });
+        rightBtn.onclick = () => list.scrollBy({ left: 160, behavior: 'smooth' });
+
+        // 유저가 스와이프할 때마다 감시 (앱 켜질 때 1번만 부착되므로 중복 에러 안 남!)
+        list.addEventListener('scroll', () => {
+            if (list.scrollWidth <= list.clientWidth) {
+                leftBtn.style.display = 'none';
+                rightBtn.style.display = 'none';
+                return;
+            }
+            leftBtn.style.display = list.scrollLeft <= 0 ? 'none' : 'flex';
+            rightBtn.style.display = Math.ceil(list.scrollLeft) >= list.scrollWidth - list.clientWidth - 1 ? 'none' : 'flex';
+        });
+    });
+}
+
+// 2. 요일이 바뀌거나 창 크기가 변할 때, 수동으로 길이를 한 번 재는 스캐너
+function checkScrollArrows() {
+    document.querySelectorAll('.scroll-wrapper').forEach(wrapper => {
+        const list = wrapper.querySelector('.webtoon-list');
+        const leftBtn = wrapper.querySelector('.left-btn');
+        const rightBtn = wrapper.querySelector('.right-btn');
+
+        if (!list || !leftBtn || !rightBtn) return;
+
+        if (list.scrollWidth <= list.clientWidth) {
+            leftBtn.style.display = 'none';
+            rightBtn.style.display = 'none';
+        } else {
+            leftBtn.style.display = list.scrollLeft <= 0 ? 'none' : 'flex';
+            rightBtn.style.display = Math.ceil(list.scrollLeft) >= list.scrollWidth - list.clientWidth - 1 ? 'none' : 'flex';
+        }
+    });
+}
+
+// 창 크기 변동 시 & 처음 로딩 시 재계산
+window.addEventListener('resize', checkScrollArrows);
+window.addEventListener('load', () => {
+    setTimeout(checkScrollArrows, 100);
+});
+
+
 function closeAttendWarning() { document.getElementById('attend-warning-modal').style.display = 'none'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
 // ==========================================
@@ -3661,10 +3719,9 @@ window.addEventListener('scroll', function () {
 }, { passive: true });
 
 /* =========================================
-   🚨 가로 스크롤 화살표 자동 숨김/표시 마법
+   🚨 가로 스크롤 화살표 스마트 자동 제어 (완전판!)
 ========================================= */
 function checkScrollArrows() {
-    // 앱 안에 있는 모든 스크롤 영역(scroll-wrapper)을 다 찾아서 검사합니다.
     const wrappers = document.querySelectorAll('.scroll-wrapper');
 
     wrappers.forEach(wrapper => {
@@ -3672,21 +3729,75 @@ function checkScrollArrows() {
         const leftBtn = wrapper.querySelector('.left-btn');
         const rightBtn = wrapper.querySelector('.right-btn');
 
-        if (!list || !leftBtn || !rightBtn) return; // 혹시라도 요소가 없으면 패스!
+        if (!list || !leftBtn || !rightBtn) return;
 
-        // 💡 핵심 로직: 안에 들어있는 진짜 작품 길이(scrollWidth)가 
-        // 겉에 보이는 껍데기 박스 길이(clientWidth)보다 큰가요?
-        if (list.scrollWidth > list.clientWidth) {
-            // 작품이 꽉 차서 스크롤이 필요하다면 화살표 켜기!
-            leftBtn.style.display = 'flex';
-            rightBtn.style.display = 'flex';
-        } else {
-            // 작품이 몇 개 없어서 스크롤이 필요 없다면 화살표 숨기기!
-            leftBtn.style.display = 'none';
-            rightBtn.style.display = 'none';
-        }
+        // 💡 1. 화살표를 껐다 켰다 하는 진짜 똑똑한 스캐너 함수
+        const updateArrows = () => {
+            // 작품 개수가 적어서 스크롤이 아예 필요 없을 때 (전부 숨김)
+            if (list.scrollWidth <= list.clientWidth) {
+                leftBtn.style.display = 'none';
+                rightBtn.style.display = 'none';
+                return;
+            }
+
+            // 스크롤이 맨 왼쪽(처음)에 있을 때 -> 왼쪽 화살표 숨기기
+            if (list.scrollLeft <= 0) {
+                leftBtn.style.display = 'none';
+            } else {
+                leftBtn.style.display = 'flex';
+            }
+
+            // 스크롤이 맨 오른쪽(끝)에 닿았을 때 -> 오른쪽 화살표 숨기기
+            // (모바일 기기의 소수점 오차를 대비해 1px 정도 여유를 둡니다)
+            if (Math.ceil(list.scrollLeft) >= list.scrollWidth - list.clientWidth - 1) {
+                rightBtn.style.display = 'none';
+            } else {
+                rightBtn.style.display = 'flex';
+            }
+        };
+
+        // 처음 로딩될 때 스캐너 한 번 작동!
+        updateArrows();
+
+        // 💡 2. 유저가 스크롤(스와이프)을 할 때마다 실시간으로 감시해서 화살표 숨기기!
+        list.addEventListener('scroll', updateArrows);
+
+        // 💡 3. 허허벌판 방어막! (화살표 클릭 시 정확히 카드 한 장 크기만큼만 이동하게 통제)
+        // 만약 기존에 leftBtn.onclick 코드가 딴 곳에 있었다면 그걸 지우고 이걸 쓰시면 완벽합니다.
+        leftBtn.onclick = () => {
+            list.scrollBy({ left: -140, behavior: 'smooth' }); // 왼쪽으로 140px 이동
+        };
+        rightBtn.onclick = () => {
+            list.scrollBy({ left: 140, behavior: 'smooth' });  // 오른쪽으로 140px 이동
+        };
     });
 }
 
-// 📱 유저가 폰 화면을 가로/세로로 돌리거나 창 크기를 조절할 때도 알아서 다시 계산하게 세팅!
+// 창 크기 변동 시 재계산
 window.addEventListener('resize', checkScrollArrows);
+
+
+
+/* =========================================
+   🎉 폰트 업데이트 공지 팝업 (1회용 마법)
+========================================= */
+
+document.addEventListener('DOMContentLoaded', function () {
+    // 1. 브라우저 기억상자에 'font_update_seen'이라는 도장이 찍혀있는지 확인합니다.
+    const hasSeenNotice = localStorage.getItem('font_update_seen');
+    const updateModal = document.getElementById('update-notice-modal');
+
+    // 2. 도장이 없다면? (처음 들어온 유저라면) 팝업을 짠! 하고 보여줍니다.
+    if (!hasSeenNotice && updateModal) {
+        updateModal.style.display = 'flex';
+    }
+});
+
+// 3. '확인했어요!' 버튼을 누르면 실행되는 함수
+function closeUpdateNotice() {
+    // 팝업을 숨기고
+    document.getElementById('update-notice-modal').style.display = 'none';
+
+    // 브라우저 기억상자에 "이 사람 팝업 봤음!" 하고 도장을 꾹 찍어줍니다. (이제 다신 안 뜸!)
+    localStorage.setItem('font_update_seen', 'true');
+}
