@@ -275,6 +275,7 @@ window.onload = function () {
     checkStorage(); checkBackupStatus(); updatePlatformOrder();
     checkRemoteUpdate(); // 2. 업데이트 소식 체크
     autoUpdatePastBiweeklyDates(); // 🔥 앱 처음 켤 때도 날짜 갱신 검사!
+    initThemeSwitchSwipe();
 };
 
 // 🪄 태그(칩) 생성 함수
@@ -3724,7 +3725,50 @@ window.addEventListener('scroll', function () {
 
 
 
+// ==========================================
+// 🌙 다크모드 스위치 스와이프(밀기) 기능 추가!
+// ==========================================
+function initThemeSwitchSwipe() {
+    const themeSwitch = document.querySelector('.header-theme-switch');
+    if (!themeSwitch) return;
 
+    let startX = 0;
+    let isDragging = false;
+
+    // 1. 손가락이 스위치에 닿았을 때 (시작 X좌표 기억)
+    themeSwitch.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        isDragging = false;
+    });
+
+    // 2. 손가락을 움직일 때 (드래그 중이라고 표시)
+    themeSwitch.addEventListener('touchmove', (e) => {
+        isDragging = true;
+    });
+
+    // 3. 손가락을 뗐을 때 (왼쪽/오른쪽 판별해서 찰칵!)
+    themeSwitch.addEventListener('touchend', (e) => {
+        // 드래그를 안 하고 그냥 톡! 터치한 거면 원래 있던 onclick이 작동하도록 놔둡니다.
+        if (!isDragging) return;
+
+        const endX = e.changedTouches[0].clientX;
+        const diffX = endX - startX; // 얼마나 이동했는지 계산
+        const isDark = document.body.classList.contains('dark-mode');
+
+        // 15px 이상 유의미하게 옆으로 밀었을 때만 작동!
+        if (Math.abs(diffX) > 15) {
+            e.preventDefault(); // 🚨 중요: 스와이프로 켰으니 뒤따라오는 '클릭' 이벤트가 중복 실행되는 걸 막아줍니다!
+
+            if (diffX > 15 && !isDark) {
+                // 오른쪽으로 슥~ 밀었는데 라이트 모드면? -> 다크모드 켜기!
+                toggleDarkMode();
+            } else if (diffX < -15 && isDark) {
+                // 왼쪽으로 슥~ 밀었는데 다크 모드면? -> 다크모드 끄기!
+                toggleDarkMode();
+            }
+        }
+    });
+}
 
 /* =========================================
    🎉 폰트 업데이트 공지 팝업 (1회용 마법)
