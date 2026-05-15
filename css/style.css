@@ -3067,6 +3067,28 @@ body.dark-mode .header .hd_wrap .theme-switch-wrapper .header-theme-slider {
     background-color: #4a4a4c;
 }
 
+/* =========================================
+   📱 모바일 전용 좌표 (화면 폭 500px 이하)
+========================================= */
+@media screen and (max-width: 500px) {
+
+    /* 1. 스위치 박스 전체의 기준점을 오른쪽에서 왼쪽(로고 쪽)으로 변경 */
+    .header .hd_wrap .theme-switch-wrapper {
+        right: auto;
+        /* 우측 햄버거 버튼 기준점 해제 */
+        left: 105px;
+        /* 로고(MOBO) 바로 오른쪽 좌표! (폰에 맞춰 살짝 수정해보세요) */
+    }
+
+    /* 2. 모바일에서 화면 밖으로 날아가게 만드는 마이너스 좌표 초기화 */
+    .header .hd_wrap .theme-switch-wrapper .header-theme-switch {
+        left: 0;
+        /* -250px 마이너스 좌표 해제 */
+        top: 12px;
+        /* 로고와 수평이 맞도록 Y축 미세 조정 */
+    }
+}
+
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
 a[x-apple-data-detectors] {
     color: inherit !important;
