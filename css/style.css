@@ -2993,11 +2993,11 @@ body.dark-mode .day-badge.badge-finished {
 
 .header .hd_wrap .theme-switch-wrapper .header-theme-switch {
     position: relative;
-    top: 12px;
-    left: -250px;
+    top: 9px;
+    left: -11px;
     width: 60px;
     min-width: 60px;
-    height: 27px;
+    height: 30px;
     background-color: #f1f2f3;
     border-radius: 12px;
     cursor: pointer;
@@ -3053,7 +3053,7 @@ body.dark-mode .header .hd_wrap .theme-switch-wrapper .icon-sun {
     top: 4px;
     left: 4px;
     width: 26px;
-    height: 20px;
+    height: 22px;
     background-color: #fcfcfc;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
@@ -3076,7 +3076,7 @@ body.dark-mode .header .hd_wrap .theme-switch-wrapper .header-theme-slider {
     .header .hd_wrap .theme-switch-wrapper {
         right: auto;
         /* 우측 햄버거 버튼 기준점 해제 */
-        left: 105px;
+        left: 300px;
         /* 로고(MOBO) 바로 오른쪽 좌표! (폰에 맞춰 살짝 수정해보세요) */
     }
 
@@ -3084,7 +3084,7 @@ body.dark-mode .header .hd_wrap .theme-switch-wrapper .header-theme-slider {
     .header .hd_wrap .theme-switch-wrapper .header-theme-switch {
         left: 0;
         /* -250px 마이너스 좌표 해제 */
-        top: 12px;
+        top: 9px;
         /* 로고와 수평이 맞도록 Y축 미세 조정 */
     }
 }
