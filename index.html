@@ -16,7 +16,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
     <link rel="stylesheet" href="./css/reset.css">
-    <link rel="stylesheet" href="./css/style.css?v=6.2">
+    <link rel="stylesheet" href="./css/style.css?v=6.5">
 
 
 
@@ -34,7 +34,7 @@
     <script src="https://unpkg.com/lucide@latest" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 
-    <script src="./js/custom.js?v=2.3" defer></script>
+    <script src="./js/custom.js?v=2.8" defer></script>
 
 
 </head>
@@ -47,6 +47,14 @@
             <h1 class="main-page-title">
                 <a href="index.html">MOBO</a>
             </h1>
+
+            <div class="theme-switch-wrapper">
+                <div class="header-theme-switch" onclick="toggleDarkMode()">
+                    <i data-lucide="sun" class="icon-sun"></i>
+                    <i data-lucide="moon" class="icon-moon"></i>
+                    <div class="header-theme-slider"></div>
+                </div>
+            </div>
 
             <div class="top-util-bar">
                 <button onclick="openNav()" class="menu-btn">
@@ -66,8 +74,6 @@
                 <div class="nav-section">
                     <h4>보기 설정</h4>
                     <button onclick="openPlatformSettingModal()" class="menu-item">플랫폼 순서 변경</button>
-                    <button onclick="handleMenuAction('darkMode')" id="menu-dark-mode-btn" class="menu-item">다크
-                        모드</button>
                     <button onclick="openLinkSettingModal()" class="menu-item">출석 링크 직접 설정</button>
                 </div>
 

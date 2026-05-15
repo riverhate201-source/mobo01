@@ -68,7 +68,7 @@ function applyTheme() {
             document.body.classList.remove('dark-mode');
         }
     }
-    updateDarkModeBtn();
+
 }
 
 // 2. 폰 화면 켜둔 채로 제어센터에서 다크 모드 껐다 켰을 때, 새로고침 없이 즉시 반응하게 만들기!
@@ -81,7 +81,7 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
         } else {
             document.body.classList.remove('dark-mode');
         }
-        updateDarkModeBtn();
+
     }
 });
 
@@ -1121,6 +1121,11 @@ function processDeduction() {
             deductFromWallet('ridi', tR, 'r');
             deductFromWallet('mrblue', tM, 'm');
 
+
+            if (tL > 0) {
+                localStorage.removeItem('lezhinBonusExpire');
+            }
+
             const addedWon = tR + tM;
             addWeeklySpent(tL + tB, addedWon);
             localStorage.setItem('monthlyHistory', JSON.stringify(monthlyHistory));
@@ -1394,9 +1399,8 @@ function saveData() {
     }
 }
 
-function toggleDarkMode() { const isDark = document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); updateDarkModeBtn(); saveData(); }
+function toggleDarkMode() { const isDark = document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); saveData(); }
 
-function updateDarkModeBtn() { const isDark = document.body.classList.contains('dark-mode'); const btn = document.getElementById('menu-dark-mode-btn'); if (btn) btn.textContent = isDark ? "라이트 모드" : "다크 모드"; }
 
 function changeDay(day) {
     // 🌟 [전체] 버튼을 눌렀을 때는 메인 화면은 놔두고 모달창만 띄우기!
@@ -3718,63 +3722,7 @@ window.addEventListener('scroll', function () {
     }
 }, { passive: true });
 
-/* =========================================
-   🚨 가로 스크롤 화살표 스마트 자동 제어 (완전판!)
-========================================= */
-function checkScrollArrows() {
-    const wrappers = document.querySelectorAll('.scroll-wrapper');
 
-    wrappers.forEach(wrapper => {
-        const list = wrapper.querySelector('.webtoon-list');
-        const leftBtn = wrapper.querySelector('.left-btn');
-        const rightBtn = wrapper.querySelector('.right-btn');
-
-        if (!list || !leftBtn || !rightBtn) return;
-
-        // 💡 1. 화살표를 껐다 켰다 하는 진짜 똑똑한 스캐너 함수
-        const updateArrows = () => {
-            // 작품 개수가 적어서 스크롤이 아예 필요 없을 때 (전부 숨김)
-            if (list.scrollWidth <= list.clientWidth) {
-                leftBtn.style.display = 'none';
-                rightBtn.style.display = 'none';
-                return;
-            }
-
-            // 스크롤이 맨 왼쪽(처음)에 있을 때 -> 왼쪽 화살표 숨기기
-            if (list.scrollLeft <= 0) {
-                leftBtn.style.display = 'none';
-            } else {
-                leftBtn.style.display = 'flex';
-            }
-
-            // 스크롤이 맨 오른쪽(끝)에 닿았을 때 -> 오른쪽 화살표 숨기기
-            // (모바일 기기의 소수점 오차를 대비해 1px 정도 여유를 둡니다)
-            if (Math.ceil(list.scrollLeft) >= list.scrollWidth - list.clientWidth - 1) {
-                rightBtn.style.display = 'none';
-            } else {
-                rightBtn.style.display = 'flex';
-            }
-        };
-
-        // 처음 로딩될 때 스캐너 한 번 작동!
-        updateArrows();
-
-        // 💡 2. 유저가 스크롤(스와이프)을 할 때마다 실시간으로 감시해서 화살표 숨기기!
-        list.addEventListener('scroll', updateArrows);
-
-        // 💡 3. 허허벌판 방어막! (화살표 클릭 시 정확히 카드 한 장 크기만큼만 이동하게 통제)
-        // 만약 기존에 leftBtn.onclick 코드가 딴 곳에 있었다면 그걸 지우고 이걸 쓰시면 완벽합니다.
-        leftBtn.onclick = () => {
-            list.scrollBy({ left: -140, behavior: 'smooth' }); // 왼쪽으로 140px 이동
-        };
-        rightBtn.onclick = () => {
-            list.scrollBy({ left: 140, behavior: 'smooth' });  // 오른쪽으로 140px 이동
-        };
-    });
-}
-
-// 창 크기 변동 시 재계산
-window.addEventListener('resize', checkScrollArrows);
 
 
 
