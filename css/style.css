@@ -2993,10 +2993,12 @@ body.dark-mode .day-badge.badge-finished {
 
 .header .hd_wrap .theme-switch-wrapper .header-theme-switch {
     position: relative;
+    top: 12px;
+    left: -250px;
     width: 60px;
     min-width: 60px;
-    height: 39px;
-    background-color: #e8eaed;
+    height: 27px;
+    background-color: #f1f2f3;
     border-radius: 12px;
     cursor: pointer;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -3013,8 +3015,8 @@ body.dark-mode .header .hd_wrap .theme-switch-wrapper .header-theme-switch {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     z-index: 2;
     transition: opacity 0.3s ease, color 0.3s ease;
     pointer-events: none;
@@ -3051,8 +3053,8 @@ body.dark-mode .header .hd_wrap .theme-switch-wrapper .icon-sun {
     top: 4px;
     left: 4px;
     width: 26px;
-    height: 31px;
-    background-color: #ffffff;
+    height: 20px;
+    background-color: #fcfcfc;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s ease;
