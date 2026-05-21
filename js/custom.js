@@ -1391,6 +1391,9 @@ function saveData() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
         renderAll();
         checkStorage();
+        if (typeof window.uploadToCloud === "function") {
+            window.uploadToCloud();
+        }
     } catch (error) {
         if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
             alert("모보의 저장 공간(5MB)이 꽉 찼습니다!\n새로운 내용을 저장하려면 기존 작품의 '사진'을 몇 개 삭제해 주세요.");
