@@ -37,7 +37,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        // 🚨 상태 감지(onAuthStateChanged)와 로그아웃(signOut) 도구 추가!
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         const firebaseConfig = {
@@ -55,55 +54,53 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // 🌟 1. 로그인 상태 자동 감지기 (핵심!)
+        // 🌟 [핵심 해결책] 구글아, 로그인할 때마다 무조건 "어떤 계정으로 로그인할래?" 하고 물어봐!
+        provider.setCustomParameters({
+            prompt: 'select_account'
+        });
+
+        // 1. 로그인 상태 자동 감지기
         onAuthStateChanged(auth, (user) => {
             const loginBtn = document.getElementById("google-login-btn");
-            if (!loginBtn) return; // 버튼이 없으면 에러 방지
+            if (!loginBtn) return;
 
             if (user) {
-                // 이미 로그인된 상태라면? -> 버튼 텍스트를 '로그아웃'으로 바꿈!
                 loginBtn.innerText = "로그아웃 하기";
                 loginBtn.onclick = window.googleLogout;
             } else {
-                // 로그아웃 상태라면? -> 다시 '구글 로그인'으로 바꿈!
-                loginBtn.innerText = "구글 로그인";
+                loginBtn.innerText = "구글 로그인 하기";
                 loginBtn.onclick = window.googleLogin;
             }
         });
 
-        // 🌟 2. 로그인 함수
+        // 2. 로그인 함수
         window.googleLogin = function () {
             signInWithPopup(auth, provider)
                 .then((result) => {
                     alert(result.user.displayName + "님 환영합니다!");
                 }).catch((error) => {
-                    // 갤럭시에서 창 닫았을 때 무식하게 에러 띄우는 것 방지!
                     if (error.code === 'auth/popup-closed-by-user') {
                         console.log("사용자가 로그인 창을 닫았습니다. (정상)");
                     } else {
-                        alert("로그인 중 문제가 발생했습니다.");
+                        console.log("로그인 에러:", error);
                     }
                 });
         };
 
-        // 🌟 3. 로그아웃 함수 (확인 창 + 아이폰 맞춤형 새로고침 포함!)
+        // 3. 로그아웃 함수 (아이폰/아이패드 무한 로딩 완벽 방지 버전!)
         window.googleLogout = function () {
-            // 물어보고 "확인"을 눌렀을 때만(true) 로그아웃 실행!
             if (confirm("정말 로그아웃 하시겠습니까?")) {
                 signOut(auth).then(() => {
-                    alert("로그아웃 되었습니다.");
-                    // 아이폰 팝업 좀비 버그를 막기 위해 로그아웃 직후 화면을 강제로 새로고침!
-                    window.location.reload();
+                    console.log("로그아웃 성공!");
+                    // 찌꺼기를 완벽히 지우기 위해 0.5초 뒤 화면 새로고침
+                    setTimeout(() => {
+                        window.location.href = window.location.href;
+                    }, 500);
                 }).catch((error) => {
-                    alert("로그아웃 실패하였습니다.");
+                    alert("로그아웃 실패");
                 });
-            } else {
-                // "취소"를 누르면 아무 일도 일어나지 않고 조용히 취소됩니다.
-                console.log("로그아웃이 취소되었습니다.");
             }
         };
-
-        console.log("🔥 파이어베이스 로그인/로그아웃 시스템 완벽 탑재!!!");
     </script>
 
     <script src="./js/custom.js?v=2.9" defer></script>
