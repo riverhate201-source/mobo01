@@ -2241,7 +2241,7 @@ function openAddModal(platform) {
 
 function closeAddModal() { document.getElementById('custom-modal').style.display = 'none'; }
 
-function saveWorkFinal() {
+async function saveWorkFinal() {
     const batchSection = document.getElementById('batch-add-section');
     const isBatchMode = batchSection && batchSection.style.display !== 'none';
 
@@ -2405,7 +2405,38 @@ function saveWorkFinal() {
         }
     }
 
-    const workData = { id: workId, title, url, cycle: cycleStr, coin, progress, status: targetStatus, img: tempImg, time, lastDeductDate: finalDeductDate };
+    // 🚨 여기서부터 ImgBB 업로드 로직 추가! 🚨
+    let finalImgUrl = tempImg;
+
+    if (tempImg && tempImg.startsWith('data:image')) {
+        try {
+            const statusText = document.getElementById('image-status-text');
+            if (statusText) {
+                statusText.textContent = "사진을 창고에 올리는 중...";
+                statusText.style.color = "#1967d2";
+            }
+            finalImgUrl = await uploadImageToImgBB(tempImg);
+        } catch (e) {
+            console.error("사진 업로드 에러:", e);
+            alert("사진 업로드에 실패했습니다. 다시 시도해주세요.");
+            return;
+        }
+    }
+
+    // 🌟 텍스트 주소로 바뀐 새로운 workData!
+    const workData = {
+        id: workId,
+        title: title,
+        url: url,
+        cycle: cycleStr,
+        coin: coin,
+        progress: progress,
+        status: targetStatus,
+        img: finalImgUrl,
+        time: time,
+        lastDeductDate: finalDeductDate
+    };
+    // 🚨 여기까지 추가 완료 🚨
 
     if (editMode) {
         Object.keys(state[currentPlatform]).forEach(day => {
@@ -3796,3 +3827,79 @@ function closeUpdateNotice() {
     // 브라우저 기억상자에 "이 사람 팝업 봤음!" 하고 도장을 꾹 찍어줍니다. (이제 다신 안 뜸!)
     localStorage.setItem('font_update_seen', 'true');
 }
+
+// ☁️ 고화질 사진을 ImgBB 창고에 올리고 '주소(URL)'를 받아오는 함수
+async function uploadImageToImgBB(base64Data) {
+    // 1. 여기서 'YOUR_API_KEY' 부분을 아까 복사한 진짜 키로 바꿔주세요!
+    const apiKey = '2b1edf6e0a94cf20f255114dcdebd782';
+
+    // Base64 코드에서 앞부분(data:image/jpeg;base64,)을 떼어내고 순수 데이터만 추출
+    const base64String = base64Data.split(',')[1];
+
+    const formData = new FormData();
+    formData.append('image', base64String);
+
+    // ImgBB 서버로 사진 전송!
+    const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+        method: 'POST',
+        body: formData
+    });
+
+    const data = await response.json();
+    if (data.success) {
+        return data.data.url; // 성공하면 고화질 이미지의 '웹 주소'를 반환!
+    } else {
+        throw new Error('사진 창고 업로드 실패');
+    }
+}
+
+/* =========================================
+   🤫 (쉿) 유저 몰래 기존 뚱뚱한 사진들을 ImgBB 창고로 이사 보내는 함수
+========================================= */
+async function silentAutoMigrateToImgBB() {
+    let localData = JSON.parse(localStorage.getItem("WEBTOON_APP_STABLE_V1"));
+    if (!localData || !localData.state) return;
+
+    let isModified = false;
+    const platforms = ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
+
+    // 유저의 장부를 싹 뒤져서 뚱뚱한 원본 사진(data:image)을 찾습니다!
+    for (let plt of platforms) {
+        if (localData.state[plt]) {
+            for (let day of Object.keys(localData.state[plt])) {
+                for (let work of localData.state[plt][day]) {
+                    if (work.img && work.img.startsWith('data:image')) {
+                        try {
+                            // ImgBB 서버로 사진을 보내고 가벼운 주소(URL)를 받아옵니다
+                            let newUrl = await uploadImageToImgBB(work.img);
+                            work.img = newUrl; // 주소로 바꿔치기!
+                            isModified = true;
+                        } catch (e) {
+                            console.error(`[${work.title}] 창고 이사 실패:`, e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 이사한 사진이 1개라도 있다면?
+    if (isModified) {
+        // 1. 가벼워진 데이터를 유저 기기(로컬 스토리지)에 덮어씁니다.
+        localStorage.setItem("WEBTOON_APP_STABLE_V1", JSON.stringify(localData));
+        console.log("🤫 기존 유저들의 대용량 이미지 ImgBB 이사 완료!");
+
+        // 2. 가벼워졌으니 파이어베이스 클라우드로 알아서 동기화(백업) 시켜줍니다!
+        if (typeof window.uploadToCloud === "function") {
+            window.uploadToCloud();
+        }
+
+        // 3. 바뀐 사진들이 화면에 잘 보이게 살짝 새로고침!
+        if (typeof renderAll === "function") renderAll();
+    }
+}
+
+// 앱이 켜지고 화면이 다 그려진 후, 2초(2000ms) 뒤에 버벅임 없이 유저 몰래 실행!
+window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(silentAutoMigrateToImgBB, 2000);
+});
