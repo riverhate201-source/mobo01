@@ -75,13 +75,16 @@
 
         // 2. 로그인 함수
         window.googleLogin = function () {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-            const isStandalone = window.navigator.standalone;
+            // 🌟 아이패드의 거짓말을 꿰뚫어 보는 팩트 폭력 판독기!
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+            // 홈 화면 앱(PWA)인지 확인하는 더 강력한 조건
+            const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
 
             if (isIOS && isStandalone) {
                 if (!localStorage.getItem("hasSeenIosAlert")) {
-                    alert("IOS 기기 안내: 로그인 완료 후 화면이 멈춘 것처럼 하얗게 변하면 당황하지 마시고, 화면 상단의 [완료] 또는 [X] 버튼을 눌러서 창을 닫아주세요!");
-                    // 알림창을 띄운 후, 금고에 영수증을 딱! 넣어둡니다. (다음엔 안 뜨게)
+                    alert("ios 기기 안내: 로그인 완료 후 화면이 멈춘 것처럼 하얗게 변하면 당황하지 마시고, 화면 상단의 [완료] 또는 [X] 버튼을 눌러서 창을 닫아주세요!");
                     localStorage.setItem("hasSeenIosAlert", "true");
                 }
             }
