@@ -54,7 +54,7 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // 🌟 [핵심 해결책] 구글아, 로그인할 때마다 무조건 "어떤 계정으로 로그인할래?" 하고 물어봐!
+
         provider.setCustomParameters({
             prompt: 'select_account'
         });
@@ -75,6 +75,17 @@
 
         // 2. 로그인 함수
         window.googleLogin = function () {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isStandalone = window.navigator.standalone;
+
+            if (isIOS && isStandalone) {
+                if (!localStorage.getItem("hasSeenIosAlert")) {
+                    alert("IOS 기기 안내: 로그인 완료 후 화면이 멈춘 것처럼 하얗게 변하면 당황하지 마시고, 화면 상단의 [완료] 또는 [X] 버튼을 눌러서 창을 닫아주세요!");
+                    // 알림창을 띄운 후, 금고에 영수증을 딱! 넣어둡니다. (다음엔 안 뜨게)
+                    localStorage.setItem("hasSeenIosAlert", "true");
+                }
+            }
+
             signInWithPopup(auth, provider)
                 .then((result) => {
                     alert(result.user.displayName + "님 환영합니다!");
