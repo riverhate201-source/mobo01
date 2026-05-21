@@ -16,7 +16,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
     <link rel="stylesheet" href="./css/reset.css">
-    <link rel="stylesheet" href="./css/style.css?v=7.5">
+    <link rel="stylesheet" href="./css/style.css?v=7.6">
 
 
 
@@ -121,71 +121,48 @@
             }
         };
 
-        // 🌟 [예은님 맞춤형] 클라우드 창고에서 내 데이터 다운로드 받기
+        // 🌟 1. 구글 창고에서 내 '개인 금고'를 통째로 가져오기
         window.loadFromCloud = async function () {
             if (!currentUser) return;
             try {
+                // 'users'라는 큰 서랍장에서 예은님의 UID 이름을 가진 개인 금고를 찾습니다.
                 const docRef = doc(db, "users", currentUser.uid);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
-                    // 1. 구글 창고에서 통째로 데이터 꺼내오기
-                    const cloudData = docSnap.data().appData;
+                    const cloudData = docSnap.data().appData; // 개인 금고 안의 데이터!
 
-                    if (cloudData) {
-                        // 2. 예은님의 진짜 금고(WEBTOON_APP_STABLE_V1)에 덮어쓰기!
-                        localStorage.setItem("WEBTOON_APP_STABLE_V1", JSON.stringify(cloudData));
+                    // 내 폰 금고에 덮어쓰기! (의 키값 이름 확인!)
+                    localStorage.setItem("WEBTOON_APP_STABLE_V1", JSON.stringify(cloudData));
 
-                        // 3. custom.js에 있는 함수들을 불러내서 화면 즉시 새로고침!
-                        if (typeof window.loadAllData === "function") window.loadAllData();
-                        if (typeof window.renderAll === "function") window.renderAll();
+                    // 화면 새로고침!
+                    if (typeof window.loadAllData === "function") window.loadAllData();
+                    if (typeof window.renderAll === "function") window.renderAll();
 
-                        console.log("☁️ 클라우드 데이터 완벽 동기화 완료!");
-                    }
+                    console.log("☁️ 클라우드 데이터 완벽 동기화 완료!");
                 } else {
-                    console.log("구글 창고에 데이터가 없습니다. (신규 기기)");
+                    console.log("아직 구글 창고에 백업된 데이터가 없습니다.");
                 }
             } catch (e) {
                 console.error("데이터 불러오기 실패:", e);
             }
         };
 
-        // 🌟 [예은님 맞춤형] 내 폰 금고 데이터를 통째로 구글 클라우드로 업로드하기
+        // 🌟 2. 내 폰 금고를 통째로 구글 창고 '개인 금고'에 업로드하기
         window.uploadToCloud = async function () {
-            if (!currentUser) return; // 로그인 안 되어있으면 조용히 패스
+            if (!currentUser) return;
 
             try {
-                // 1. 예은님의 진짜 금고(WEBTOON_APP_STABLE_V1)에서 통째로 데이터 꺼내기
+                // 폰에 있는 '전체 데이터'를 꺼냅니다.
                 const localData = JSON.parse(localStorage.getItem("WEBTOON_APP_STABLE_V1"));
 
                 if (localData) {
-                    // 2. 내 유저 ID 서랍에 통째로 덮어쓰기 저장!
+                    // users -> {uid} 경로에 'appData'라는 이름으로 통째로 저장!
                     await setDoc(doc(db, "users", currentUser.uid), {
                         appData: localData,
                         lastUpdated: new Date()
                     });
-                    console.log("☁️ 클라우드 창고 백업 성공!");
-                }
-            } catch (e) {
-                console.error("클라우드 백업 실패:", e);
-            }
-        };
-
-        // 🌟 내 폰 금고 데이터를 통째로 구글 클라우드로 업로드하기
-        window.uploadToCloud = async function () {
-            if (!currentUser) return; // 로그인 안 되어있으면 조용히 패스
-
-            try {
-                // 1. 진짜 금고(WEBTOON_APP_STABLE_V1)에서 통째로 데이터 꺼내기
-                const localData = JSON.parse(localStorage.getItem("WEBTOON_APP_STABLE_V1"));
-
-                if (localData) {
-                    // 2. 내 유저 ID 서랍에 통째로 덮어쓰기 저장!
-                    await setDoc(doc(db, "users", currentUser.uid), {
-                        appData: localData,
-                        lastUpdated: new Date()
-                    });
-                    console.log("클라우드 창고 백업 성공!");
+                    console.log("☁️ 클라우드 개인 금고 백업 성공!");
                 }
             } catch (e) {
                 console.error("클라우드 백업 실패:", e);
@@ -193,7 +170,7 @@
         };
     </script>
 
-    <script src="./js/custom.js?v=3.0" defer></script>
+    <script src="./js/custom.js?v=3.1" defer></script>
 
 
 
