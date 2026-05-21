@@ -36,11 +36,10 @@
 
 
     <script type="module">
-        // 1. 코어 모듈 + 인증(Auth) 모듈 가져오기
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // 🚨 팝업 대신 '리다이렉트(Redirect)' 관련 도구를 가져옵니다!
+        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-        // 예은님의 고유 금고 열쇠
         const firebaseConfig = {
             apiKey: "AIzaSyCIO76IJMTpcIWTxqYRfqWjnNOhyWgzA8Y",
             authDomain: "mobo-7489c.firebaseapp.com",
@@ -50,28 +49,30 @@
             appId: "1:1045521806787:web:9585ec2f2082935c98b976"
         };
 
-        // 파이어베이스 가동
         const app = initializeApp(firebaseConfig);
         window.firebaseApp = app;
 
-        // 2. 구글 로그인 시스템 가동 준비
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // 3. 버튼을 누르면 팝업창을 띄우는 마법의 함수!
+        // 1. 버튼을 누르면 팝업창 대신 현재 화면이 통째로 구글 로그인으로 넘어갑니다!
         window.googleLogin = function () {
-            signInWithPopup(auth, provider)
-                .then((result) => {
-                    const user = result.user;
-                    console.log("로그인 성공!", user);
-                    alert(user.displayName + "님 환영합니다!");
-                }).catch((error) => {
-                    console.error("로그인 에러:", error);
-                    alert("로그인에 실패했습니다. 다시 시도해주세요.");
-                });
+            signInWithRedirect(auth, provider);
         };
 
-        console.log("🔥 파이어베이스 로그인 모듈 탑재 완료!!!");
+        // 2. 구글에서 로그인을 마치고 다시 모보 앱으로 돌아왔을 때, 결과를 낚아채서 환영해주기!
+        getRedirectResult(auth).then((result) => {
+            if (result) {
+                const user = result.user;
+                console.log("로그인 성공!", user);
+                alert(user.displayName + "님 환영합니다!");
+            }
+        }).catch((error) => {
+            console.error("로그인 에러:", error);
+            alert("로그인에 실패했습니다. 다시 시도해주세요.");
+        });
+
+        console.log("🔥 파이어베이스 리다이렉트 로그인 탑재 완료!!!");
     </script>
 
     <script src="./js/custom.js?v=2.9" defer></script>
