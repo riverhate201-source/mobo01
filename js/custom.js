@@ -2669,7 +2669,7 @@ function handleImport(event) {
                 };
                 window.addEventListener('beforeunload', preventReload);
 
-                alert("데이터 복원이 시작되었습니다!\n고화질 사진을 창고로 옮기는 중이니 완료 팝업이 뜰 때까지 **절대 새로고침하거나 앱을 끄지 마세요!**\n(약 10초~20초 소요)");
+                alert("데이터 복원이 시작되었습니다!\n완료 팝업이 뜰 때까지 **절대 새로고침하거나 앱을 끄지 마세요!**\n(약 10초~1분 소요)");
 
                 let count = 0;
                 const platforms = ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
@@ -2705,7 +2705,7 @@ function handleImport(event) {
                 // 🌟 [방어 해제] 무사히 끝났으니 새로고침 방어막 끄기
                 window.removeEventListener('beforeunload', preventReload);
 
-                alert(`🎉 복원 완벽 성공!\n총 ${count}개의 고화질 사진이 무사히 창고로 이사했습니다.\n화면을 새로고침합니다.`);
+                alert(`복원 성공! 화면을 새로고침합니다.`);
                 location.reload();
             } else {
                 throw new Error("잘못된 형식입니다.");
@@ -3121,12 +3121,12 @@ async function checkRemoteUpdate() {
 
             // 🌟 3. 에러 많던 푸시 알림(Notification) 로직은 버리고, 무조건 뜨는 중앙 팝업으로 통일!
             setTimeout(() => {
-                if (confirm(`[모보 새 소식]\n\n${data.title}\n${data.message}\n\n지금 확인하러 가시겠어요?`)) {
+                if (confirm(`[모보 새 소식]\n\n${data.title}\n${data.message}\n\n개인정보 처리방침을 확인하시겠습니까?`)) {
                     // 🌟 4. 확인 버튼을 누르면 애널리틱스에 '클릭' 기록 후 이동!
                     if (typeof gtag === 'function') {
                         gtag('event', 'popup_click', { 'event_category': 'notice', 'event_label': 'confirm' });
                     }
-                    window.open(data.link, '_blank');
+                    location.href = data.link;
                 }
             }, 500); // 앱 켜지고 0.5초 뒤에 짠!
 
