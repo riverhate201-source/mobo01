@@ -1358,6 +1358,9 @@ function loadAllData() {
         if (p.bomtoonExpire) localStorage.setItem('bomtoonExpire', JSON.stringify(p.bomtoonExpire));
         if (p.ridiExpire) localStorage.setItem('ridiExpire', JSON.stringify(p.ridiExpire));
         if (p.mrblueExpire) localStorage.setItem('mrblueExpire', JSON.stringify(p.mrblueExpire));
+        if (p.lastAttendDate) localStorage.setItem('lastAttendDate', p.lastAttendDate);
+        if (p.lezhinAttend) localStorage.setItem('lezhinAttend', p.lezhinAttend);
+        if (p.bomtoonAttend) localStorage.setItem('bomtoonAttend', p.bomtoonAttend);
     }
 
     // 🚨 앱을 켤 때마다 자동으로 청소기를 싹~ 돌려서 휴재작들을 전부 뒤로 밀어냅니다!
@@ -1384,7 +1387,10 @@ function saveData() {
         lezhinExpire: JSON.parse(localStorage.getItem('lezhinExpire')) || null,
         bomtoonExpire: JSON.parse(localStorage.getItem('bomtoonExpire')) || null,
         ridiExpire: JSON.parse(localStorage.getItem('ridiExpire')) || null,
-        mrblueExpire: JSON.parse(localStorage.getItem('mrblueExpire')) || null
+        mrblueExpire: JSON.parse(localStorage.getItem('mrblueExpire')) || null,
+        lastAttendDate: localStorage.getItem('lastAttendDate') || '',
+        lezhinAttend: localStorage.getItem('lezhinAttend') || 'false',
+        bomtoonAttend: localStorage.getItem('bomtoonAttend') || 'false'
     };
 
     try {
