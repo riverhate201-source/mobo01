@@ -2638,25 +2638,74 @@ function triggerImport() {
     document.getElementById('backup-file-input').click();
 }
 
-// 브라우저가 절대 무시할 수 없는 가장 튼튼한 복구 함수!
+// 🚨 브라우저가 절대 무시할 수 없는 가장 튼튼하고 똑똑한 복구+이사 함수! (철벽 방어 추가)
 function handleImport(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function (e) {
+    reader.onload = async function (e) {
         try {
             const content = e.target.result;
             const parsedData = JSON.parse(content);
 
             if (parsedData && parsedData.state) {
-                localStorage.setItem(STORAGE_KEY, content);
-                alert("데이터 복원 완료! 화면을 새로고침합니다.");
+                // 🌟 [핵심 방어 1] 일단 원본 그대로 브라우저에 '즉시' 강제 저장!!!
+                // (이렇게 하면 이제 중간에 새로고침해도 데이터가 절대 안 날아갑니다)
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(parsedData));
+
+                // 🌟 [핵심 방어 2] 새로고침/뒤로가기 방어막 켜기!
+                const preventReload = (e) => {
+                    const warningMessage = "복구를 진행 중입니다. 정말 새로고침 하시겠습니까? (새로고침 시 복구 중단)";
+                    e.preventDefault(); // 최신 표준 방식
+                    e.returnValue = warningMessage; // 크롬 구버전 등에서 작동
+                    return warningMessage; // 사파리 구버전 등에서 작동
+                };
+                window.addEventListener('beforeunload', preventReload);
+
+                alert("데이터 복원이 시작되었습니다!\n고화질 사진을 창고로 옮기는 중이니 완료 팝업이 뜰 때까지 **절대 새로고침하거나 앱을 끄지 마세요!**\n(약 10초~20초 소요)");
+
+                let count = 0;
+                const platforms = ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
+
+                // 🌟 사진 창고로 이사 시작
+                for (let plt of platforms) {
+                    if (parsedData.state[plt]) {
+                        for (let day of Object.keys(parsedData.state[plt])) {
+                            for (let work of parsedData.state[plt][day]) {
+                                if (work.img && work.img.startsWith('data:image')) {
+                                    try {
+                                        console.log(`📦 [${work.title}] 고화질 사진 창고로 전송 중...`);
+                                        let newUrl = await uploadImageToImgBB(work.img);
+                                        work.img = newUrl; // 창고 주소로 교체!
+                                        count++;
+                                    } catch (err) {
+                                        console.error(`❌ [${work.title}] 창고 전송 실패:`, err);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 🌟 3. 창고 이사가 끝나서 홀가분해진 가벼운 데이터를 다시 저장 (덮어쓰기)
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(parsedData));
+
+                // 🌟 4. 파이어베이스 클라우드에 "이게 진짜 최신본이야!" 하고 냅다 덮어씌우기!
+                if (typeof window.uploadToCloud === "function") {
+                    window.uploadToCloud();
+                }
+
+                // 🌟 [방어 해제] 무사히 끝났으니 새로고침 방어막 끄기
+                window.removeEventListener('beforeunload', preventReload);
+
+                alert(`🎉 복원 완벽 성공!\n총 ${count}개의 고화질 사진이 무사히 창고로 이사했습니다.\n화면을 새로고침합니다.`);
                 location.reload();
             } else {
                 throw new Error("잘못된 형식입니다.");
             }
         } catch (err) {
+            console.error(err);
             alert("❌ 잘못된 백업 파일이거나 손상되었습니다.\n(모보에서 다운로드한 파일이 맞는지 확인해주세요!)");
         }
         // 파일 읽기가 '완전히 끝난 후'에 초기화해야 모바일에서 안 튕김
@@ -2665,7 +2714,6 @@ function handleImport(event) {
 
     reader.readAsText(file);
 }
-
 function checkBackupStatus() { const lastBackup = localStorage.getItem('lastBackupDate'); const alertEl = document.getElementById('backup-alert'); if (!lastBackup || (Date.now() - parseInt(lastBackup)) / 86400000 >= 7) alertEl.style.display = 'block'; else alertEl.style.display = 'none'; }
 
 // 주간 누적 통계 UI 업데이트
