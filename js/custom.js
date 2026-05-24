@@ -1397,9 +1397,6 @@ function saveData() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
         renderAll();
         checkStorage();
-        if (typeof window.uploadToCloud === "function") {
-            window.uploadToCloud();
-        }
     } catch (error) {
         if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
             alert("모보의 저장 공간(5MB)이 꽉 찼습니다!\n새로운 내용을 저장하려면 기존 작품의 '사진'을 몇 개 삭제해 주세요.");
@@ -2414,18 +2411,19 @@ async function saveWorkFinal() {
     // 🚨 여기서부터 ImgBB 업로드 로직 추가! 🚨
     let finalImgUrl = tempImg;
 
+    // 🌟 똑똑한 필터링: 사진 보관함이 비어있지 않고, '뚱뚱한 원본(data:image)'일 때만 창고로 보냅니다!
     if (tempImg && tempImg.startsWith('data:image')) {
         try {
             const statusText = document.getElementById('image-status-text');
             if (statusText) {
-                statusText.textContent = "사진을 창고에 올리는 중...";
+                statusText.textContent = "사진 업로드 중...";
                 statusText.style.color = "#1967d2";
             }
             finalImgUrl = await uploadImageToImgBB(tempImg);
         } catch (e) {
             console.error("사진 업로드 에러:", e);
-            alert("사진 업로드에 실패했습니다. 다시 시도해주세요.");
-            return;
+            alert("사진 용량이 너무 큽니다! (다른 사진으로 교체해주세요)");
+            return; // 👈 에러 나면 저장을 멈추기
         }
     }
 
@@ -2644,7 +2642,7 @@ function triggerImport() {
     document.getElementById('backup-file-input').click();
 }
 
-// 🚨 브라우저가 절대 무시할 수 없는 가장 튼튼하고 똑똑한 복구+이사 함수! (철벽 방어 추가)
+// 🚨 브라우저가 절대 무시할 수 없는 가장 튼튼하고 똑똑한 복구+이사 함수! (철벽 방어 유지, 구글 연동만 제거)
 function handleImport(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -2657,15 +2655,14 @@ function handleImport(event) {
 
             if (parsedData && parsedData.state) {
                 // 🌟 [핵심 방어 1] 일단 원본 그대로 브라우저에 '즉시' 강제 저장!!!
-                // (이렇게 하면 이제 중간에 새로고침해도 데이터가 절대 안 날아갑니다)
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(parsedData));
 
                 // 🌟 [핵심 방어 2] 새로고침/뒤로가기 방어막 켜기!
                 const preventReload = (e) => {
                     const warningMessage = "복구를 진행 중입니다. 정말 새로고침 하시겠습니까? (새로고침 시 복구 중단)";
-                    e.preventDefault(); // 최신 표준 방식
-                    e.returnValue = warningMessage; // 크롬 구버전 등에서 작동
-                    return warningMessage; // 사파리 구버전 등에서 작동
+                    e.preventDefault();
+                    e.returnValue = warningMessage;
+                    return warningMessage;
                 };
                 window.addEventListener('beforeunload', preventReload);
 
@@ -2681,12 +2678,12 @@ function handleImport(event) {
                             for (let work of parsedData.state[plt][day]) {
                                 if (work.img && work.img.startsWith('data:image')) {
                                     try {
-                                        console.log(`📦 [${work.title}] 고화질 사진 창고로 전송 중...`);
+                                        console.log(`[${work.title}] 사진 업로드 중...`);
                                         let newUrl = await uploadImageToImgBB(work.img);
                                         work.img = newUrl; // 창고 주소로 교체!
                                         count++;
                                     } catch (err) {
-                                        console.error(`❌ [${work.title}] 창고 전송 실패:`, err);
+                                        console.error(`❌ [${work.title}] 사진 업로드 실패:`, err);
                                     }
                                 }
                             }
@@ -2697,10 +2694,7 @@ function handleImport(event) {
                 // 🌟 3. 창고 이사가 끝나서 홀가분해진 가벼운 데이터를 다시 저장 (덮어쓰기)
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(parsedData));
 
-                // 🌟 4. 파이어베이스 클라우드에 "이게 진짜 최신본이야!" 하고 냅다 덮어씌우기!
-                if (typeof window.uploadToCloud === "function") {
-                    window.uploadToCloud();
-                }
+                // 🚨 [유일하게 지워진 부분!] 파이어베이스 클라우드 업로드 함수 삭제 완료! 🚨
 
                 // 🌟 [방어 해제] 무사히 끝났으니 새로고침 방어막 끄기
                 window.removeEventListener('beforeunload', preventReload);
@@ -2712,7 +2706,7 @@ function handleImport(event) {
             }
         } catch (err) {
             console.error(err);
-            alert("❌ 잘못된 백업 파일이거나 손상되었습니다.\n(모보에서 다운로드한 파일이 맞는지 확인해주세요!)");
+            alert("잘못된 백업 파일이거나 손상되었습니다.\n(모보에서 다운로드한 파일이 맞는지 확인해주세요!)");
         }
         // 파일 읽기가 '완전히 끝난 후'에 초기화해야 모바일에서 안 튕김
         document.getElementById('backup-file-input').value = '';
@@ -2720,6 +2714,8 @@ function handleImport(event) {
 
     reader.readAsText(file);
 }
+
+
 function checkBackupStatus() { const lastBackup = localStorage.getItem('lastBackupDate'); const alertEl = document.getElementById('backup-alert'); if (!lastBackup || (Date.now() - parseInt(lastBackup)) / 86400000 >= 7) alertEl.style.display = 'block'; else alertEl.style.display = 'none'; }
 
 // 주간 누적 통계 UI 업데이트
@@ -3884,52 +3880,71 @@ function closeUpdateNotice() {
 
 // ☁️ 고화질 사진을 ImgBB 창고에 올리고 '주소(URL)'를 받아오는 함수
 async function uploadImageToImgBB(base64Data) {
-    // 1. 여기서 'YOUR_API_KEY' 부분을 아까 복사한 진짜 키로 바꿔주세요!
     const apiKey = '2b1edf6e0a94cf20f255114dcdebd782';
 
-    // Base64 코드에서 앞부분(data:image/jpeg;base64,)을 떼어내고 순수 데이터만 추출
-    const base64String = base64Data.split(',')[1];
+    try {
+        // 1. 순수 파일(Blob)로 변환 (글자가 깨져서 거절당하는 현상 완벽 방지)
+        const arr = base64Data.split(',');
+        const mime = arr[0].match(/:(.*?);/)[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        const fileBlob = new Blob([u8arr], { type: mime });
 
-    const formData = new FormData();
-    formData.append('image', base64String);
+        const formData = new FormData();
+        formData.append('image', fileBlob, 'image.jpg');
 
-    // ImgBB 서버로 사진 전송!
-    const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-        method: 'POST',
-        body: formData
-    });
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+            method: 'POST',
+            body: formData
+        });
 
-    const data = await response.json();
-    if (data.success) {
-        return data.data.url; // 성공하면 고화질 이미지의 '웹 주소'를 반환!
-    } else {
-        throw new Error('사진 창고 업로드 실패');
+        const data = await response.json();
+
+        // 🌟 2. 에러가 났을 때 '서버가 말하는 진짜 이유'를 화면에 띄워줍니다!
+        if (!response.ok || !data.success) {
+            console.error("ImgBB 거절 상세 정보:", data);
+            alert(`🚨 ImgBB 업로드 실패!\n원인: ${data.error.message}\n(API 키 문제이거나 서버 오류입니다. API 키를 새로 발급받아 보세요!)`);
+            throw new Error(data.error.message);
+        }
+
+        return data.data.url;
+
+    } catch (error) {
+        console.error("업로드 함수 에러:", error);
+        throw error;
     }
 }
+
+// 1초 쉬어가는 대기 함수 (스팸 차단 방지용)
+const delay = ms => new Promise(res => setTimeout(res, ms));
 
 /* =========================================
    🤫 (쉿) 유저 몰래 기존 뚱뚱한 사진들을 ImgBB 창고로 이사 보내는 함수
 ========================================= */
 async function silentAutoMigrateToImgBB() {
-    let localData = JSON.parse(localStorage.getItem("WEBTOON_APP_STABLE_V1"));
-    if (!localData || !localData.state) return;
-
     let isModified = false;
     const platforms = ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
 
-    // 유저의 장부를 싹 뒤져서 뚱뚱한 원본 사진(data:image)을 찾습니다!
     for (let plt of platforms) {
-        if (localData.state[plt]) {
-            for (let day of Object.keys(localData.state[plt])) {
-                for (let work of localData.state[plt][day]) {
+        if (state[plt]) {
+            for (let day of Object.keys(state[plt])) {
+                for (let work of state[plt][day]) {
                     if (work.img && work.img.startsWith('data:image')) {
                         try {
-                            // ImgBB 서버로 사진을 보내고 가벼운 주소(URL)를 받아옵니다
                             let newUrl = await uploadImageToImgBB(work.img);
-                            work.img = newUrl; // 주소로 바꿔치기!
+                            work.img = newUrl;
                             isModified = true;
+                            saveData(); // 1장 바뀔 때마다 즉시 안전하게 저장!
+
+                            // 🌟 [핵심] 1장 올리고 1초 쉬기! (서버가 스팸 공격으로 오해하는 것 방지)
+                            await delay(1000);
                         } catch (e) {
                             console.error(`[${work.title}] 창고 이사 실패:`, e);
+                            // 🚨 예은님의 멀쩡한 사진이므로 에러가 나도 절대 지우지 않고 그대로 둡니다!
                         }
                     }
                 }
@@ -3937,19 +3952,8 @@ async function silentAutoMigrateToImgBB() {
         }
     }
 
-    // 이사한 사진이 1개라도 있다면?
     if (isModified) {
-        // 1. 가벼워진 데이터를 유저 기기(로컬 스토리지)에 덮어씁니다.
-        localStorage.setItem("WEBTOON_APP_STABLE_V1", JSON.stringify(localData));
         console.log("🤫 기존 유저들의 대용량 이미지 ImgBB 이사 완료!");
-
-        // 2. 가벼워졌으니 파이어베이스 클라우드로 알아서 동기화(백업) 시켜줍니다!
-        if (typeof window.uploadToCloud === "function") {
-            window.uploadToCloud();
-        }
-
-        // 3. 바뀐 사진들이 화면에 잘 보이게 살짝 새로고침!
-        if (typeof renderAll === "function") renderAll();
     }
 }
 

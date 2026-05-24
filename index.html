@@ -35,142 +35,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-        // 🚨 Firestore에서 데이터를 가져오고(getDoc), 덮어쓰는(setDoc, doc) 도구 추가!
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCIO76IJMTpcIWTxqYRfqWjnNOhyWgzA8Y",
-            authDomain: "mobo-7489c.firebaseapp.com",
-            projectId: "mobo-7489c",
-            storageBucket: "mobo-7489c.firebasestorage.app",
-            messagingSenderId: "1045521806787",
-            appId: "1:1045521806787:web:9585ec2f2082935c98b976"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        window.firebaseApp = app;
-
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
-        const db = getFirestore(app); // 클라우드 창고 연결
-
-        // 현재 로그인한 유저 정보를 담아둘 변수
-        let currentUser = null;
-
-        provider.setCustomParameters({
-            prompt: 'select_account'
-        });
-
-        // 1. 로그인 상태 자동 감지기 (★연동의 핵심★)
-        onAuthStateChanged(auth, async (user) => {
-            const loginBtn = document.getElementById("google-login-btn");
-            if (!loginBtn) return;
-
-            if (user) {
-                currentUser = user; // 유저 정보 저장
-                loginBtn.innerText = "로그아웃 하기";
-                loginBtn.onclick = window.googleLogout;
-
-                // 🌟 로그인이 확인되면 구글 창고에서 이 유저의 데이터를 자동으로 불러옵니다!
-                await window.loadFromCloud();
-            } else {
-                currentUser = null;
-                loginBtn.innerText = "구글 로그인 하기";
-                loginBtn.onclick = window.googleLogin;
-            }
-        });
-
-        // 2. 로그인 함수
-        window.googleLogin = function () {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-            const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-
-            if (isIOS && isStandalone) {
-                if (!localStorage.getItem("hasSeenIosAlert")) {
-                    alert("ios 기기 안내: 로그인 완료 후 화면이 멈춘 것처럼 하얗게 변하면 당황하지 마시고, 화면 상단의 [완료] 또는 [X] 버튼을 눌러서 창을 닫아주세요!");
-                    localStorage.setItem("hasSeenIosAlert", "true");
-                }
-            }
-
-            signInWithPopup(auth, provider)
-                .then((result) => {
-                    alert(result.user.displayName + "님 환영합니다!");
-                }).catch((error) => {
-                    if (error.code !== 'auth/popup-closed-by-user') {
-                        console.log("로그인 에러:", error);
-                    }
-                });
-        };
-
-        // 3. 로그아웃 함수
-        window.googleLogout = function () {
-            if (confirm("정말 로그아웃 하시겠습니까?")) {
-                signOut(auth).then(() => {
-                    console.log("로그아웃 성공!");
-                    setTimeout(() => {
-                        window.location.href = window.location.href;
-                    }, 500);
-                }).catch((error) => {
-                    alert("로그아웃 실패");
-                });
-            }
-        };
-
-        // 🌟 1. 구글 창고에서 내 '개인 금고'를 통째로 가져오기
-        window.loadFromCloud = async function () {
-            if (!currentUser) return;
-            try {
-                // 'users'라는 큰 서랍장에서 예은님의 UID 이름을 가진 개인 금고를 찾습니다.
-                const docRef = doc(db, "users", currentUser.uid);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const cloudData = docSnap.data().appData; // 개인 금고 안의 데이터!
-
-                    // 내 폰 금고에 덮어쓰기! (의 키값 이름 확인!)
-                    localStorage.setItem("WEBTOON_APP_STABLE_V1", JSON.stringify(cloudData));
-
-                    // 화면 새로고침!
-                    if (typeof window.loadAllData === "function") window.loadAllData();
-                    if (typeof window.renderAll === "function") window.renderAll();
-
-                    console.log("☁️ 클라우드 데이터 완벽 동기화 완료!");
-                } else {
-                    console.log("아직 구글 창고에 백업된 데이터가 없습니다.");
-                }
-            } catch (e) {
-                console.error("데이터 불러오기 실패:", e);
-            }
-        };
-
-        // 🌟 2. 내 폰 금고를 통째로 구글 창고 '개인 금고'에 업로드하기
-        window.uploadToCloud = async function () {
-            if (!currentUser) return;
-
-            try {
-                // 폰에 있는 '전체 데이터'를 꺼냅니다.
-                const localData = JSON.parse(localStorage.getItem("WEBTOON_APP_STABLE_V1"));
-
-                if (localData) {
-                    // users -> {uid} 경로에 'appData'라는 이름으로 통째로 저장!
-                    await setDoc(doc(db, "users", currentUser.uid), {
-                        appData: localData,
-                        lastUpdated: new Date()
-                    });
-                    console.log("☁️ 클라우드 개인 금고 백업 성공!");
-                }
-            } catch (e) {
-                console.error("클라우드 백업 실패:", e);
-            }
-        };
-    </script>
-
-    <script src="./js/custom.js?v=3.7" defer></script>
+    <script src="./js/custom.js?v=3.9" defer></script>
 
 
 
@@ -211,7 +77,6 @@
 
                 <div class="nav-section">
                     <h4>보기 설정</h4>
-                    <button id="google-login-btn" onclick="googleLogin()" class="menu-item">구글 로그인</button>
                     <button onclick="openPlatformSettingModal()" class="menu-item">플랫폼 순서 변경</button>
                     <button onclick="openLinkSettingModal()" class="menu-item">출석 링크 직접 설정</button>
                 </div>
@@ -986,7 +851,7 @@
     </div>
 
     <div class="sync-btn-wrapper">
-        <button class="sync-btn" onclick="window.location.reload()" aria-label="동기화 버튼">
+        <button class="sync-btn" onclick="window.location.reload()" aria-label="새로고침 버튼">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="23 4 23 10 17 10"></polyline>
