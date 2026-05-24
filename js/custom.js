@@ -3880,7 +3880,7 @@ function closeUpdateNotice() {
 
 // ☁️ 고화질 사진을 ImgBB 창고에 올리고 '주소(URL)'를 받아오는 함수
 async function uploadImageToImgBB(base64Data) {
-    const apiKey = '2b1edf6e0a94cf20f255114dcdebd782';
+    const apiKey = '6963cfb507df01b542e8d66d26483e29';
 
     try {
         // 1. 순수 파일(Blob)로 변환 (글자가 깨져서 거절당하는 현상 완벽 방지)
@@ -3959,5 +3959,5 @@ async function silentAutoMigrateToImgBB() {
 
 // 앱이 켜지고 화면이 다 그려진 후, 2초(2000ms) 뒤에 버벅임 없이 유저 몰래 실행!
 window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(silentAutoMigrateToImgBB, 2000);
+    setTimeout(silentAutoMigrateToImgBB, 6000);
 });
