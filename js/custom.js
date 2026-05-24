@@ -3117,7 +3117,7 @@ async function checkRemoteUpdate() {
 
             // 🌟 3. 에러 많던 푸시 알림(Notification) 로직은 버리고, 무조건 뜨는 중앙 팝업으로 통일!
             setTimeout(() => {
-                if (confirm(`[모보 새 소식]\n\n${data.title}\n${data.message}\n\n개인정보 처리방침을 확인하시겠습니까?`)) {
+                if (confirm(`[모보 오류 안정화 소식]\n\n${data.title}\n${data.message}\n\n`)) {
                     // 🌟 4. 확인 버튼을 누르면 애널리틱스에 '클릭' 기록 후 이동!
                     if (typeof gtag === 'function') {
                         gtag('event', 'popup_click', { 'event_category': 'notice', 'event_label': 'confirm' });
