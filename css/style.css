@@ -3138,17 +3138,20 @@ body.dark-mode .header .hd_wrap .theme-switch-wrapper .header-theme-slider {
 
 /* 💻 태블릿 & PC 환경 (화면 넓이가 768px 이상일 때 발동!) */
 @media screen and (min-width: 768px) {
+
     /* 1. 껍데기 박스를 넓은 본문 사이즈(800px)로 확장! */
     .sync-btn-wrapper {
-        max-width: 468px; 
-        bottom: 20px; /* PC 화면에선 답답하지 않게 바닥에서 조금 더 띄움 */
+        max-width: 468px;
+        bottom: 20px;
+        /* PC 화면에선 답답하지 않게 바닥에서 조금 더 띄움 */
     }
 
     /* 2. 마우스로 누르기 편하게 진짜 버튼 사이즈 키우기! */
     .sync-btn {
         width: 40px;
         height: 40px;
-        right: 1px; /* PC에선 여백도 살짝 더 여유롭게 */
+        right: 1px;
+        /* PC에선 여백도 살짝 더 여유롭게 */
     }
 
     /* 3. 버튼이 커졌으니 안에 있는 SVG 빙글빙글 아이콘도 같이 키우기! */
@@ -3176,6 +3179,26 @@ body.dark-mode .sync-btn:hover {
     background-color: #3a3a3c;
 }
 
+
+/* 📦 이사 진행 현황 바 */
+#migration-status {
+    position: fixed;
+    left: 10px;
+    bottom: 10px;
+    background: rgba(0, 0, 0, 0.85);
+    /* 약간 투명한 검정 */
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 12px;
+    font-size: 13px;
+    z-index: 9999;
+    /* 화면 맨 위에 띄우기 */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    /* 클릭 방해 금지 */
+    display: none;
+    /* 처음엔 숨겨두기 */
+}
 
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
 a[x-apple-data-detectors] {

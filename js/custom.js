@@ -3925,35 +3925,78 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 /* =========================================
    🤫 (쉿) 유저 몰래 기존 뚱뚱한 사진들을 ImgBB 창고로 이사 보내는 함수
 ========================================= */
+// 2. 메인 이사 함수
 async function silentAutoMigrateToImgBB() {
-    let isModified = false;
+    if (window.isMigrating) return;
+    window.isMigrating = true;
+
     const platforms = ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
+    let worksToMigrate = [];
 
+    // [Step 1] 전체 사진 개수와 이사할 사진 찾기
+    let totalImages = 0;
     for (let plt of platforms) {
-        if (state[plt]) {
-            for (let day of Object.keys(state[plt])) {
-                for (let work of state[plt][day]) {
-                    if (work.img && work.img.startsWith('data:image')) {
-                        try {
-                            let newUrl = await uploadImageToImgBB(work.img);
-                            work.img = newUrl;
-                            isModified = true;
-                            saveData(); // 1장 바뀔 때마다 즉시 안전하게 저장!
-
-                            // 🌟 [핵심] 1장 올리고 1초 쉬기! (서버가 스팸 공격으로 오해하는 것 방지)
-                            await delay(1000);
-                        } catch (e) {
-                            console.error(`[${work.title}] 창고 이사 실패:`, e);
-                            // 🚨 예은님의 멀쩡한 사진이므로 에러가 나도 절대 지우지 않고 그대로 둡니다!
-                        }
+        if (!state[plt]) continue;
+        for (let day of Object.keys(state[plt])) {
+            for (let work of state[plt][day]) {
+                if (work.img) {
+                    totalImages++;
+                    if (work.img.startsWith('data:image')) {
+                        worksToMigrate.push(work);
                     }
                 }
             }
         }
     }
 
-    if (isModified) {
-        console.log("🤫 기존 유저들의 대용량 이미지 ImgBB 이사 완료!");
+    // 이사할 사진이 없다면 종료
+    if (worksToMigrate.length === 0) {
+        window.isMigrating = false;
+        return;
+    }
+
+    let migratedCount = totalImages - worksToMigrate.length; // 이미 이사 된 사진들
+
+    // [Step 2] 이사 시작
+    for (let work of worksToMigrate) {
+        updateMigrationUI(migratedCount + 1, totalImages);
+
+        try {
+            // 🌟 6초 딜레이 (서버 보호)
+            await new Promise(resolve => setTimeout(resolve, 6000));
+
+            let newUrl = await uploadImageToImgBB(work.img);
+            work.img = newUrl;
+            migratedCount++;
+            saveData(); // 1장마다 즉시 저장!
+        } catch (e) {
+            console.error(`[${work.title}] 해당 사진 업로드 실패`, e);
+            // 에러가 나도 앱은 멈추지 않고 다음 사진으로 넘어감
+        }
+    }
+
+    updateMigrationUI(totalImages, totalImages);
+    window.isMigrating = false;
+    console.log("🤫 모든 이사 완료!");
+}
+
+// 🏠 상태창을 업데이트하는 똑똑한 도우미 함수
+function updateMigrationUI(current, total) {
+    let statusEl = document.getElementById('migration-status');
+    // 없으면 HTML에 추가
+    if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.id = 'migration-status';
+        document.body.appendChild(statusEl);
+    }
+
+    // 상태창 표시
+    statusEl.style.display = 'block';
+    statusEl.innerHTML = `사진 업로드 처리 중 (${current}/${total})`;
+
+    // 다 끝나면 3초 뒤에 사라지게 하기
+    if (current >= total) {
+        setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
     }
 }
 
