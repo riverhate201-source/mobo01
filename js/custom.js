@@ -1367,8 +1367,8 @@ function loadAllData() {
     forceSortBreaks();
 }
 
-// 2. 데이터 저장하기
-function saveData() {
+// 2. 데이터 저장하기 (🌟 조용히 저장하는 silent 옵션 추가!)
+function saveData(silent = false) {
     forceSortBreaks(); // 🚨 새로운 걸 추가하거나 수정할 때도 무조건 청소기 돌리기!
 
     const d = {
@@ -1395,8 +1395,13 @@ function saveData() {
 
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-        renderAll();
-        checkStorage();
+
+        // 🌟 [핵심] silent가 false일 때(기본 상태)만 화면을 다시 그립니다!
+        // 이사 함수가 saveData(true)로 부르면 이 부분은 무시하고 조용히 넘어갑니다.
+        if (!silent) {
+            renderAll();
+            checkStorage();
+        }
     } catch (error) {
         if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
             alert("모보의 저장 공간(5MB)이 꽉 찼습니다!\n새로운 내용을 저장하려면 기존 작품의 '사진'을 몇 개 삭제해 주세요.");
@@ -2604,7 +2609,6 @@ function saveCoinUpdate() {
         localStorage.removeItem(currentCoinPlt + 'Expire');
     }
 
-    // ... (위쪽 코드들) ...
 
     // 🌟 [핵심 방어막 추가!] 레진 지갑을 수동으로 수정했다면 24시간 보너스 폭탄 해체!
     if (currentCoinPlt === 'lezhin') {
@@ -3919,28 +3923,69 @@ async function uploadImageToImgBB(base64Data) {
     }
 }
 
-// 1초 쉬어가는 대기 함수 (스팸 차단 방지용)
-const delay = ms => new Promise(res => setTimeout(res, ms));
+/* =========================================================================
+   🚚 [최종형] 유저 안심 실시간 현황 바 + 6초 안전 딜레이 통합 이사 시스템
+========================================================================= */
 
-/* =========================================
-   🤫 (쉿) 유저 몰래 기존 뚱뚱한 사진들을 ImgBB 창고로 이사 보내는 함수
-========================================= */
-// 2. 메인 이사 함수
+// 1. 어떤 레이아웃 환경에서도 무조건 최상단에 노출되는 현황 바 UI 관리 함수
+function updateMigrationUI(current, total) {
+    let statusEl = document.getElementById('migration-status');
+
+    // 만약 화면에 상태창 요소가 없다면 강제로 생성하여 주입
+    if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.id = 'migration-status';
+        // 모보 앱의 기존 CSS에 덮이지 않도록 !important를 활용해 스타일을 강제 고정합니다.
+        statusEl.style.cssText = `
+            position: fixed !important;
+            left: 20px !important;
+            bottom: 20px !important;
+            background: rgba(20, 20, 20, 0.95) !important;
+            color: #ffffff !important;
+            padding: 12px 20px !important;
+            border-radius: 10px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            z-index: 9999999 !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+            letter-spacing: -0.5px !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            display: none !important;
+            pointer-events: none !important;
+        `;
+        document.body.appendChild(statusEl);
+    }
+
+    // 진행 현황 글자 업데이트 및 화면 노출
+    statusEl.innerText = `사진 안전하게 정리 중 (${current}/${total})`;
+    statusEl.style.setProperty('display', 'block', 'important');
+
+    // 모든 사진 이사가 완료되면 3초 후에 자연스럽게 사라집니다.
+    if (current >= total) {
+        setTimeout(() => {
+            if (statusEl) statusEl.style.setProperty('display', 'none', 'important');
+        }, 3000);
+    }
+}
+
+// 2. 메인 이사 비동기 함수
 async function silentAutoMigrateToImgBB() {
+    // 중복 실행 방지 안전장치
     if (window.isMigrating) return;
     window.isMigrating = true;
 
     const platforms = ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
     let worksToMigrate = [];
-
-    // [Step 1] 전체 사진 개수와 이사할 사진 찾기
     let totalImages = 0;
+
+    // [Step 1] 유저의 로컬 데이터 스캔 (전체 사진 수 및 이사 대상 분류)
     for (let plt of platforms) {
         if (!state[plt]) continue;
         for (let day of Object.keys(state[plt])) {
             for (let work of state[plt][day]) {
                 if (work.img) {
-                    totalImages++;
+                    totalImages++; // 전체 등록된 사진 카운트
+                    // 아직 이사하지 않은 뚱뚱한 원본(Base64) 데이터만 선별
                     if (work.img.startsWith('data:image')) {
                         worksToMigrate.push(work);
                     }
@@ -3949,55 +3994,46 @@ async function silentAutoMigrateToImgBB() {
         }
     }
 
-    // 이사할 사진이 없다면 종료
+    // 이사할 남은 사진이 없다면 즉시 종료하되, UI가 켜져 있다면 숨깁니다.
     if (worksToMigrate.length === 0) {
         window.isMigrating = false;
+        let statusEl = document.getElementById('migration-status');
+        if (statusEl) statusEl.style.setProperty('display', 'none', 'important');
         return;
     }
 
-    let migratedCount = totalImages - worksToMigrate.length; // 이미 이사 된 사진들
+    // 이미 이사가 완료된 사진 개수 계산
+    let migratedCount = totalImages - worksToMigrate.length;
 
-    // [Step 2] 이사 시작
+    // [Step 2] 선별된 사진만 안전하게 순차 이사 시작
     for (let work of worksToMigrate) {
+        // UI에 실시간 현황 전달 (현재 처리 중인 번호, 총 개수)
         updateMigrationUI(migratedCount + 1, totalImages);
 
         try {
-            // 🌟 6초 딜레이 (서버 보호)
+            // 🌟 [핵심 방어막] 다음 사진을 보내기 전 무조건 6초 동안 대기
             await new Promise(resolve => setTimeout(resolve, 6000));
 
+            // ImgBB 서버로 전송
             let newUrl = await uploadImageToImgBB(work.img);
-            work.img = newUrl;
-            migratedCount++;
-            saveData(); // 1장마다 즉시 저장!
+
+            // 🌟 [엄격한 검증] 올바른 주소 형태로 응답이 왔을 때만 변환 성공 처리
+            if (newUrl && newUrl.startsWith('http')) {
+                work.img = newUrl;
+                migratedCount++;
+                saveData(true); // 1장이 성공할 때마다 즉시 폰의 로컬스토리지 금고에 박제!
+            }
         } catch (e) {
-            console.error(`[${work.title}] 해당 사진 업로드 실패`, e);
-            // 에러가 나도 앱은 멈추지 않고 다음 사진으로 넘어감
+            console.error(`[${work.title}] 사진 업로드 실패 (다시 시도):`, e);
+            // 업로드 중 에러(400, 429 등)가 나도 catch문으로 안전하게 넘어가므로
+            // 유저의 소중한 원본 데이터는 절대 지워지거나 변형되지 않고 그대로 유지됩니다.
         }
     }
 
+    // 최종 완공 도장 쾅!
     updateMigrationUI(totalImages, totalImages);
     window.isMigrating = false;
-    console.log("🤫 모든 이사 완료!");
-}
-
-// 🏠 상태창을 업데이트하는 똑똑한 도우미 함수
-function updateMigrationUI(current, total) {
-    let statusEl = document.getElementById('migration-status');
-    // 없으면 HTML에 추가
-    if (!statusEl) {
-        statusEl = document.createElement('div');
-        statusEl.id = 'migration-status';
-        document.body.appendChild(statusEl);
-    }
-
-    // 상태창 표시
-    statusEl.style.display = 'block';
-    statusEl.innerHTML = `사진 업로드 처리 중 (${current}/${total})`;
-
-    // 다 끝나면 3초 뒤에 사라지게 하기
-    if (current >= total) {
-        setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
-    }
+    console.log("🤫 모든 유저의 데이터 최적화 이사가 안전하게 완료되었습니다.");
 }
 
 // 앱이 켜지고 화면이 다 그려진 후, 2초(2000ms) 뒤에 버벅임 없이 유저 몰래 실행!
