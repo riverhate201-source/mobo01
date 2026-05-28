@@ -3156,6 +3156,7 @@ setInterval(() => {
 
 // [신규 기능] 이번 달 월말정산 예쁜 영수증 띄우기!
 // 🌟 [교체] 개별 저장 버튼이 달린 월말정산 영수증 띄우기!
+// [신규 기능] 이번 달 월말정산 예쁜 영수증 띄우기!
 function showMonthlyReport() {
     closeNav();
 
@@ -3192,9 +3193,9 @@ function showMonthlyReport() {
             let totalPltSpent = 0;
             const info = pltInfo[plt];
 
-            // 🌟 개별 캡처를 위해 id를 달고 예쁜 카드 박스로 감싸줍니다!
+            // 🌟 1. 기존 화면에 예쁘게 보여지는 모보 앱 UI 영수증 
             htmlContent += `
-                    <div class="report-plt-section" id="receipt-mini-${plt}" style="background: ${info.bgColor}; padding: 16px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; color: ${info.textColor};">
+                    <div class="report-plt-section" id="receipt-original-${plt}" style="background: ${info.bgColor}; padding: 16px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; color: ${info.textColor};">
                         
                         <div class="report-plt-title" style="display: flex; justify-content: space-between; align-items: center; color: ${info.textColor}; border-bottom: 2px solid ${isDark ? '#555' : '#ccc'}; padding-bottom: 8px; margin-bottom: 12px;">
                             <span style="font-weight: 900; font-size: 15px;">${info.name} 정산</span>
@@ -3221,6 +3222,7 @@ function showMonthlyReport() {
                             <span>${formatNum(totalPltSpent)} ${info.unit}</span>
                         </div>
                     </div>`;
+
         }
     });
 
@@ -3240,36 +3242,151 @@ function closeMonthlyReport() {
 }
 
 
-
-// 플랫폼 낱장(미니 영수증)을 이미지로 저장해 주는 함수
+// 플랫폼 낱장(미니 영수증)을 이미지로 저장해 주는 함수 (예은님 커스텀 반영)
 function saveSingleReceipt(plt, pltName) {
-    // 1. 해당 플랫폼 카드만 콕 집어서 찾습니다.
-    const targetElement = document.getElementById(`receipt-mini-${plt}`);
+    const todayKST = getKSTDate();
+    const monthKey = `${todayKST.getFullYear()}-${String(todayKST.getMonth() + 1).padStart(2, '0')}`;
+    const monthlyHistory = JSON.parse(localStorage.getItem('monthlyHistory')) || {};
+    const thisMonthData = monthlyHistory[monthKey];
 
-    const isDark = document.body.classList.contains('dark-mode');
-    const bgColor = isDark ? '#2c2c2e' : '#ffffff';
+    if (!thisMonthData || !thisMonthData[plt]) {
+        alert("저장할 결제 내역이 없습니다!");
+        return;
+    }
 
-    // 2. 그 부분만 예쁘게 잘라서 찰칵!
-    html2canvas(targetElement, {
-        scale: 3, // 낱장은 더 선명하게 3배 화질로!
-        backgroundColor: bgColor,
-        useCORS: true
-    }).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
+    const works = thisMonthData[plt];
+    let workTitles = Object.keys(works);
+    if (workTitles.length === 0) return;
 
-        const todayKST = getKSTDate();
-        const month = todayKST.getMonth() + 1;
-        // 파일 이름도 센스있게: "모보_4월_레진_정산서.png"
-        link.download = `모보_${month}월_${pltName}_정산서.png`;
+    workTitles.sort((a, b) => works[b] - works[a]);
+    const top5Titles = workTitles.slice(0, 5);
+    const hiddenCount = workTitles.length - 5;
 
-        link.href = imgData;
-        link.click();
-    }).catch(err => {
-        alert('이미지 저장 중에 오류가 발생했어요.');
-    });
+    let totalPltSpent = 0;
+    workTitles.forEach(t => totalPltSpent += works[t]);
+    const unit = (plt === 'ridi') ? '캐시' : (plt === 'mrblue' ? '머니' : 'C');
+
+    const imgPath = `./images/${plt}_bg.png`;
+
+    const bgImage = new Image();
+    bgImage.src = imgPath;
+
+    bgImage.onload = () => {
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'fixed';
+        tempDiv.style.top = '0';
+        tempDiv.style.left = '-9999px';
+
+        tempDiv.innerHTML = `
+            <div id="temp-y2k-receipt" style="
+                width: 320px; 
+                height: 540px; 
+                position: relative;
+                color: #4c4c4c; 
+                font-family: 'Courier Prime', 'Courier New', Courier, monospace; 
+                font-size: 11px;
+                font-weight: 900;
+                box-sizing: border-box;
+                background-color: transparent; 
+            ">
+                <div style="position: relative; z-index: 10; padding: 120px 20px 20px 20px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box;">
+                    <div style="text-align: center; margin-bottom: 8px;">
+                        ======================================<br>
+                        <span style="font-size: 14px; letter-spacing: 2px;">M O B O &nbsp; R E C E I P T</span><br>
+                        ======================================
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; padding: 0 5px;">
+                        <span>DATE: ${todayKST.getFullYear()}.${String(todayKST.getMonth() + 1).padStart(2, '0')}.${String(todayKST.getDate()).padStart(2, '0')}</span>
+                        <span>TIME: ${String(todayKST.getHours()).padStart(2, '0')}:${String(todayKST.getMinutes()).padStart(2, '0')}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 0 5px;">
+                        <span>POS: MOBO</span>
+                        <span>CASHIER: s_euni_</span>
+                    </div>
+
+                    <div style="border-bottom: 1px dashed #4c4c4c; margin-bottom: 8px;"></div>
+
+                    <div style="display: flex; justify-content: space-between; padding: 0 5px; margin-bottom: 6px;">
+                        <span>[ TITLE ]</span>
+                        <span>[ AMOUNT ]</span>
+                    </div>
+
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 0 5px;">
+                        ${top5Titles.map((title, index) => `
+                        <div style="display: flex; align-items: flex-end; width: 100%;">
+                            <span style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${String(index + 1).padStart(2, '0')}. ${title}
+                            </span>
+                            <span style="flex: 1; border-bottom: 1.5px dashed #4c4c4c; margin: 0 5px; position: relative; top: -4px;"></span>
+                            <span style="white-space: nowrap;">${formatNum(works[title])}</span>
+                        </div>
+                        `).join('')}
+                        
+                        ${hiddenCount > 0 ? `
+                        <div style="text-align: center; margin-top: 2px; margin-bottom: 2px; line-height: 0.6; font-size: 16px; font-weight: bold;">
+                            .<br>.<br>.
+                        </div>
+                        ` : ''}
+                    </div> 
+                    
+                    <div style="border-top: 1px dashed #4c4c4c; margin-top: ${hiddenCount > 0 ? '6px' : '10px'}; padding-top: 8px; padding-right: 5px; text-align: right; font-size: 13px;">
+                        TOTAL: <span style="font-size: 16px;">${formatNum(totalPltSpent)}</span> ${unit}
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px; margin-bottom: 8px;">
+                       
+                    </div>
+
+
+                    <div style="text-align: center; margin-bottom: 5px;">
+                        <div style="font-family: 'Libre Barcode 39', cursive; font-size: 58px; line-height: 0.7; font-weight: normal; transform: scaleY(1.3);">
+                            *MOBO2026*
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; font-size: 10px;">
+                        모보를 사용해 주셔서 감사합니다.<br>
+                        THANK YOU FOR USING MOBO
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(tempDiv);
+        const targetElement = tempDiv.querySelector('#temp-y2k-receipt');
+
+        html2canvas(targetElement, {
+            scale: 3,
+            backgroundColor: null,
+            useCORS: true,
+            scrollY: -window.scrollY
+        }).then(textCanvas => {
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = 320 * 3;
+            finalCanvas.height = 540 * 3;
+            const ctx = finalCanvas.getContext('2d');
+
+            ctx.drawImage(bgImage, 0, 0, finalCanvas.width, finalCanvas.height);
+            ctx.drawImage(textCanvas, 0, 0);
+
+            const imgData = finalCanvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `모보_${todayKST.getMonth() + 1}월_${pltName}_정산서.png`;
+            link.href = imgData;
+            link.click();
+
+            document.body.removeChild(tempDiv);
+        }).catch(err => {
+            alert('이미지 저장 중 오류가 발생했습니다.');
+            document.body.removeChild(tempDiv);
+        });
+    };
+
+    bgImage.onerror = () => {
+        alert("배경 이미지(" + imgPath + ")를 찾을 수 없습니다. 경로를 다시 한번 확인해 주세요!");
+    };
 }
-
 
 // 숨어있는 좀비 장부까지 완벽하게 불태우는 강력한 청소기!
 function cleanupIncorrectHistoryV2() {
