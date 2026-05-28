@@ -3121,7 +3121,7 @@ async function checkRemoteUpdate() {
 
             // 🌟 3. 에러 많던 푸시 알림(Notification) 로직은 버리고, 무조건 뜨는 중앙 팝업으로 통일!
             setTimeout(() => {
-                if (confirm(`[모보 오류 안정화 소식]\n\n${data.title}\n${data.message}\n\n`)) {
+                if (confirm(`[모보 업데이트 소식]\n\n${data.title}\n${data.message}\n\n`)) {
                     // 🌟 4. 확인 버튼을 누르면 애널리틱스에 '클릭' 기록 후 이동!
                     if (typeof gtag === 'function') {
                         gtag('event', 'popup_click', { 'event_category': 'notice', 'event_label': 'confirm' });
@@ -3259,8 +3259,12 @@ function saveSingleReceipt(plt, pltName) {
     if (workTitles.length === 0) return;
 
     workTitles.sort((a, b) => works[b] - works[a]);
-    const top5Titles = workTitles.slice(0, 5);
-    const hiddenCount = workTitles.length - 5;
+
+    // 🌟 6개 이상이면 탑 4개만, 아니면 전부 다 자르기!
+    const isOver5 = workTitles.length > 5;
+    const topCount = isOver5 ? 4 : workTitles.length;
+    const topTitles = workTitles.slice(0, topCount);
+    const padLen = workTitles.length >= 100 ? 3 : 2;
 
     let totalPltSpent = 0;
     workTitles.forEach(t => totalPltSpent += works[t]);
@@ -3313,24 +3317,32 @@ function saveSingleReceipt(plt, pltName) {
                     </div>
 
                     <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 0 5px;">
-                        ${top5Titles.map((title, index) => `
+                        ${topTitles.map((title, index) => `
                         <div style="display: flex; align-items: flex-end; width: 100%;">
                             <span style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                ${String(index + 1).padStart(2, '0')}. ${title}
+                                ${String(index + 1).padStart(padLen, '0')}. ${title}
                             </span>
                             <span style="flex: 1; border-bottom: 1.5px dashed #4c4c4c; margin: 0 5px; position: relative; top: -4px;"></span>
                             <span style="white-space: nowrap;">${formatNum(works[title])}</span>
                         </div>
                         `).join('')}
                         
-                        ${hiddenCount > 0 ? `
-                        <div style="text-align: center; margin-top: 2px; margin-bottom: 2px; line-height: 0.6; font-size: 16px; font-weight: bold;">
-                            .<br>.<br>.
-                        </div>
-                        ` : ''}
+                        ${isOver5 ? `
+    <div style="text-align: center; margin-top: 2px; margin-bottom: 2px; line-height: 0.6; font-size: 16px; font-weight: bold;">
+        .<br>.<br>.
+    </div>
+    <!-- 🌟 마지막 작품 등수와 금액을 렌더링 -->
+    <div style="display: flex; align-items: flex-end; width: 100%;">
+        <span style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            ${String(workTitles.length).padStart(padLen, '0')}. ${workTitles[workTitles.length - 1]}
+        </span>
+        <span style="flex: 1; border-bottom: 1.5px dashed #4c4c4c; margin: 0 5px; position: relative; top: -4px;"></span>
+        <span style="white-space: nowrap;">${formatNum(works[workTitles[workTitles.length - 1]])}</span>
+    </div>
+    ` : ''}
                     </div> 
                     
-                    <div style="border-top: 1px dashed #4c4c4c; margin-top: ${hiddenCount > 0 ? '6px' : '10px'}; padding-top: 8px; padding-right: 5px; text-align: right; font-size: 13px;">
+                    <div style="border-top: 1px dashed #4c4c4c; margin-top: ${isOver5 > 0 ? '6px' : '10px'}; padding-top: 8px; padding-right: 5px; text-align: right; font-size: 13px;">
                         TOTAL: <span style="font-size: 16px;">${formatNum(totalPltSpent)}</span> ${unit}
                     </div>
                     
