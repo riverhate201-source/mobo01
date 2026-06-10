@@ -3200,6 +3200,123 @@ body.dark-mode .sync-btn:hover {
     /* 처음엔 숨겨두기 */
 }
 
+/* --- 📅 휴재 설정 영역 (라이트 모드 기본) --- */
+.break-setting-row {
+    display: none;
+    /* 기본 상태는 숨김 */
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.break-date-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 13px;
+    background-color: #fff;
+    color: #333;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.break-btn {
+    margin-bottom: 12px;
+    padding: 13px 10px;
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+    border-radius: 7px;
+    font-size: 12px;
+    color: #333;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s ease;
+}
+
+.break-btn:active {
+    background: #e0e0e0;
+}
+
+.break-btn-clear {
+    background: #fff;
+    color: #333;
+    /* 미정 버튼은 눈에 띄는 빨간색 */
+    font-weight: 600;
+}
+
+/* --- 🌙 휴재 설정 영역 (다크 모드 대응) --- */
+body.dark-mode .break-date-input {
+    background-color: #2c2c2c;
+    border-color: #555;
+    color: #eee;
+    color-scheme: dark;
+    /* 브라우저 기본 달력 팝업창까지 다크모드로 변경해주는 꿀팁! */
+}
+
+body.dark-mode .break-btn {
+    background: #3a3a3a;
+    border-color: #555;
+    color: #eee;
+}
+
+body.dark-mode .break-btn:active {
+    background: #555;
+}
+
+body.dark-mode .break-btn-clear {
+    background: #2c2c2c;
+    color: #eee;
+    font-weight: 600;
+    /* 다크모드에서는 조금 더 화사한 핑크/코랄빛으로 변경 */
+}
+
+
+
+/* --- 🍞 토스트 팝업 (기본 라이트 모드) --- */
+.mobo-toast {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: rgba(45, 52, 54, 0.95);
+    /* 세련된 다크그레이 */
+    color: #fff;
+    text-align: center;
+    border-radius: 8px;
+    padding: 14px 20px;
+    position: fixed;
+    /* 화면 어디에 있든 고정! */
+    z-index: 9999;
+    /* 무조건 제일 위에! */
+    left: 50%;
+    bottom: 40px;
+    /* 화면 아래쪽에서 띄움 */
+    transform: translateX(-50%) translateY(20px);
+    /* 가운데 정렬 & 살짝 아래로 내려둠 */
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+}
+
+/* 토스트가 화면에 나타날 때 (JS로 이 클래스를 붙여줄 거예요) */
+.mobo-toast.show {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    /* 스르륵 제자리로 올라옴! */
+}
+
+/* --- 🌙 토스트 팝업 (다크 모드) --- */
+body.dark-mode .mobo-toast {
+    background-color: rgba(245, 246, 250, 0.95);
+    /* 다크모드에선 오히려 밝게 해서 대비 효과! */
+    color: #2d3436;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
 a[x-apple-data-detectors] {
     color: inherit !important;

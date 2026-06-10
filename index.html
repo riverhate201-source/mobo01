@@ -519,16 +519,17 @@
                     </div>
 
                     <select id="input-status" class="modal-select"
-                        style="width: 100%; margin-top: 4px; margin-bottom: 0;">
+                        style="width: 100%; margin-top: 4px; margin-bottom: 0;" onchange="toggleBreakSettingRow(this)">
                         <option value="연재중">연재 중</option>
-                        <option value="휴재">휴재 (코인 안빠짐)</option>
-                        <option value="완결">완결 (코인 안빠짐)</option>
+                        <option value="휴재">휴재 (코인 안 빠짐)</option>
+                        <option value="완결">완결 (코인 안 빠짐)</option>
                     </select>
                 </div>
 
                 <!-- 3️⃣ 단일 추가 전용 아랫부분 (주기, 코인, 결제, 사진) -->
                 <div id="single-add-section-2">
-                    <div style="display: flex; gap: 10px; margin-top: 8px; margin-bottom: 12px;">
+
+                    <div id="cycle-row" style="display: flex; gap: 10px; margin-top: 8px; margin-bottom: 12px;">
                         <select id="input-cycle-type" class="modal-select" style="flex: 2; margin-bottom: 0;"
                             onchange="toggleCycleInputs(this)">
                             <option value="">특정 연재주기 선택 (없음)</option>
@@ -541,6 +542,20 @@
                         </select>
                         <input type="text" id="input-cycle-week" placeholder="n주차 (숫자)"
                             style="display: none; flex: 1; margin-bottom: 0; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+
+                    <div id="break-setting-row" class="break-setting-row">
+                        <input type="date" id="break-return-date" class="break-date-input"
+                            onchange="clearActiveBreakBtns()">
+
+                        <button type="button" id="btn-break-1" class="break-btn"
+                            onclick="setBreakWeeks(1, this)">+1주</button>
+
+                        <button type="button" id="btn-break-2" class="break-btn"
+                            onclick="setBreakMonths(1, this)">+1달</button>
+
+                        <button type="button" class="break-btn break-btn-clear"
+                            onclick="clearBreakDate(this)">미정</button>
                     </div>
 
                     <div style="display: flex; gap: 10px;">
@@ -751,6 +766,8 @@
             <button id="toast-undo-btn" onclick="undoDelete()">실행 취소</button>
         </div>
 
+        <div id="mobo-toast" class="mobo-toast"></div>
+
         <div id="drawer-modal" class="modal-overlay" style="display: none; z-index: 5500;">
             <div class="modal-content"
                 style="max-width: 320px; position: relative; max-height: 75vh; display: flex; flex-direction: column; padding: 25px 20px;">
@@ -862,6 +879,20 @@
             </svg>
         </button>
     </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('오프라인 모드 준비 완료! 😎', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('오프라인 모드 설정 실패 ㅠㅠ', err);
+                    });
+            });
+        }
+    </script>
 
 </body>
 
