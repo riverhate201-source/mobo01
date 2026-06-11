@@ -120,7 +120,34 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 
+// // ⏱️ [모보 전용 얼음! 타임머신]
+// // 여기서 시간을 설정하면, 1초도 흐르지 않고 무조건 딱 이 시간에 멈춰 있습니다!
+// // 평소에 진짜 시간을 쓸 때는 null 로 바꿔주세요.
 
+// const TIME_MACHINE = '2026-06-13T22:00:00'; // 원하는 시간으로 설정 (예: 밤 9시 59분 50초)
+// // const TIME_MACHINE = null; // 끄기 (진짜 시간으로 돌아가기)
+
+// function getKSTDate() {
+//     // 🌟 타임머신이 켜져 있으면, 무조건 설정한 가짜 시간으로 고정!
+//     if (TIME_MACHINE) {
+//         return new Date(TIME_MACHINE);
+//     }
+
+//     // 타임머신이 꺼져 있으면(null) 평소처럼 진짜 한국 시간을 반환!
+//     const now = new Date();
+//     const utc = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+//     return new Date(utc + (9 * 60 * 60 * 1000));
+// }
+
+// function getWebtoonDate() {
+//     const kst = getKSTDate();
+//     if (kst.getHours() >= 22) kst.setDate(kst.getDate() + 1);
+//     return kst;
+// }
+
+// function formatDate(dateObj) {
+//     return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+// }
 
 function getKSTDate() { const now = new Date(); const utc = now.getTime() + (now.getTimezoneOffset() * 60 * 1000); return new Date(utc + (9 * 60 * 60 * 1000)); }
 
@@ -267,19 +294,37 @@ let state = {
 let platformOrder = JSON.parse(localStorage.getItem('platformOrder')) || ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
 
 window.onload = function () {
-    requestNotificationPermission(); // 1. 권한 확인
-    loadAllData();
+    requestNotificationPermission(); // 1. 권한 확인 (기존과 똑같이 맨 위!)
+
+    // 🛡️ [안전장치 1] 데이터 부르다 꼬여도 앱 멈추지 않게 방어!
+    try { loadAllData(); } catch (e) { console.error("데이터 로드 에러:", e); }
+
     cleanupIncorrectHistoryV2();
     applyTheme();
-    lucide.createIcons();
+
+    // 🛡️ [안전장치 2] 오프라인이라 아이콘(lucide) 인터넷에서 못 가져와도 에러 안 나게 방어!
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    } else {
+        console.warn("오프라인 상태라 외부 아이콘 로드를 건너뜁니다.");
+    }
+
     checkCoinExpiration();
     checkSaleDays();
     checkAttendanceReset();
     checkAndShowAttendPopup();
+
+    // 🌟 [유일하게 추가된 줄] 오프라인일 때 통계창이 증발하는 걸 막기 위해 이걸 정산창보다 먼저 실행하게 끌어올렸어요!
+    updateWeeklyStatUI();
     askForDeduction();
+
     viewDay = days[getWebtoonDate().getDay()];
-    renderAll(); initScroll();
-    checkStorage(); checkBackupStatus(); updatePlatformOrder();
+    renderAll();
+    initScroll();
+
+    checkStorage();
+    checkBackupStatus();
+    updatePlatformOrder();
     checkRemoteUpdate(); // 2. 업데이트 소식 체크
     autoUpdatePastBiweeklyDates(); // 🔥 앱 처음 켤 때도 날짜 갱신 검사!
     initThemeSwitchSwipe();
@@ -902,14 +947,19 @@ function askForDeduction() {
         }
 
         const hasWorks = platformOrder.some(plt => pendingDeductions[plt].length > 0);
+
+        // 🌟 [핵심 수정] 정산 팝업을 띄우기 '전'에 무조건 통계부터 화면에 그리게 끌어올림!
+        updateWeeklyStatUI();
+
         if (hasWorks) {
             pendingDaysStr = ds.join(', '); showDeductionModal(); return;
         } else {
             localStorage.setItem('lastCheckDate', nowStr);
         }
     }
-    updateWeeklyStatUI();
+    // (기존의 맨 밑에 있던 updateWeeklyStatUI()는 지워주셔도 됩니다!)
 }
+
 
 function showDeductionModal() {
     const listEl = document.getElementById('deduction-list'); listEl.innerHTML = '';
@@ -1549,8 +1599,29 @@ function renderList(platform) {
                             }
                         }
                     }
-                    // 🚨 VIP 이름표(isTodayBiweekly) 부착!
-                    displayWorks.push({ ...work, origDay: d, origIdx: idx, isTodayBiweekly: isTodayRelease });
+                    // 🌟 카드를 화면에 그리기 직전에 무적의 서열을 정리합니다!
+                    displayWorks.sort((a, b) => {
+                        // 1순위: 메인 탭 VIP 주인공 (10일/격주) - 단, 휴재나 완결이 아닐 때!
+                        const isVipA = (a.isToday10Day || a.isTodayBiweekly) && !isWorkOnBreak(a);
+                        const isVipB = (b.isToday10Day || b.isTodayBiweekly) && !isWorkOnBreak(b);
+                        if (isVipA && !isVipB) return -1;
+                        if (!isVipA && isVipB) return 1;
+
+                        // 2순위: 휴재 작품들 완벽 서열 정리 (가장 빠른 복귀일 -> 장기 휴재/완결)
+                        const hasDateA = a.status === '휴재' && a.breakDate && a.breakDate.trim() !== "";
+                        const hasDateB = b.status === '휴재' && b.breakDate && b.breakDate.trim() !== "";
+
+                        // 💡 둘 다 확정 복귀일이 있다면? -> 날짜가 가장 가까운(빠른) 순서대로 1등!
+                        if (hasDateA && hasDateB) {
+                            return new Date(a.breakDate) - new Date(b.breakDate);
+                        }
+
+                        // 💡 둘 중 하나만 확정 복귀일이 있다면? -> 날짜 있는 녀석을 장기휴재보다 위로 올리기!
+                        if (hasDateA && !hasDateB) return -1;
+                        if (!hasDateA && hasDateB) return 1;
+
+                        return 0; // 나머지는 기존 순서 유지 (장기휴재끼리, 완결끼리)
+                    });
                 }
             });
         });
@@ -1568,7 +1639,7 @@ function renderList(platform) {
     else {
         (state[platform][viewDay] || []).forEach((work, idx) => { displayWorks.push({ ...work, origDay: viewDay, origIdx: idx }); });
 
-        // 🌟 [핵심] 일반 요일 탭에서 10일 연재작 등판!
+        // 🌟 일반 요일 탭에서 10일 연재작 등판!
         const targetDate = getTargetDateForViewDay(viewDay);
         (state[platform]["10일 연재"] || []).forEach((work, idx) => {
             if (isDateMatch(work.cycle, targetDate, platform)) {
@@ -1576,7 +1647,7 @@ function renderList(platform) {
             }
         });
 
-        // 🔥 [추가] 일반 요일 탭에서 격주 연재작도 날짜(예: 4/10)가 맞으면 등판!
+        // 🔥 일반 요일 탭에서 격주 연재작 등판!
         (state[platform]["격주 연재"] || []).forEach((work, idx) => {
             if (work.cycle && work.cycle.includes('격주 연재')) {
                 let match = work.cycle.match(/\((.*?)\)/);
@@ -1584,10 +1655,7 @@ function renderList(platform) {
                     const parts = match[1].split('/');
                     if (parts.length === 2) {
                         const d = new Date(targetDate.getFullYear(), parseInt(parts[0]) - 1, parseInt(parts[1]));
-                        // 연도 보정 (안전장치)
-                        if (d.getTime() - targetDate.getTime() > 180 * 24 * 60 * 60 * 1000) {
-                            d.setFullYear(targetDate.getFullYear() - 1);
-                        }
+                        if (d.getTime() - targetDate.getTime() > 180 * 24 * 60 * 60 * 1000) d.setFullYear(targetDate.getFullYear() - 1);
                         if (d.getMonth() === targetDate.getMonth() && d.getDate() === targetDate.getDate()) {
                             displayWorks.push({ ...work, origDay: "격주 연재", origIdx: idx, isTodayBiweekly: true });
                         }
@@ -1595,34 +1663,94 @@ function renderList(platform) {
                 }
             }
         });
+
+        // 🚨 다른 폴더에 숨어있는 '오늘 복귀작' 강제로 소환하기 (이름표는 밑에서 한 번에 달아줍니다!)
+        Object.keys(state[platform]).forEach(dayKey => {
+            if (dayKey !== viewDay && dayKey !== "10일 연재" && dayKey !== "격주 연재") {
+                (state[platform][dayKey] || []).forEach((work, idx) => {
+                    if (work.status === '휴재' && work.breakDate && work.breakDate.trim() !== "") {
+                        const daysArr = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+                        if (daysArr[new Date(work.breakDate).getDay()] === viewDay) {
+                            const isAlreadyIn = displayWorks.some(w => w.title === work.title);
+                            if (!isAlreadyIn) {
+                                displayWorks.push({ ...work, origDay: dayKey, origIdx: idx });
+                            }
+                        }
+                    }
+                });
+            }
+        });
     }
 
+    // 🌟 [버그 해결 핵심 코드!] 어디서 왔든 상관없이 '오늘 복귀' 조건이 맞으면 모두에게 VIP 이름표 부착!
+    const weekDaysArr = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+    displayWorks.forEach(work => {
+        if (work.status === '휴재' && work.breakDate && work.breakDate.trim() !== "") {
+            if (weekDaysArr[new Date(work.breakDate).getDay()] === viewDay) {
+                work.isReturningToday = true; // 🚨 너 오늘 나오는구나? VIP 프리패스 통과!
+            }
+        }
+    });
 
-
-    // 🌟 [필터링 완벽 수정] 숨기기 기능은 오직 '메인 화면(월~일)'에서만 작동하게 제한!
+    // 🌟 [1단계: 필터링 완벽 수정] 숨기기 기능은 오직 '메인 화면(월~일)'에서만 작동!
     const regularDays = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
 
     if (regularDays.includes(viewDay)) {
-        // 유저가 누른 탭이 메인 화면(월~일)일 때만 숨기기 토글의 말을 듣습니다.
         if (isHidingFinished[platform]) {
-            displayWorks = displayWorks.filter(work => !isWorkOnBreak(work));
+            displayWorks = displayWorks.filter(work => {
+                if (work.status === '완결') return false;
+
+                if (work.status === '휴재' || isWorkOnAutoBreak(work)) {
+                    // 💡 위에서 무조건 달아준 VIP 이름표 덕분에 이제 절대 안 숨겨집니다!
+                    if (work.isReturningToday) return true;
+                    return false;
+                }
+                return true;
+            });
         }
     }
-    // 💡 전용 탭(10일 연재, 격주 연재, 휴재/완결)에서는 필터링을 아예 안 하니까 숨김 없이 무조건 다 보여줍니다!
 
-    // [추가] 만약 오늘 볼 작품이 0개라면? 안내 문구 띄우기!
+    // 🌟 [2단계: 최종 보스 서열 정리] 휴재 탭과 일반 탭을 완벽하게 나눠서 줄 세우기!
+    if (viewDay === '휴재' || viewDay === '휴재 중인 작품' || viewDay.includes('휴재') || viewDay === '휴재 및 완결') {
+        // 👉 (1) 휴재 탭 전용: 복귀일 빠른 순 -> 장기 휴재
+        displayWorks.sort((a, b) => {
+            const hasDateA = a.status === '휴재' && a.breakDate && a.breakDate.trim() !== "";
+            const hasDateB = b.status === '휴재' && b.breakDate && b.breakDate.trim() !== "";
+            if (hasDateA && hasDateB) return new Date(a.breakDate) - new Date(b.breakDate);
+            if (hasDateA && !hasDateB) return -1;
+            if (!hasDateA && hasDateB) return 1;
+            return 0;
+        });
+    } else if (viewDay !== '전체') {
+        // 👉 (2) 일반 요일 탭 전용: 10일/격주(1등) -> 오늘 복귀작(2등) -> 일반작(3등)
+        displayWorks.sort((a, b) => {
+            const isVipA = (a.isToday10Day || a.isTodayBiweekly) && a.status !== '휴재';
+            const isVipB = (b.isToday10Day || b.isTodayBiweekly) && b.status !== '휴재';
+            if (isVipA && !isVipB) return -1;
+            if (!isVipA && isVipB) return 1;
+
+            if (a.isReturningToday && !b.isReturningToday) return -1;
+            if (!a.isReturningToday && b.isReturningToday) return 1;
+            if (a.isReturningToday && b.isReturningToday) return new Date(a.breakDate) - new Date(b.breakDate);
+
+            return 0;
+        });
+    }
+
+    // 🌟 [3단계: 빈 화면 처리] 만약 오늘 볼 작품이 0개라면? 안내 문구 띄우기!
     if (displayWorks.length === 0) {
         listEl.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; padding: 30px 0;">
-    <p style="margin: 0; margin-top:5px; font-size: 11px; font-weight: bold; color: #555;">오늘은 연재 작품이 없어요!</p>
-    <p style="margin: 5px 0 0 0; font-size: 11px; color: #aaa;">여유롭게 정주행은 어떠신가요?</p>
-</div>
-    `;
-        return; // 카드를 그리지 않고 여기서 멈춤!
+            <p style="margin: 0; margin-top:5px; font-size: 11px; font-weight: bold; color: #555;">오늘은 연재 작품이 없어요!</p>
+            <p style="margin: 5px 0 0 0; font-size: 11px; color: #aaa;">여유롭게 정주행은 어떠신가요?</p>
+        </div>
+        `;
+        return;
     }
 
-    // 화면에 카드 그리기
-    displayWorks.forEach((work) => {
+    // 🌟 [4단계: 카드 그리기] 이미 필터링과 정렬이 끝났으니, 여기선 그냥 그리기만 하면 됩니다!
+    displayWorks.forEach((work, index) => {
+        // 🚨 주의: 이 아래에는 if (isHidingFinished) 로 시작하는 숨김 코드가 일절 없어야 합니다! 🚨
         const hasImg = work.img && work.img !== "";
         let statusBadge = "";
         let isBreak = isWorkOnBreak(work);
@@ -1782,12 +1910,7 @@ function renderList(platform) {
             </div>
         </div>
     </div>`;
-        // 🌟 10일 연재/격주 연재 주인공은 맨 앞으로! (단, 휴재/완결 상태가 '아닐 때'만 위로 올리기!)
-        if ((work.isToday10Day || work.isTodayBiweekly) && work.status !== '휴재' && work.status !== '완결') {
-            listEl.prepend(card);
-        } else {
-            listEl.appendChild(card); // 휴재/완결인 애들은 10일 연재여도 얌전히 밑으로!
-        }
+        listEl.appendChild(card);
     });
 
     checkScrollArrows();
@@ -4222,7 +4345,7 @@ function toggleBreakSettingRow(selectElement) {
 // 🌟 1. 버튼 색상(활성화 상태) 초기화 함수
 function clearActiveBreakBtns() {
     document.querySelectorAll('.break-btn').forEach(btn => {
-        btn.classList.remove('active-btn');
+        btn.classList.remove('active-btn', 'active-btn-long-break');
     });
 }
 
@@ -4300,7 +4423,7 @@ function clearBreakDate(btnElement) {
 
     // 버튼 활성화 & 반짝임 효과
     clearActiveBreakBtns();
-    if (btnElement) btnElement.classList.add('active-btn');
+    if (btnElement) btnElement.classList.add('active-btn', 'active-btn-long-break');
 
     dateInput.classList.remove('flash-effect');
     void dateInput.offsetWidth;
