@@ -1629,8 +1629,10 @@ function renderList(platform) {
 
         // 🌟 1. 상태 뱃지 (휴재/완결) - 날짜 중복 제거하고 깔끔하게 텍스트만!
         if (work.status === '휴재') {
-            const label = work.breakDate ? '휴재' : '장기 휴재';
-            statusBadge = `<span style="background: #e67e22; color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 12px; font-weight: 500;">[휴재]</span>`;
+            // 🌟 [최종 방어] breakDate가 아예 없거나(구버전 데이터), 빈 문자열이면 무조건 '장기 휴재'!
+            const isLongBreak = !work.breakDate || work.breakDate.trim() === "";
+            const label = isLongBreak ? '[장기휴재]' : '[휴재]';
+            statusBadge = `<span style="background: #e67e22; color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 12px; font-weight: 500;">${label}</span>`;
         } else if (work.status === '완결') {
             statusBadge = `<span style="background: #7f8c8d; color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 12px; font-weight: 500;">[완결]</span>`;
         } else if (isBreak) {
@@ -3615,7 +3617,9 @@ function openGlobalDrawerModal(activePlt) {
                 let isBreak = isWorkOnAutoBreak(work);
 
                 if (work.status === '휴재') {
-                    // 💡 breakDate가 있으면 '휴재', 없으면(미정이면) '장기 휴재'로 표시!
+                    // 🌟 [최종 방어] 기존 유저 데이터까지 모두 포용하는 장기 휴재 로직
+                    const isLongBreak = !work.breakDate || work.breakDate.trim() === "";
+                    const label = isLongBreak ? '장기 휴재' : '휴재';
                     badgeHtml = `<span class="drawer-badge badge-break">${label}</span>`;
                 }
                 else if (work.status === '완결') {
@@ -3757,12 +3761,25 @@ if (savedHideData) {
 function toggleFilterMenu(plt) {
     currentFilterPlt = plt;
 
-    // 🌟 모달창 열 때, 지금 누른 플랫폼이 숨기기 상태인지 아닌지 확인해서 글씨를 맞춰줍니다!
     const hideText = document.getElementById('hide-text');
-    if (isHidingFinished[currentFilterPlt]) {
-        hideText.innerText = "휴재 및 완결 작품 꺼내기";
-    } else {
-        hideText.innerText = "휴재 및 완결 작품 숨기기";
+    // 🌟 [핵심] HTML에 있는 두 번째 하얀 버튼 전체를 정확한 ID로 콕 집어냅니다!
+    const hideBtn = document.getElementById('toggle-hide-btn');
+
+    if (hideText) {
+        if (isHidingFinished[currentFilterPlt]) {
+            hideText.innerText = "휴재 및 완결 작품 꺼내기";
+        } else {
+            hideText.innerText = "휴재 및 완결 작품 숨기기";
+        }
+    }
+
+    // 🌟 [무적 숨기기] 탭 이름이 '휴재'나 '완결'일 때는 하얀 버튼 전체를 흔적도 없이 날려버립니다!
+    if (hideBtn) {
+        if (viewDay === '휴재' || viewDay === '완결') {
+            hideBtn.style.display = 'none'; // 싹 숨기기
+        } else {
+            hideBtn.style.display = ''; // 일반 요일 탭에서는 원래 예쁜 모양으로 복구하기!
+        }
     }
 
     document.getElementById('filter-modal').style.display = 'flex';
@@ -3930,7 +3947,10 @@ function renderReorderList() {
         let badgeHtml = '';
         let isBreak = isWorkOnBreak(work);
         if (work.status === '휴재') {
-            badgeHtml = `<span style="font-size: 11px; background: #e67e22; color: #fff; padding: 2px 5px; border-radius: 4px; margin-right: 8px; font-weight: bold;">휴재</span>`;
+            // 🌟 [최종 방어] 기존 유저 데이터까지 모두 포용하는 장기 휴재 로직
+            const isLongBreak = !work.breakDate || work.breakDate.trim() === "";
+            const label = isLongBreak ? '장기 휴재' : '휴재';
+            badgeHtml = `<span style="font-size: 11px; background: #e67e22; color: #fff; padding: 2px 5px; border-radius: 4px; margin-right: 8px; font-weight: bold;">${label}</span>`;
         } else if (work.status === '완결') {
             badgeHtml = `<span style="font-size: 11px; background: #7f8c8d; color: #fff; padding: 2px 5px; border-radius: 4px; margin-right: 8px; font-weight: bold;">완결</span>`;
         } else if (isBreak) {
