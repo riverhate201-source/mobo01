@@ -1052,16 +1052,35 @@ function autoUpdatePastBiweeklyDates() {
         Object.keys(state[plt]).forEach(day => {
             state[plt][day].forEach(work => {
 
-                // 🔥 1. [신규 마법] 휴재 복귀일이 다가왔다면?! -> 자동으로 연재중으로 부활!
+                // 🔥 1. [완성형] 휴재 복귀 시 부활 + 원래 요일의 원래 순서로 이사!
                 if (work.status === '휴재' && work.breakDate) {
-                    // 웹툰 시간이 복귀일(예: 6/25)에 도달했거나 지났다면
                     if (todayStr >= work.breakDate) {
-                        work.status = '연재중'; // 연재중으로 상태 복구
-                        work.breakDate = '';    // 달력 날짜 지우기
+                        work.status = '연재중';
+                        work.breakDate = '';
+
+                        // 🌟 [핵심 1] 원래 집(origDay)으로 이사
+                        if (work.origDay && work.origDay !== '휴재' && work.origDay !== '10일 연재' && work.origDay !== '격주 연재') {
+                            let targetArr = state[plt][work.origDay];
+
+                            // 중복 방지 체크
+                            if (!targetArr.some(w => w.id === work.id)) {
+                                // 🌟 [핵심 2] 원래 인덱스 위치에 정확히 끼워 넣기
+                                if (work.origIdx !== undefined && work.origIdx <= targetArr.length) {
+                                    targetArr.splice(work.origIdx, 0, work);
+                                } else {
+                                    targetArr.push(work);
+                                }
+
+                                // 🌟 [핵심 3] 이사 온 후, 해당 요일의 전체 인덱스를 최신화!
+                                targetArr.forEach((w, i) => w.origIdx = i);
+                            }
+
+                            // 휴재 탭(현재의 day) 리스트에서 삭제
+                            state[plt][day] = state[plt][day].filter(w => w.id !== work.id);
+                        }
                         isUpdated = true;
                     }
                 }
-
                 // 🔥 2. 기존 로직 (격주 연재 날짜 넘기기)
                 if (work.cycle && work.cycle.includes('격주 연재')) {
                     let match = work.cycle.match(/\((.*?)\)/);
@@ -1434,9 +1453,13 @@ function loadAllData() {
     forceSortBreaks();
 }
 
-// 2. 데이터 저장하기 (🌟 조용히 저장하는 silent 옵션 추가!)
+// 2. 데이터 저장하기 (🌟 완전 무소음 완벽판!)
 function saveData(silent = false) {
-    forceSortBreaks(); // 🚨 새로운 걸 추가하거나 수정할 때도 무조건 청소기 돌리기!
+    // 🚨 [핵심 방어막] 배경에서 몰래 저장할 때(silent=true)는 청소기를 안 돌립니다!
+    // 유저가 앱을 조작 중일 때 갑자기 작품 순서가 덜컹거리는 부작용 100% 차단!
+    if (!silent) {
+        forceSortBreaks();
+    }
 
     const d = {
         state: state,
@@ -1463,8 +1486,6 @@ function saveData(silent = false) {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
 
-        // 🌟 [핵심] silent가 false일 때(기본 상태)만 화면을 다시 그립니다!
-        // 이사 함수가 saveData(true)로 부르면 이 부분은 무시하고 조용히 넘어갑니다.
         if (!silent) {
             renderAll();
             checkStorage();
@@ -1639,8 +1660,11 @@ function renderList(platform) {
     else {
         (state[platform][viewDay] || []).forEach((work, idx) => { displayWorks.push({ ...work, origDay: viewDay, origIdx: idx }); });
 
-        // 🌟 일반 요일 탭에서 10일 연재작 등판!
+        // 🌟 [핵심] 현재 보고 있는 탭의 '정확한 달력 날짜'를 구합니다! (예: 2026-06-24)
         const targetDate = getTargetDateForViewDay(viewDay);
+        const targetDateStr = formatDate(targetDate);
+
+        // 🌟 일반 요일 탭에서 10일 연재작 등판!
         (state[platform]["10일 연재"] || []).forEach((work, idx) => {
             if (isDateMatch(work.cycle, targetDate, platform)) {
                 displayWorks.push({ ...work, origDay: "10일 연재", origIdx: idx, isToday10Day: true });
@@ -1664,13 +1688,13 @@ function renderList(platform) {
             }
         });
 
-        // 🚨 다른 폴더에 숨어있는 '오늘 복귀작' 강제로 소환하기 (이름표는 밑에서 한 번에 달아줍니다!)
+        // 🚨 [수정된 강제 소환 로직] 다른 폴더 작품 중 복귀 '날짜'가 정확히 오늘인 녀석만 소환!
         Object.keys(state[platform]).forEach(dayKey => {
             if (dayKey !== viewDay && dayKey !== "10일 연재" && dayKey !== "격주 연재") {
                 (state[platform][dayKey] || []).forEach((work, idx) => {
                     if (work.status === '휴재' && work.breakDate && work.breakDate.trim() !== "") {
-                        const daysArr = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-                        if (daysArr[new Date(work.breakDate).getDay()] === viewDay) {
+                        // 🌟 요일(수요일)만 비교하는 게 아니라, 달력 날짜(YYYY-MM-DD)가 완벽히 같을 때만 소환!
+                        if (work.breakDate === targetDateStr) {
                             const isAlreadyIn = displayWorks.some(w => w.title === work.title);
                             if (!isAlreadyIn) {
                                 displayWorks.push({ ...work, origDay: dayKey, origIdx: idx });
@@ -1682,15 +1706,19 @@ function renderList(platform) {
         });
     }
 
-    // 🌟 [버그 해결 핵심 코드!] 어디서 왔든 상관없이 '오늘 복귀' 조건이 맞으면 모두에게 VIP 이름표 부착!
-    const weekDaysArr = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+    // 🌟 [핵심 방어막] 소환됐든 원래 폴더에 있었든, 탭 날짜와 복귀 날짜가 같으면 무조건 VIP 이름표 부착!
+    const targetDateForTag = getTargetDateForViewDay(viewDay);
+    const targetDateStrForTag = formatDate(targetDateForTag);
+
     displayWorks.forEach(work => {
         if (work.status === '휴재' && work.breakDate && work.breakDate.trim() !== "") {
-            if (weekDaysArr[new Date(work.breakDate).getDay()] === viewDay) {
-                work.isReturningToday = true; // 🚨 너 오늘 나오는구나? VIP 프리패스 통과!
+            // 🌟 여기서도 요일이 아니라, 정확한 날짜로 깐깐하게 검사합니다!
+            if (work.breakDate === targetDateStrForTag) {
+                work.isReturningToday = true; // 🚨 VIP 프리패스 통과!
             }
         }
     });
+
 
     // 🌟 [1단계: 필터링 완벽 수정] 숨기기 기능은 오직 '메인 화면(월~일)'에서만 작동!
     const regularDays = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
@@ -1712,13 +1740,23 @@ function renderList(platform) {
 
     // 🌟 [2단계: 최종 보스 서열 정리] 휴재 탭과 일반 탭을 완벽하게 나눠서 줄 세우기!
     if (viewDay === '휴재' || viewDay === '휴재 중인 작품' || viewDay.includes('휴재') || viewDay === '휴재 및 완결') {
-        // 👉 (1) 휴재 탭 전용: 복귀일 빠른 순 -> 장기 휴재
+        // 👉 휴재 탭 정렬 로직
         displayWorks.sort((a, b) => {
-            const hasDateA = a.status === '휴재' && a.breakDate && a.breakDate.trim() !== "";
-            const hasDateB = b.status === '휴재' && b.breakDate && b.breakDate.trim() !== "";
-            if (hasDateA && hasDateB) return new Date(a.breakDate) - new Date(b.breakDate);
-            if (hasDateA && !hasDateB) return -1;
-            if (!hasDateA && hasDateB) return 1;
+            // 순위 판독기: 1(복귀일 있는 휴재) > 2(자동/정기 휴재) > 3(장기 휴재)
+            const getRank = (w) => {
+                if (w.status === '휴재' && w.breakDate && w.breakDate.trim() !== "") return 1;
+                if (isWorkOnAutoBreak(w)) return 2;
+                return 3;
+            };
+
+            const rankA = getRank(a);
+            const rankB = getRank(b);
+
+            if (rankA !== rankB) return rankA - rankB;
+
+            // 같은 순위라면 복귀일이 빠른 순(복귀일 있는 경우만)
+            if (rankA === 1) return new Date(a.breakDate) - new Date(b.breakDate);
+
             return 0;
         });
     } else if (viewDay !== '전체') {
@@ -2125,9 +2163,8 @@ function toggleCycleInputs(changedEl) {
     }
 }
 
-function removeSelectedImage() { tempImg = ""; document.getElementById('image-input').value = ""; document.getElementById('image-status-text').textContent = "📷 사진이 삭제되었습니다."; document.getElementById('image-status-text').style.color = "#e60012"; document.getElementById('remove-img-btn').style.display = 'none'; }
+function removeSelectedImage() { tempImg = ""; document.getElementById('image-input').value = ""; document.getElementById('image-status-text').textContent = "사진이 삭제되었습니다."; document.getElementById('image-status-text').style.color = "#e60012"; document.getElementById('remove-img-btn').style.display = 'none'; }
 
-// 작품 수정 창 열기 (저장된 시간 불러오기 + 여러 요일 체크박스 동기화!)
 function editFromAction() {
     closeActionModal();
     editMode = true;
@@ -2230,6 +2267,16 @@ function editFromAction() {
     // 상태에 맞춰 연재주기창/달력창 스위치 찰칵!
     if (typeof toggleBreakSettingRow === "function") {
         toggleBreakSettingRow(document.getElementById('input-status'));
+    }
+
+    // 🚨 [장기 휴재 파란 테두리 미리 켜두기 로직]
+    if (typeof clearActiveBreakBtns === "function") clearActiveBreakBtns();
+    const longBreakBtn = document.querySelector('button[onclick*="clearBreakDate"]');
+
+    if (work.status === '휴재' && (!work.breakDate || work.breakDate.trim() === "")) {
+        if (longBreakBtn) longBreakBtn.classList.add('active-btn', 'active-btn-long-break');
+    } else {
+        if (longBreakBtn) longBreakBtn.classList.remove('active-btn', 'active-btn-long-break');
     }
 
     const deductLabel = document.getElementById('add-deduct-label');
@@ -4345,65 +4392,66 @@ function toggleBreakSettingRow(selectElement) {
 // 🌟 1. 버튼 색상(활성화 상태) 초기화 함수
 function clearActiveBreakBtns() {
     document.querySelectorAll('.break-btn').forEach(btn => {
+        // 🚨 기존 'active-btn' 뿐만 아니라, 'active-btn-long-break' 파란 테두리도 싹 다 지우라고 추가!
         btn.classList.remove('active-btn', 'active-btn-long-break');
     });
 }
-
-// 🌟 2. 주 단위 더하기 (+1주 버튼용)
-function setBreakWeeks(weeks, btnElement) {
+// 🌟 주 단위 더하기 (+1주 등 버튼용)
+function setBreakWeeks(arg1, arg2) {
     const dateInput = document.getElementById('break-return-date');
+    if (!dateInput) return;
 
-    // 달력에 값이 있으면 그 날짜, 없으면 오늘 날짜 가져오기
-    let targetDate = dateInput.value ? new Date(dateInput.value) : new Date();
+    let weeks = (typeof arg1 === 'object') ? Number(arg2) : Number(arg1);
+    let btnElement = (typeof arg1 === 'object') ? arg1 : (window.event ? window.event.currentTarget || window.event.target : null);
 
-    // 타겟 날짜에 주(weeks) 단위로 더하기
-    targetDate.setDate(targetDate.getDate() + (weeks * 7));
+    let d;
+    if (!dateInput.value || dateInput.value.trim() === "") {
+        d = getWebtoonDate(); // 오늘 날짜 불러오기
+        // 🚨 [멘트 수정] 예은님 기획 멘트로 변경!
+        if (typeof showToast === 'function') showToast("예정일이 없어 오늘 기준으로 설정됩니다.");
+    } else {
+        d = new Date(dateInput.value);
+    }
 
-    const yyyy = targetDate.getFullYear();
-    const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(targetDate.getDate()).padStart(2, '0');
+    d.setDate(d.getDate() + (weeks * 7));
+    dateInput.value = formatDate(d);
 
-    dateInput.value = `${yyyy}-${mm}-${dd}`;
-
-    // 💡 [추가] 날짜가 다시 생겼으니 '미정' 안내 문구는 숨기기!
-    document.getElementById('break-hint-text').style.display = 'none';
-
-    // 버튼 활성화 & 반짝임 효과
-    clearActiveBreakBtns();
-    if (btnElement) btnElement.classList.add('active-btn');
+    if (typeof clearActiveBreakBtns === 'function') clearActiveBreakBtns();
+    if (btnElement && btnElement.classList) btnElement.classList.add('active-btn');
 
     dateInput.classList.remove('flash-effect');
     void dateInput.offsetWidth;
     dateInput.classList.add('flash-effect');
 }
 
-// 🌟 3. 달 단위 더하기 (+1달 버튼용)
-function setBreakMonths(months, btnElement) {
+// 🌟 달 단위 더하기 (+1달 버튼용)
+function setBreakMonths(arg1, arg2) {
     const dateInput = document.getElementById('break-return-date');
+    if (!dateInput) return;
 
-    // 달력에 값이 있으면 그 날짜, 없으면 오늘 날짜 가져오기
-    let targetDate = dateInput.value ? new Date(dateInput.value) : new Date();
+    let months = (typeof arg1 === 'object') ? Number(arg2) : Number(arg1);
+    let btnElement = (typeof arg1 === 'object') ? arg1 : (window.event ? window.event.currentTarget || window.event.target : null);
 
-    // 타겟 날짜에 월(months) 단위로 더하기
-    targetDate.setMonth(targetDate.getMonth() + months);
+    let d;
+    if (!dateInput.value || dateInput.value.trim() === "") {
+        d = getWebtoonDate();
+        // 🚨 [멘트 수정] 예은님 기획 멘트로 변경!
+        if (typeof showToast === 'function') showToast("예정일이 없어 오늘을 기준으로 설정됩니다.");
+    } else {
+        d = new Date(dateInput.value);
+    }
 
-    const yyyy = targetDate.getFullYear();
-    const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
-    const dd = String(targetDate.getDate()).padStart(2, '0');
+    d.setMonth(d.getMonth() + months);
+    dateInput.value = formatDate(d);
 
-    dateInput.value = `${yyyy}-${mm}-${dd}`;
-
-    // 💡 [추가] 날짜가 다시 생겼으니 '미정' 안내 문구는 숨기기!
-    document.getElementById('break-hint-text').style.display = 'none';
-
-    // 버튼 활성화 & 반짝임 효과
-    clearActiveBreakBtns();
-    if (btnElement) btnElement.classList.add('active-btn');
+    if (typeof clearActiveBreakBtns === 'function') clearActiveBreakBtns();
+    if (btnElement && btnElement.classList) btnElement.classList.add('active-btn');
 
     dateInput.classList.remove('flash-effect');
     void dateInput.offsetWidth;
     dateInput.classList.add('flash-effect');
 }
+
 // 🍞 토스트 팝업을 띄우는 마법의 함수!
 function showToast(message) {
     const toast = document.getElementById('mobo-toast');
@@ -4420,16 +4468,16 @@ function clearBreakDate(btnElement) {
     const dateInput = document.getElementById('break-return-date');
     dateInput.value = '';
 
-
-    // 버튼 활성화 & 반짝임 효과
+    // 모든 버튼의 색상을 먼저 싹 지우고!
     clearActiveBreakBtns();
+
+    // 🚨 방금 누른 미정 버튼에만 주황색(기본) + 파란색 테두리 이름표를 같이 달아줍니다!
     if (btnElement) btnElement.classList.add('active-btn', 'active-btn-long-break');
 
     dateInput.classList.remove('flash-effect');
     void dateInput.offsetWidth;
     dateInput.classList.add('flash-effect');
 
-    // 💡 [여기!] 기존 안내 문구 대신 폼나게 토스트 팝업 호출!
     showToast("복귀 일정이 없는 장기 휴재로 설정됩니다.");
 }
 
@@ -4479,7 +4527,7 @@ function updateMigrationUI(current, total) {
     }
 }
 
-// 2. 메인 이사 비동기 함수
+// 2. 메인 이사 비동기 함수 (데이터 충돌 완벽 방어판!)
 async function silentAutoMigrateToImgBB() {
     // 중복 실행 방지 안전장치
     if (window.isMigrating) return;
@@ -4487,6 +4535,7 @@ async function silentAutoMigrateToImgBB() {
 
     const platforms = ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
     let worksToMigrate = [];
+    let liveWorksMap = {}; // 🌟 [속도 100배 상승] 마법의 지름길
     let totalImages = 0;
 
     // [Step 1] 유저의 로컬 데이터 스캔 (전체 사진 수 및 이사 대상 분류)
@@ -4494,11 +4543,17 @@ async function silentAutoMigrateToImgBB() {
         if (!state[plt]) continue;
         for (let day of Object.keys(state[plt])) {
             for (let work of state[plt][day]) {
+                if (!work.id) work.id = 'legacy_' + Math.random().toString(36).substr(2, 9);
+
                 if (work.img) {
                     totalImages++; // 전체 등록된 사진 카운트
+
+                    // 🌟 작품의 고유 ID를 열쇠로 삼아 지도를 만듭니다
+                    if (work.id) liveWorksMap[work.id] = work;
+
                     // 아직 이사하지 않은 뚱뚱한 원본(Base64) 데이터만 선별
                     if (work.img.startsWith('data:image')) {
-                        worksToMigrate.push(work);
+                        worksToMigrate.push({ id: work.id, base64: work.img, title: work.title });
                     }
                 }
             }
@@ -4517,7 +4572,7 @@ async function silentAutoMigrateToImgBB() {
     let migratedCount = totalImages - worksToMigrate.length;
 
     // [Step 2] 선별된 사진만 안전하게 순차 이사 시작
-    for (let work of worksToMigrate) {
+    for (let item of worksToMigrate) {
         // UI에 실시간 현황 전달 (현재 처리 중인 번호, 총 개수)
         updateMigrationUI(migratedCount + 1, totalImages);
 
@@ -4526,16 +4581,21 @@ async function silentAutoMigrateToImgBB() {
             await new Promise(resolve => setTimeout(resolve, 6000));
 
             // ImgBB 서버로 전송
-            let newUrl = await uploadImageToImgBB(work.img);
+            let newUrl = await uploadImageToImgBB(item.base64);
 
             // 🌟 [엄격한 검증] 올바른 주소 형태로 응답이 왔을 때만 변환 성공 처리
             if (newUrl && newUrl.startsWith('http')) {
-                work.img = newUrl;
-                migratedCount++;
-                saveData(true); // 1장이 성공할 때마다 즉시 폰의 로컬스토리지 금고에 박제!
+                // 🌟 [핵심 개선] 지도에서 ID만 부르면 0.001초 만에 최신 데이터를 찾습니다!
+                let liveWork = liveWorksMap[item.id];
+
+                if (liveWork) {
+                    liveWork.img = newUrl; // 핀셋 교체
+                    migratedCount++;
+                    saveData(true); // 1장이 성공할 때마다 즉시 무소음으로 금고에 박제!
+                }
             }
         } catch (e) {
-            console.error(`[${work.title}] 사진 업로드 실패 (다시 시도):`, e);
+            console.error(`[${item.title}] 사진 업로드 실패 (다시 시도):`, e);
             // 업로드 중 에러(400, 429 등)가 나도 catch문으로 안전하게 넘어가므로
             // 유저의 소중한 원본 데이터는 절대 지워지거나 변형되지 않고 그대로 유지됩니다.
         }
@@ -4547,7 +4607,7 @@ async function silentAutoMigrateToImgBB() {
     console.log("🤫 모든 유저의 데이터 최적화 이사가 안전하게 완료되었습니다.");
 }
 
-// 앱이 켜지고 화면이 다 그려진 후, 2초(2000ms) 뒤에 버벅임 없이 유저 몰래 실행!
+// 앱이 켜지고 화면이 다 그려진 후, 6초(6000ms) 뒤에 버벅임 없이 유저 몰래 실행!
 window.addEventListener('DOMContentLoaded', () => {
     setTimeout(silentAutoMigrateToImgBB, 6000);
 });

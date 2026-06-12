@@ -3281,6 +3281,13 @@ body.dark-mode .break-btn-clear {
     /* 다크모드에서는 조금 더 화사한 핑크/코랄빛으로 변경 */
 }
 
+/* 🌙 [다크 모드] 바디 클래스까지 합쳐서 기존 다크모드 설정 우아하게 덮어쓰기! */
+body.dark-mode button.break-btn.active-btn.active-btn-long-break {
+    border: 1px solid #3498db;
+    color: #5dade2;
+    background-color: rgba(52, 152, 219, 0.15);
+}
+
 
 /* --- 🍞 토스트 팝업 (기본 라이트 모드) --- */
 .mobo-toast {
