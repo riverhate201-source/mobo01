@@ -1,6 +1,6 @@
 // 🌟 버전 숫자를 하나 올렸습니다! (적용을 위해)
 const CACHE_NAME = 'mobo-cache-v9';
-const DYNAMIC_CACHE = 'mobo-dynamic-v1'; // 🌟 외부 이미지/아이콘을 훔쳐(?) 담을 새로운 보조 창고!
+const DYNAMIC_CACHE = 'mobo-dynamic-v2'; // 🌟 외부 이미지/아이콘을 훔쳐(?) 담을 새로운 보조 창고!
 
 const urlsToCache = [
     './',
