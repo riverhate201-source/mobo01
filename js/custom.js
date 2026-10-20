@@ -36,7 +36,7 @@ function isWorkOnAutoBreak(work) {
         }
     }
 
-    // 🌟 [추가] 3. 격주 연재 '자동휴재' 판독
+    // [추가] 3. 격주 연재 '자동휴재' 판독
     if (work.cycle && work.cycle.includes('격주 연재')) {
         let match = work.cycle.match(/\((.*?)\)/);
         if (match) {
@@ -120,7 +120,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 
-// // ⏱️ [모보 전용 얼음! 타임머신]
+// // [모보 전용 얼음! 타임머신]
 // // 여기서 시간을 설정하면, 1초도 흐르지 않고 무조건 딱 이 시간에 멈춰 있습니다!
 // // 평소에 진짜 시간을 쓸 때는 null 로 바꿔주세요.
 
@@ -604,16 +604,294 @@ function openCalcModal() {
     document.getElementById('calc-coinback-percent').value = '';
     toggleCoinbackInput();
 
+
     document.getElementById('calc-result-box').style.display = 'none';
+
+    // 빠른 차감 입력 초기화
+    document.getElementById('quick-deduct-platform').value = 'lezhin';
+    document.getElementById('quick-deduct-amount').value = '';
+    document.getElementById('quick-deduct-title').value = '';
+    updateQuickDeductLabel();
+    updateQuickDeductionPreview();
+
+    // 기본 탭: 정주행 계산
+    setCalcMode('calc');
+
     document.getElementById('calc-modal').style.display = 'flex';
 
-    // 🌟 [추가] 창 열리면 '작품 총 화수' 칸에 바로 숫자 입력할 수 있게!
-    setTimeout(() => document.getElementById('calc-total').focus(), 100);
+
+
+    setTimeout(() => {
+        const isCalcActive =
+            document.getElementById('calc-mode-calc')
+                .classList.contains('active');
+
+        const isModalOpen =
+            document.getElementById('calc-modal')
+                .style.display === 'flex';
+
+        if (isCalcActive && isModalOpen) {
+            document.getElementById('calc-total').focus();
+        }
+    }, 100);
+
 }
 
 function closeCalcModal() {
     document.getElementById('calc-modal').style.display = 'none';
 }
+
+
+// 정주행 계산 / 빠른 차감 탭 전환
+function setCalcMode(mode) {
+    const isQuick = mode === 'quick';
+
+    // 선택한 탭에 맞춰 모달 제목 변경
+    const modalTitle = document.getElementById('calc-modal-title');
+
+    if (modalTitle) {
+        modalTitle.textContent = isQuick
+            ? '빠른 차감'
+            : '정주행 계산기';
+    }
+
+    const calcTab = document.getElementById('calc-mode-calc');
+    const quickTab = document.getElementById('calc-mode-quick');
+
+    const calcSection = document.getElementById('calc-standard-section');
+    const quickSection = document.getElementById('calc-quick-section');
+
+    // 선택한 화면만 표시
+    calcSection.style.display = isQuick ? 'none' : 'block';
+    quickSection.style.display = isQuick ? 'block' : 'none';
+
+    // 탭 선택 상태 변경
+    calcTab.classList.toggle('active', !isQuick);
+    quickTab.classList.toggle('active', isQuick);
+
+    calcTab.setAttribute('aria-selected', String(!isQuick));
+    quickTab.setAttribute('aria-selected', String(isQuick));
+}
+
+
+// 빠른 차감 중복 실행 방지
+let quickDeductionInProgress = false;
+
+
+
+function updateQuickDeductLabel() {
+    const platformSelect = document.getElementById('quick-deduct-platform');
+    const label = document.getElementById('quick-deduct-amount-label');
+
+    // HTML 요소가 없더라도 계산기 실행을 막지 않도록 보호
+    if (!platformSelect || !label) return;
+
+    const units = {
+        lezhin: '코인',
+        bomtoon: '코인',
+        ridi: '캐시',
+        mrblue: '머니'
+    };
+
+    const unit = units[platformSelect.value] || '코인';
+
+    label.textContent = `사용 ${unit}`;
+}
+
+
+/**
+ * 차감 후 예상 지갑 잔액 계산
+ * 실제 지갑과 정산 기록은 변경하지 않음
+ */
+function getDeductionPreview(plt, amount) {
+    const walletKeys = {
+        lezhin: 'lWallet',
+        bomtoon: 'bWallet',
+        ridi: 'rWallet',
+        mrblue: 'mWallet'
+    };
+
+    const walletKey = walletKeys[plt];
+    const expense = Number(amount);
+
+    // 잘못된 플랫폼이나 금액은 계산하지 않음
+    if (!walletKey || !Number.isSafeInteger(expense) || expense <= 0) {
+        return null;
+    }
+
+    // 현재 일반 지갑 잔액
+    const currentWallet =
+        parseInt(localStorage.getItem(walletKey) || '0', 10) || 0;
+
+    // 기존 차감 로직과 동일하게 소멸 예정 재화 확인
+    const expireData =
+        JSON.parse(localStorage.getItem(plt + 'Expire') || 'null');
+
+    const expireBalance =
+        Math.max(0, parseInt(expireData?.amount, 10) || 0);
+
+    // 소멸 예정 재화를 먼저 사용
+    const usedExpire = Math.min(expense, expireBalance);
+
+    // 나머지만 일반 지갑에서 차감
+    const usedWallet = expense - usedExpire;
+
+    // 예상 잔액 (마이너스 허용)
+    const expectedWallet = currentWallet - usedWallet;
+
+    return {
+        currentWallet,
+        expireBalance,
+        usedExpire,
+        usedWallet,
+        expectedWallet,
+        isInsufficient: expectedWallet < 0
+    };
+}
+
+
+/**
+ * 빠른 차감 잔액 부족 안내
+ * 실제 지갑이나 정산 기록은 변경하지 않음
+ */
+function updateQuickDeductionPreview() {
+    const select = document.getElementById('quick-deduct-platform');
+    const input = document.getElementById('quick-deduct-amount');
+    const notice = document.getElementById('quick-deduct-balance-notice');
+
+    if (!select || !input || !notice) return;
+
+    const rawAmount = input.value.trim();
+    const amount = Number(rawAmount);
+
+    // 기존 안내 초기화
+    notice.style.display = 'none';
+    notice.textContent = '';
+
+    // 올바른 금액을 입력했을 때만 계산
+    if (!rawAmount || !Number.isSafeInteger(amount) || amount <= 0) {
+        return;
+    }
+
+    // 1단계에서 만든 예상 잔액 함수 사용
+    const preview = getDeductionPreview(select.value, amount);
+
+    // 잔액이 충분하면 아무것도 표시하지 않음
+    if (!preview || !preview.isInsufficient) return;
+
+    const units = {
+        lezhin: '코인',
+        bomtoon: '코인',
+        ridi: '캐시',
+        mrblue: '머니'
+    };
+
+    const unit = units[select.value];
+
+    notice.textContent =
+        `ⓘ 차감 후 예상 잔액: ${formatNum(preview.expectedWallet)} ${unit} `;
+
+    notice.style.display = 'block';
+}
+
+// 플랫폼이나 사용 금액이 달라질 때 자동 갱신
+document.addEventListener('DOMContentLoaded', () => {
+    const platformSelect =
+        document.getElementById('quick-deduct-platform');
+
+    const amountInput =
+        document.getElementById('quick-deduct-amount');
+
+
+    if (platformSelect && amountInput) {
+        platformSelect.addEventListener('change', () => {
+            // 플랫폼 변경 시 사용 금액 초기화
+            amountInput.value = '';
+
+            // 기존 잔액 부족 안내도 초기화
+            updateQuickDeductionPreview();
+        });
+    }
+
+
+    if (amountInput) {
+        amountInput.addEventListener(
+            'input',
+            updateQuickDeductionPreview
+        );
+    }
+});
+
+
+
+
+// 빠른 차감 실행
+function quickDeductFromModal() {
+
+    if (quickDeductionInProgress) return;
+
+    const plt = document.getElementById('quick-deduct-platform').value;
+
+    const rawAmount = document.getElementById('quick-deduct-amount').value.trim();
+
+    const title =
+        document.getElementById('quick-deduct-title').value.trim()
+        || '기타 지출';
+
+    const platforms = {
+        lezhin: '레진',
+        bomtoon: '봄툰',
+        ridi: '리디',
+        mrblue: '미블'
+    };
+
+    const units = {
+        lezhin: '코인',
+        bomtoon: '코인',
+        ridi: '캐시',
+        mrblue: '머니'
+    };
+
+    const amount = Number(rawAmount);
+
+    // 플랫폼 검증
+    if (!Object.prototype.hasOwnProperty.call(platforms, plt)) {
+        alert('플랫폼을 다시 선택해 주세요.');
+        return;
+    }
+
+    // 차감 금액 검증
+    if (!rawAmount || !Number.isSafeInteger(amount) || amount <= 0) {
+        alert('사용 금액은 1 이상의 정수로 입력해 주세요.');
+        return;
+    }
+
+    // 최종 확인
+    const confirmed = confirm(
+        `${platforms[plt]}에서 ${formatNum(amount)} ${units[plt]}를 차감하고\n` +
+        `월말정산에 [${title}]으로 기록할까요?`
+    );
+
+    if (!confirmed) return;
+
+    const submitBtn = document.getElementById('quick-deduct-submit');
+
+    quickDeductionInProgress = true;
+    submitBtn.disabled = true;
+
+    try {
+        // 기존 모보의 차감 시스템 재사용
+        executeDeduction(plt, title, amount);
+
+        // 처리 완료 후 모달 닫기
+        closeCalcModal();
+
+    } finally {
+        submitBtn.disabled = false;
+        quickDeductionInProgress = false;
+    }
+}
+
 
 function toggleCoinbackInput() {
     const isChecked = document.getElementById('calc-coinback-toggle').checked;
@@ -652,6 +930,87 @@ function updateCalcLabels() {
 }
 
 let currentCalcCoin = 0;
+
+
+// 정주행 계산기: 차감 지갑 선택창 준비
+function prepareCalcWalletChoice(unit) {
+    const wrap = document.getElementById('calc-wallet-wrap');
+    const select = document.getElementById('calc-deduct-wallet');
+    if (!wrap || !select) return;
+
+    const choices = {
+        coin: [
+            ['lezhin', '레진코믹스 (코인)'],
+            ['bomtoon', '봄툰 (코인)']
+        ],
+        cash: [
+            ['ridi', '리디 (캐시)']
+        ],
+        won: [
+            ['mrblue', '미블 (머니)']
+        ]
+    };
+
+    select.replaceChildren();
+
+    // 레진/봄툰만 직접 선택
+    if (unit === 'coin') {
+        wrap.style.display = 'block';
+        select.add(new Option('차감할 지갑 선택', ''));
+
+        choices.coin.forEach(([value, text]) => {
+            select.add(new Option(text, value));
+        });
+    } else if (unit === 'cash') {
+        // 리디는 자동 선택
+        wrap.style.display = 'none';
+        select.add(new Option('리디 (캐시)', 'ridi'));
+        select.value = 'ridi';
+    } else if (unit === 'won') {
+        // 미블은 자동 선택
+        wrap.style.display = 'none';
+        select.add(new Option('미블 (머니)', 'mrblue'));
+        select.value = 'mrblue';
+    } else {
+        wrap.style.display = 'none';
+    }
+
+    updateCalcBalanceNotice();
+}
+
+
+// 정주행 계산기: 잔액 부족 안내만 표시
+function updateCalcBalanceNotice() {
+    const wallet =
+        document.getElementById('calc-deduct-wallet')?.value;
+
+    const notice =
+        document.getElementById('calc-balance-notice');
+
+    if (!notice) return;
+
+    notice.style.display = 'none';
+    notice.textContent = '';
+
+    if (!wallet || currentCalcCoin <= 0) return;
+
+    // 1단계에서 만든 공통 예상 잔액 함수
+    const preview = getDeductionPreview(wallet, currentCalcCoin);
+
+    if (!preview || !preview.isInsufficient) return;
+
+
+    const unit =
+        wallet === 'ridi' ? '캐시' :
+            wallet === 'mrblue' ? '머니' : 'C';
+
+
+    notice.textContent =
+        `ⓘ 차감 후 예상 잔액 ${formatNum(preview.expectedWallet)} ${unit}`;
+
+    notice.style.display = 'block';
+}
+
 
 // 수정: 계산기 로직 (JS에 숨어있던 인라인 색상 주입 로직 완전 제거!)
 function calculateCoins() {
@@ -701,6 +1060,7 @@ function calculateCoins() {
     }
 
     document.getElementById('calc-result-box').style.display = 'block';
+    prepareCalcWalletChoice(plt);
 }
 
 
@@ -779,18 +1139,25 @@ function executeDeduction(plt, title, amount) {
 function deductFromCalculator() {
     if (currentCalcCoin <= 0) return alert("차감할 금액이 없습니다!");
 
-    let targetPlt = document.getElementById('calc-platform').value;
-    let exactPlt = '';
 
-    // 계산기엔 레진/봄툰이 'coin'으로 묶여 있어서 한번 물어봅니다!
-    if (targetPlt === 'cash') exactPlt = 'ridi';
-    else if (targetPlt === 'won') exactPlt = 'mrblue';
-    else {
-        let choice = prompt("어느 플랫폼 지갑에서 뺄까요?\n[1] 레진  [2] 봄툰");
-        if (choice === '1') exactPlt = 'lezhin';
-        else if (choice === '2') exactPlt = 'bomtoon';
-        else return alert("차감이 취소되었습니다.");
+    // 화면에서 선택한 실제 지갑 사용
+    const exactPlt =
+        document.getElementById('calc-deduct-wallet')?.value;
+
+    const unit = document.getElementById('calc-platform').value;
+
+    const allowedWallets = {
+        coin: ['lezhin', 'bomtoon'],
+        cash: ['ridi'],
+        won: ['mrblue']
+    };
+
+    // 지갑을 선택하지 않았거나 선택값이 올바르지 않으면 중단
+    if (!allowedWallets[unit]?.includes(exactPlt)) {
+        alert('차감할 지갑을 먼저 선택해 주세요.');
+        return;
     }
+
 
     // 🌟 [신규 로직] 선택된 플랫폼에 맞춰서 진짜 단위를 꺼내옵니다!
     let unitStr = '코인';
@@ -1822,7 +2189,9 @@ function renderList(platform) {
 
         // 휴재가 아니면 기존 연재 주기 로직 그대로 유지!
         else if (work.cycle && work.cycle.trim() !== '') {
+
             const parts = work.cycle.split('+').map(p => p.trim());
+
 
             if (parts.length === 1) {
                 // [조건 1] 1개일 때: 이모티콘 싹 빼고 텍스트만!
@@ -1916,7 +2285,7 @@ function renderList(platform) {
 
 
         card.innerHTML = `
-    <div class="card-thumbnail" ${imgOnClick} style="background-image: url('${work.img || ''}'); ${cursorStyle}; position: relative;">
+    <div class="card-thumbnail lazy-bg" ${imgOnClick} data-bg="${work.img || ''}" style="${cursorStyle}; position: relative;">
         
         <div style="position: absolute; top: 5px; left: 5px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; z-index: 10;">
             ${timeBadge}   ${statusBadge} </div>
@@ -1952,6 +2321,7 @@ function renderList(platform) {
     });
 
     checkScrollArrows();
+    applyLazyLoading();
 }
 
 
@@ -2561,10 +2931,13 @@ async function saveWorkFinal() {
         if (localStorage.getItem('lastCheckDate') > nowStrSingle) {
             localStorage.setItem('lastCheckDate', nowStrSingle);
         }
-        localStorage.removeItem('lastPartialDeductDate'); // 🌟 새 작품 생겼으니 흔적 깔끔하게 지우기
+        localStorage.removeItem('lastPartialDeductDate');
 
         trackClick('batch_add_works_tags', { 'platform': currentPlatform, 'count': addedCount });
-        alert(`총 ${addedCount}개의 작품이 요일별로 완벽하게 추가되었습니다!`);
+
+        // 🌟 alert 지우고 토스트로 변경!
+        showToast(`총 ${addedCount}개의 작품 추가 완료!`);
+
         closeAddModal();
         return;
     }
@@ -2647,6 +3020,13 @@ async function saveWorkFinal() {
         let unitStr = '코인';
         if (currentPlatform === 'ridi') unitStr = '캐시';
         else if (currentPlatform === 'mrblue') unitStr = '머니';
+
+        // 🌟 [추가된 핵심 예외 처리] 1화당 재화가 0이거나 비어있을 때 차단!
+        if (coin === 0) {
+            alert(`현재 이 작품의 1화당 ${unitStr} 설정이 0이거나 비어있습니다! 설정한 후 다시 시도해 주세요.`);
+            deductChk.checked = false; // 혼동을 막기 위해 스위치도 꺼줌
+            return; // 🛑 여기서 함수를 강제 종료시켜서 에러가 나는 걸 막습니다!
+        }
 
         let buyCount = prompt(`[${title}]\n이번에 새로 결제하신 건 몇 화 분량인가요?\n(1화당 ${formatNum(coin)}${unitStr} 차감)`);
         let parsedBuy = parseInt(buyCount) || 0;
@@ -2737,6 +3117,13 @@ async function saveWorkFinal() {
     trackClick(editMode ? 'edit_work' : 'add_new_work', { 'platform': currentPlatform, 'title': title });
 
     closeAddModal();
+
+    // 🌟 [추가] 창이 닫히면서 부드럽게 성공 알림 띄우기!
+    if (editMode) {
+        showToast(`[${title}] 수정 완료!`);
+    } else {
+        showToast(`[${title}] 추가 완료!`);
+    }
 }
 
 
@@ -3079,12 +3466,12 @@ function deleteFromAction() {
         closeActionModal();
 
         // 🚨 여기서 아래에 있는 showToast 함수를 불러냅니다!
-        showToast("작품이 삭제되었습니다.");
+        showUndoToast("작품이 삭제되었습니다.");
     }
 }
 
 // 3. 토스트 팝업 띄우기 함수 (이게 꼭 있어야 팝업이 나타나요!)
-function showToast(msg) {
+function showUndoToast(msg) {
     const toast = document.getElementById("toast-popup");
     if (!toast) return; // 혹시 HTML에 팝업창이 없으면 에러 안 나게 방어!
 
@@ -3138,6 +3525,7 @@ function closeSearchModal() {
     document.getElementById('search-modal').style.display = 'none';
 }
 
+// 🔍 검색 기능 (진짜 형광펜 감성! 글씨 벌어짐 완벽 해결!)
 function performSearch() {
     const query = document.getElementById('search-input').value.trim().toLowerCase();
     const listEl = document.getElementById('search-result-list');
@@ -3149,7 +3537,6 @@ function performSearch() {
     }
 
     let foundWorks = [];
-    // 검색도 켠 플랫폼(platformOrder) 안에서만!
     platformOrder.forEach(plt => {
         Object.keys(state[plt]).forEach(day => {
             (state[plt][day] || []).forEach((work, idx) => {
@@ -3172,6 +3559,27 @@ function performSearch() {
         else if (item.plt === 'ridi') { pltName = '리디'; color = '#1e90ff'; }
         else if (item.plt === 'mrblue') { pltName = '미블'; color = '#004e9a'; }
 
+        let originalTitle = item.work.title;
+        let lowerTitle = originalTitle.toLowerCase();
+        let queryLen = query.length;
+        let highlightedTitle = "";
+
+        let startIndex = 0;
+        let index = lowerTitle.indexOf(query);
+
+        while (index !== -1) {
+            highlightedTitle += originalTitle.substring(startIndex, index);
+            let matchText = originalTitle.substring(index, index + queryLen);
+
+            // 🌟 [수정 완료] 글씨 색깔 건드리지 않음! 패딩/마진 완전 삭제! 
+            // 뒤에 '66'을 붙여서 투명도 40%의 진짜 예쁜 형광펜 배경색만 입혀줍니다!
+            highlightedTitle += `<span style="background-color: ${color}66;">${matchText}</span>`;
+
+            startIndex = index + queryLen;
+            index = lowerTitle.indexOf(query, startIndex);
+        }
+        highlightedTitle += originalTitle.substring(startIndex);
+
         const div = document.createElement('div');
         div.style.borderBottom = '1px solid #eee';
         div.style.padding = '10px 0';
@@ -3180,15 +3588,15 @@ function performSearch() {
         div.style.alignItems = 'center';
 
         div.innerHTML = `
-                    <div style="flex:1; overflow:hidden;">
-                        <div style="font-size:11px; color:#888;">[${pltName}] ${item.day}</div>
-                        <div style="font-size:14px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.work.title}</div>
-                    </div>
-                    <button onclick="closeSearchModal(); openActionModal('${item.plt}', '${item.day}', ${item.idx})" 
-                            style="background:${color}; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-size:12px; flex-shrink:0; margin-left:10px; font-weight:bold;">
-                        관리하기
-                    </button>
-                `;
+            <div style="flex:1; overflow:hidden;">
+                <div style="font-size:11px; color:#888;">[${pltName}] ${item.day}</div>
+                <div style="font-size:14px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${highlightedTitle}</div>
+            </div>
+            <button onclick="closeSearchModal(); openActionModal('${item.plt}', '${item.day}', ${item.idx})" 
+                    style="background:${color}; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-size:12px; flex-shrink:0; margin-left:10px; font-weight:bold;">
+                관리하기
+            </button>
+        `;
         listEl.appendChild(div);
     });
 }
@@ -3786,6 +4194,13 @@ function openGlobalDrawerModal(activePlt) {
                 let badgeHtml = '';
                 let isBreak = isWorkOnAutoBreak(work);
 
+
+                const compactTenDayBadge =
+                    (work.status === '휴재' || isBreak) &&
+                    (work.cycle || '').includes('10일 연재') &&
+                    !(work.status === '휴재' && work.breakDate);
+
+
                 if (work.status === '휴재') {
                     // 🌟 [최종 방어] 기존 유저 데이터까지 모두 포용하는 장기 휴재 로직
                     const isLongBreak = !work.breakDate || work.breakDate.trim() === "";
@@ -3813,11 +4228,18 @@ function openGlobalDrawerModal(activePlt) {
                 else if (work.cycle && work.cycle.trim() !== '') {
                     const badgeBg = isDark ? '#1a233a' : '#e8f0fe';
                     const badgeColor = isDark ? '#8ab4f8' : '#1967d2';
-                    const parts = work.cycle.split('+').map(p => p.trim());
+                    const displayCycle = compactTenDayBadge
+                        ? work.cycle.replace(
+                            /10일\s*연재\s*\(([^)]+)\)/g,
+                            '($1)'
+                        )
+                        : work.cycle;
+
+                    const parts = displayCycle.split('+').map(p => p.trim());
 
                     if (parts.length === 1) {
                         // 1개일 때 이모티콘 삭제!
-                        cycleBadge = `<span style="font-size: 12px; color: ${badgeColor}; background: ${badgeBg}; padding: 4px 6px; border-radius: 4px; margin-left: 6px; font-weight: normal; white-space: nowrap; display: inline-block; vertical-align: middle;">${parts[0]}</span>`;
+                        cycleBadge = `<span class="drawer-cycle-badge" style="font-size: 12px; color: ${badgeColor}; background: ${badgeBg}; padding: 4px 6px; border-radius: 4px; margin-left: 6px; font-weight: normal; white-space: nowrap; display: inline-block; vertical-align: middle;">${parts[0]}</span>`;
                     } else {
                         const compressedParts = parts.map(p => {
                             let shortStr = p;
@@ -3856,13 +4278,20 @@ function openGlobalDrawerModal(activePlt) {
                 const regularDays = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
                 // 🌟 [수정] 10일 연재 그룹일 때는 이중으로 말머리 달지 않기!
                 if (!regularDays.includes(groupName) && groupName !== '10일 연재') {
+
                     let shortDay = work.origDay.replace('요일', '');
+
+                    if (work.origDay === '10일 연재') {
+                        shortDay = '10일';
+                    }
+
                     dayPrefixHtml = `<span style="color: #aaa; font-weight: bold; margin-right: 8px; font-size: 13px; min-width: 24px;">[${shortDay}]</span>`;
                 }
 
                 const div = document.createElement('div');
                 div.className = 'drawer-item';
                 div.style.cursor = 'pointer';
+
 
                 div.onclick = () => {
                     closeDrawerModal();
@@ -4328,7 +4757,7 @@ async function uploadImageToImgBB(base64Data) {
         // 🌟 2. 에러가 났을 때 '서버가 말하는 진짜 이유'를 화면에 띄워줍니다!
         if (!response.ok || !data.success) {
             console.error("ImgBB 거절 상세 정보:", data);
-            alert(`🚨 ImgBB 업로드 실패!\n원인: ${data.error.message}\n(API 키 문제이거나 서버 오류입니다. API 키를 새로 발급받아 보세요!)`);
+            alert(`🚨 썸네일 업로드 실패!\n원인: ${data.error.message}\n(현재 업로드가 몰려 속도가 지연되고 있습니다. 잠시 후 다시 시도해 주세요! (30분~3일))`);
             throw new Error(data.error.message);
         }
 
@@ -4611,3 +5040,34 @@ async function silentAutoMigrateToImgBB() {
 window.addEventListener('DOMContentLoaded', () => {
     setTimeout(silentAutoMigrateToImgBB, 6000);
 });
+
+// 🚀 화면에 나타나는 순간 사진을 불러오는 레이지 로딩 감시자!
+function applyLazyLoading() {
+    const lazyBgs = document.querySelectorAll('.lazy-bg');
+
+    if ('IntersectionObserver' in window) {
+        let lazyBgObserver = new IntersectionObserver(function (entries, observer) {
+            entries.forEach(function (entry) {
+                // 🌟 유저가 스크롤을 내려서 카드가 화면에 보이기 시작하면!
+                if (entry.isIntersecting) {
+                    let lazyBg = entry.target;
+                    if (lazyBg.dataset.bg) {
+                        // 숨겨놨던 주소를 꺼내서 진짜 배경 이미지로 넣어줍니다.
+                        lazyBg.style.backgroundImage = `url('${lazyBg.dataset.bg}')`;
+                    }
+                    lazyBg.classList.remove('lazy-bg');
+                    lazyBgObserver.unobserve(lazyBg); // 일 다 했으니 감시 종료
+                }
+            });
+        });
+
+        lazyBgs.forEach(function (lazyBg) {
+            lazyBgObserver.observe(lazyBg); // 감시 시작!
+        });
+    } else {
+        // 혹시 아주 옛날 폰을 쓰는 유저를 위한 방어막
+        lazyBgs.forEach(function (lazyBg) {
+            if (lazyBg.dataset.bg) lazyBg.style.backgroundImage = `url('${lazyBg.dataset.bg}')`;
+        });
+    }
+}

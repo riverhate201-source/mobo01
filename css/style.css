@@ -979,7 +979,7 @@ body.dark-mode .modal-content {
 .modal-select {
     width: 100%;
     padding: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     border: 1px solid #ddd;
     border-radius: 10px;
     font-size: 14px;
@@ -2018,7 +2018,6 @@ body.dark-mode .drawer-day-header {
 .global-drawer-tabs {
     display: flex;
     gap: 6px;
-    margin-top: 16px;
     position: sticky;
     top: -5px;
     /* 모달창 천장에 딱 붙게 */
@@ -3331,6 +3330,457 @@ body.dark-mode .mobo-toast {
     box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+
+
+.drawer-item-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    color: #333;
+    font-weight: normal;
+}
+
+
+/* 10일 연재 + 휴재 작품: 기존 한 줄 배치 유지 */
+.drawer-item.ten-day-break-row {
+    flex-wrap: nowrap;
+}
+
+/* 제목은 일부만 표시하고 ...으로 축약 */
+.drawer-item.ten-day-break-row .drawer-item-title {
+    flex: 1 1 auto;
+    min-width: 45px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+/* 공간이 부족하면 연재 주기 배지가 줄어듦 */
+.drawer-item.ten-day-break-row .drawer-cycle-badge {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 휴재 배지는 원래 오른쪽 위치 유지 */
+.drawer-item.ten-day-break-row .drawer-badge {
+    flex-shrink: 0;
+}
+
+/* [10일] 말머리는 한 줄 유지 */
+.drawer-item.ten-day-break-row>span:first-child {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+
+/* =========================================
+   정주행 계산기 / 빠른 차감 탭
+========================================= */
+
+.calc-mode-toggle {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    background: #f1f3f5;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.calc-mode-tab {
+    flex: 1;
+    min-width: 0;
+    padding: 8px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-weight: normal;
+    font-size: 13px;
+    color: #888;
+    cursor: pointer;
+}
+
+.calc-mode-tab.active {
+    background: #fff;
+    color: #333;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* 다크 모드 */
+body.dark-mode .calc-mode-toggle {
+    background: #1c1c1e;
+}
+
+body.dark-mode .calc-mode-tab {
+    color: #aaa;
+}
+
+body.dark-mode .calc-mode-tab.active {
+    background: #3a3a3c;
+    color: #fff;
+}
+
+/* 빠른 차감 입력창 라벨 */
+.calc-quick-label {
+    display: block;
+    font-size: 13px;
+    color: #666;
+}
+
+/* 빠른 차감 안내 문구 */
+.calc-quick-note {
+    font-size: 12px;
+    color: #888;
+    line-height: 1.5;
+    margin: 0 0 15px;
+}
+
+body.dark-mode .calc-quick-note {
+    color: #aaa;
+}
+
+/* 중복 차감 방지 */
+#quick-deduct-submit:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* 정주행 계산기 - 차감 지갑 영역 */
+.calc-wallet-wrap {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.calc-wallet-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.calc-wallet-label {
+    flex-shrink: 0;
+    font-size: 12px;
+    color: #777;
+    min-width: 54px;
+}
+
+.calc-wallet-select {
+    flex: 1;
+    margin: 0;
+    height: 36px;
+    padding: 0 10px;
+    font-size: 13px;
+}
+
+/* 예상 잔액 안내 */
+.calc-balance-notice {
+    margin: 6px 0 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #a06a00;
+    text-align: left;
+}
+
+body.dark-mode .calc-wallet-label {
+    color: #bbb;
+}
+
+body.dark-mode .calc-balance-notice {
+    color: #f0c36d;
+}
+
+
+/* ===== 정주행 계산기 결과 레이아웃 ===== */
+
+#calc-result-box {
+    padding: 12px;
+}
+
+/* 남은 화수 → 필요한 금액 */
+#calc-result-box .calc-result-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
+    align-items: center;
+    gap: 5px;
+    text-align: center;
+}
+
+#calc-result-box .calc-summary-item {
+    min-width: 0;
+}
+
+#calc-result-box .calc-summary-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: 400;
+    color: #858585;
+}
+
+#calc-result-box .calc-summary-value {
+    display: block;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #333;
+    white-space: nowrap;
+}
+
+#calc-result-box #calc-need-coin {
+    font-size: 17px;
+}
+
+#calc-result-box .calc-summary-arrow {
+    color: #aaa;
+    font-size: 18px;
+}
+
+/* 지갑 선택 */
+#calc-result-box .calc-deduct-info {
+    margin-top: 12px;
+}
+
+#calc-result-box .calc-wallet-wrap {
+    margin: 0;
+}
+
+#calc-result-box .calc-wallet-row {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+}
+
+#calc-result-box .calc-wallet-label {
+    min-width: 0;
+    font-size: 11px;
+    color: #777;
+    white-space: nowrap;
+}
+
+#calc-result-box .calc-wallet-select {
+    width: 100%;
+    min-width: 0;
+    height: 34px;
+    padding: 5px 8px;
+    margin: 0;
+    box-sizing: border-box;
+    font-size: 11px;
+}
+
+/* 예상 잔액 안내 */
+#calc-result-box .calc-balance-notice {
+    margin: 7px 0 0;
+    padding: 6px 5px;
+    border-radius: 6px;
+    background: #fff1e6;
+    color: #a76523;
+    font-size: 11px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+/* 차감 버튼과의 간격 */
+#calc-result-box #calc-deduct-btn {
+    margin-top: 10px;
+}
+
+/* 다크 모드 */
+body.dark-mode #calc-result-box .calc-summary-label,
+body.dark-mode #calc-result-box .calc-wallet-label {
+    color: #bbb;
+}
+
+body.dark-mode #calc-result-box .calc-summary-value {
+    color: #fff;
+}
+
+body.dark-mode #calc-result-box .calc-balance-notice {
+    background: #49372d;
+    color: #ffd09a !important;
+}
+
+
+
+/* =====================================
+   정주행 계산기 - 컴팩트 레이아웃
+===================================== */
+
+/* 1. 총 화수 + 현재 진도 */
+#calc-modal .calc-input-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+#calc-modal .calc-input-field {
+    min-width: 0;
+}
+
+#calc-modal .calc-input-field label {
+    display: block;
+    font-size: 12px;
+    color: #777;
+    margin-bottom: 5px;
+}
+
+#calc-modal .calc-input-field input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 9px;
+}
+
+/* 2. 계산 결과 */
+#calc-modal #calc-result-box {
+    padding: 14px;
+}
+
+#calc-modal .calc-result-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+}
+
+#calc-modal .calc-summary-item {
+    min-width: 0;
+    text-align: center;
+}
+
+#calc-modal .calc-summary-item:first-child {
+    border-right: 1px solid #dedfe2;
+}
+
+#calc-modal .calc-summary-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: 400;
+    color: #888;
+}
+
+#calc-modal .calc-summary-value {
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.35;
+    white-space: nowrap;
+    color: #333;
+}
+
+#calc-modal #calc-need-coin {
+    font-size: inherit;
+}
+
+/* 3. 지갑 선택 */
+#calc-modal .calc-deduct-info {
+    margin-top: 12px;
+}
+
+#calc-modal .calc-wallet-wrap {
+    margin: 0;
+}
+
+#calc-modal .calc-wallet-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 0;
+}
+
+#calc-modal .calc-wallet-label {
+    min-width: 0;
+    font-size: 11px;
+    color: #777;
+    white-space: nowrap;
+}
+
+#calc-modal .calc-wallet-select {
+    width: 100%;
+    min-width: 0;
+    height: 34px;
+    margin: 0;
+    padding: 5px 8px;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+/* 4. 예상 잔액 */
+#calc-modal .calc-balance-notice {
+    margin: 8px 0 0;
+    padding: 0;
+    background: transparent;
+    color: #ad713c;
+    font-size: 11px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+/* 5. 차감 버튼 */
+#calc-modal #calc-deduct-btn {
+    margin-top: 12px;
+}
+
+/* 6. 다크 모드 */
+body.dark-mode #calc-modal .calc-input-field label,
+body.dark-mode #calc-modal .calc-summary-label,
+body.dark-mode #calc-modal .calc-wallet-label {
+    color: #bbb;
+}
+
+body.dark-mode #calc-modal .calc-summary-value {
+    color: #fff;
+}
+
+body.dark-mode #calc-modal .calc-summary-item:first-child {
+    border-right-color: #555;
+}
+
+body.dark-mode #calc-modal .calc-balance-notice {
+    color: #e9b77f !important;
+}
+
+
+
+/* =====================================
+   작품 추가 / 정주행 계산기
+   작은 화면에서 모달 잘림 방지
+===================================== */
+
+#custom-modal,
+#calc-modal {
+    box-sizing: border-box;
+
+    /* 기존 브라우저 대응 */
+    height: 100vh;
+
+    /* 모바일 브라우저의 실제 표시 높이 대응 */
+    height: 100dvh;
+
+    padding:
+        max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+
+}
+
+/* 화면보다 모달이 길면 내부 스크롤 */
+#custom-modal>.modal-content,
+#calc-modal>.modal-content {
+    max-height: calc(100vh - 32px);
+
+    max-height: calc(100dvh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
 
 
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */

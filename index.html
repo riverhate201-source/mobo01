@@ -99,7 +99,7 @@
                 <div class="nav-section">
                     <h4>편의 기능</h4>
                     <button onclick="openSearchModal()" class="menu-item">작품 검색하기</button>
-                    <button onclick="openCalcModal()" class="menu-item">정주행 코인 및 페이 계산기</button>
+                    <button onclick="openCalcModal()" class="menu-item">정주행 계산기 · 빠른 차감</button>
                     <button onclick="deductToday()" class="menu-item">오늘 작품 미리 정산</button>
                     <button class="menu-item" onclick="showMonthlyReport()">이번 달 월말정산 보기
                     </button>
@@ -534,6 +534,8 @@
                         <select id="input-cycle-type" class="modal-select" style="flex: 2; margin-bottom: 0;"
                             onchange="toggleCycleInputs(this)">
                             <option value="">특정 연재주기 선택 (없음)</option>
+                            <option value="8연 1휴">8연 1휴</option>
+                            <option value="7연 1휴">7연 1휴</option>
                             <option value="6연 1휴">6연 1휴</option>
                             <option value="5연 1휴">5연 1휴</option>
                             <option value="4연 1휴">4연 1휴</option>
@@ -622,66 +624,195 @@
 
         <div id="calc-modal" class="modal-overlay" style="display: none; z-index: 5000;">
             <div class="modal-content" style="max-width: 350px;">
-                <h3 style="margin-top: 0; margin-bottom: 16px; text-align: center;">정주행 계산기</h3>
+                <h3 id="calc-modal-title" style="margin-top: 0; margin-bottom: 16px; text-align: center;">
+                    정주행 계산기
+                </h3>
 
-                <div style="margin-bottom: 15px;">
-                    <select id="calc-platform" class="modal-select" style="font-weight: bold;"
-                        onchange="updateCalcLabels()">
-                        <option value="coin">레진 / 봄툰 (코인)</option>
-                        <option value="cash">리디 (캐시)</option>
-                        <option value="won">미블 (머니)</option>
-                    </select>
-                </div>
 
-                <div style="margin-bottom: 15px;">
-                    <label style="font-size: 13px; color: #666;">작품 총 화수</label>
-                    <input type="number" id="calc-total" placeholder="예: 100"
-                        style="margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="font-size: 13px; color: #666;">내가 본 화수 (현재 진도)</label>
-                    <input type="number" id="calc-current" placeholder="예: 15"
-                        style="margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label id="calc-price-label" style="font-size: 13px; color: #666;">1화당 코인</label>
-                    <input type="number" id="calc-price" placeholder="예: 3"
-                        style="margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
-                </div>
+                <!-- 정주행 계산 / 빠른 차감 탭 -->
+                <div class="calc-mode-toggle" role="tablist" aria-label="계산 및 차감 방식">
+                    <button id="calc-mode-calc" class="calc-mode-tab active" type="button" role="tab"
+                        aria-selected="true" aria-controls="calc-standard-section" onclick="setCalcMode('calc')">
+                        정주행 계산기
+                    </button>
 
-                <div class="coinback-box" style="margin-bottom: 15px; padding: 12px; border-radius: 8px;">
-                    <label class="coinback-label"
-                        style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: normal; cursor: pointer;">
-                        <input type="checkbox" id="calc-coinback-toggle" onchange="toggleCoinbackInput()"
-                            style="margin: 0; width: 16px; height: 16px;">
-                        코인백 / 페이백(이벤트) 적용하기
-                    </label>
-                    <div id="calc-coinback-area" style="display: none; margin-top: 10px;">
-                        <label style="font-size: 12px; color: #666;">몇 퍼센트 돌려받나요? (%)</label>
-                        <input type="number" id="calc-coinback-percent" placeholder="예: 50"
-                            style="margin-top: 5px; margin-bottom: 0; width: 100%; box-sizing: border-box; padding: 8px;">
-                    </div>
-                </div>
-
-                <button onclick="calculateCoins()" class="save-btn calc-btn-full calc-mb-15">얼마나 필요할까?</button>
-
-                <div id="calc-result-box" style="display: none;">
-                    <p class="calc-text-remain">남은 화수: <span id="calc-remain-ep">0</span>화</p>
-                    <p class="calc-text-need">필요한 금액: <span id="calc-need-coin">0</span></p>
-
-                    <div id="calc-coinback-result" style="display: none;">
-                        <p class="calc-text-coinback">돌려받는 금액: <span id="calc-back-coin">0</span></p>
-                        <p class="calc-text-extra">👉 <span id="calc-extra-ep">0</span>화 더 볼 수 있어요!</p>
-                    </div>
-                    <button id="calc-deduct-btn" onclick="deductFromCalculator()">
-                        지갑에서 바로 차감하기
+                    <button id="calc-mode-quick" class="calc-mode-tab" type="button" role="tab" aria-selected="false"
+                        aria-controls="calc-quick-section" onclick="setCalcMode('quick')">
+                        빠른 차감
                     </button>
                 </div>
+
+                <!-- 기존 정주행 계산기 영역 시작 -->
+                <div id="calc-standard-section" role="tabpanel" aria-labelledby="calc-mode-calc">
+
+
+                    <div style="margin-bottom: 15px;">
+                        <select id="calc-platform" class="modal-select" style="font-weight: bold;"
+                            onchange="updateCalcLabels()">
+                            <option value="coin">레진 / 봄툰 (코인)</option>
+                            <option value="cash">리디 (캐시)</option>
+                            <option value="won">미블 (머니)</option>
+                        </select>
+                    </div>
+
+
+                    <!-- 총 화수 + 현재 진도 : 가로 2열 -->
+                    <div class="calc-input-pair">
+                        <div class="calc-input-field">
+                            <label for="calc-total">작품 총 화수</label>
+                            <input type="number" id="calc-total" placeholder="예: 100">
+                        </div>
+
+                        <div class="calc-input-field">
+                            <label for="calc-current">내가 본 화수</label>
+                            <input type="number" id="calc-current" placeholder="예: 15">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label id="calc-price-label" style="font-size: 13px; color: #666;">1화당 코인</label>
+                        <input type="number" id="calc-price" placeholder="예: 3"
+                            style="margin-bottom: 5px; margin-top: 2px; width: 100%; box-sizing: border-box; padding: 8px;">
+                    </div>
+
+                    <div class="coinback-box" style="margin-bottom: 15px; padding: 12px; border-radius: 8px;">
+                        <label class="coinback-label"
+                            style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: normal; cursor: pointer;">
+                            <input type="checkbox" id="calc-coinback-toggle" onchange="toggleCoinbackInput()"
+                                style="margin: 0; width: 16px; height: 16px;">
+                            코인백 / 페이백(이벤트) 적용하기
+                        </label>
+                        <div id="calc-coinback-area" style="display: none; margin-top: 10px;">
+                            <label style="font-size: 12px; color: #666;">몇 퍼센트 돌려받나요? (%)</label>
+                            <input type="number" id="calc-coinback-percent" placeholder="예: 50"
+                                style="margin-top: 5px; margin-bottom: 0; width: 100%; box-sizing: border-box; padding: 8px;">
+                        </div>
+                    </div>
+
+                    <button onclick="calculateCoins()" class="save-btn calc-btn-full calc-mb-15">얼마나 필요할까?</button>
+
+                    <div id="calc-result-box" style="display: none;">
+
+
+                        <!-- 계산 결과 : 가로 2열 -->
+                        <div class="calc-result-summary">
+
+                            <div class="calc-summary-item">
+                                <span class="calc-summary-label">
+                                    남은 화수
+                                </span>
+                                <span class="calc-summary-value">
+                                    <span id="calc-remain-ep">0</span>화
+                                </span>
+                            </div>
+
+                            <div class="calc-summary-item">
+                                <span class="calc-summary-label">
+                                    필요한 금액
+                                </span>
+                                <span class="calc-summary-value">
+                                    <span id="calc-need-coin">0</span>
+                                </span>
+                            </div>
+
+                        </div>
+
+
+
+                        <div id="calc-coinback-result" style="display: none;">
+                            <p class="calc-text-coinback">돌려받는 금액: <span id="calc-back-coin">0</span></p>
+                            <p class="calc-text-extra">👉 <span id="calc-extra-ep">0</span>화 더 볼 수 있어요!</p>
+                        </div>
+
+
+
+                        <div class="calc-deduct-info">
+
+                            <div id="calc-wallet-wrap" class="calc-wallet-wrap" style="display: none;">
+
+                                <div class="calc-wallet-row">
+                                    <select id="calc-deduct-wallet" class="modal-select calc-wallet-select"
+                                        aria-label="차감할 지갑 선택" onchange="updateCalcBalanceNotice()">
+                                    </select>
+                                </div>
+                            </div>
+
+                            <p id="calc-balance-notice" class="calc-balance-notice" role="status" aria-live="polite"
+                                style="display: none;">
+                            </p>
+
+                        </div>
+
+
+                        <button id="calc-deduct-btn" onclick="deductFromCalculator()">
+                            지갑에서 바로 차감하기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 빠른 차감 화면 시작 -->
+                <div id="calc-quick-section" role="tabpanel" aria-labelledby="calc-mode-quick" style="display: none;">
+
+                    <!-- 플랫폼 선택 -->
+                    <div style="margin-bottom: 15px;">
+                        <label class="calc-quick-label" for="quick-deduct-platform">
+                            플랫폼 선택
+                        </label>
+
+
+                        <select id="quick-deduct-platform" class="modal-select"
+                            style="font-weight: bold; margin-top: 5px;" onchange="updateQuickDeductLabel()">
+
+                            <option value="lezhin">레진코믹스 (코인)</option>
+                            <option value="bomtoon">봄툰 (코인)</option>
+                            <option value="ridi">리디 (캐시)</option>
+                            <option value="mrblue">미블 (머니)</option>
+                        </select>
+
+                    </div>
+
+                    <!-- 사용 금액 -->
+                    <div style="margin-bottom: 15px;">
+                        <label id="quick-deduct-amount-label" class="calc-quick-label" for="quick-deduct-amount">
+                            사용 코인
+                        </label>
+
+                        <input type="number" id="quick-deduct-amount" inputmode="numeric" min="1" step="1"
+                            placeholder="차감할 금액을 입력하세요"
+                            style="margin-top: 5px; margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
+
+                        <p id="quick-deduct-balance-notice" class="calc-quick-note" role="status" aria-live="polite"
+                            style="display: none; margin: 6px 0 0; text-align: left;">
+                        </p>
+
+                    </div>
+
+                    <!-- 작품명 -->
+                    <div style="margin-bottom: 15px;">
+                        <label class="calc-quick-label" for="quick-deduct-title">
+                            작품명 (선택)
+                        </label>
+
+                        <input type="text" id="quick-deduct-title" maxlength="200" placeholder="비워두면 기타 지출로 기록"
+                            style="margin-top: 5px; margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
+                    </div>
+
+                    <p class="calc-quick-note">
+                        작품 등록 없이도 바로 차감하고
+                        월말정산에 기록할 수 있어요.
+                    </p>
+
+                    <button id="quick-deduct-submit" type="button" onclick="quickDeductFromModal()"
+                        class="save-btn calc-btn-full">
+                        차감하고 기록하기
+                    </button>
+
+                </div>
+                <!-- 빠른 차감 화면 종료 -->
 
                 <button onclick="closeCalcModal()" class="cancel-btn calc-btn-full calc-mt-15">닫기</button>
             </div>
         </div>
-
 
         <div id="link-setting-modal" class="modal-overlay" style="display: none; z-index: 5000;">
             <div class="modal-content" style="max-width: 400px; position: relative;">
@@ -775,7 +906,7 @@
                 style="max-width: 320px; position: relative; max-height: 75vh; display: flex; flex-direction: column; padding: 25px 20px;">
                 <button onclick="closeDrawerModal()"
                     style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
-                <h3 id="drawer-title" style="margin-top: 0; text-align: center; padding-bottom: 2px;">
+                <h3 id="drawer-title" style="margin-top: 0; text-align: center; padding-bottom: 8px;">
                     요일 전체 작품 서랍
                 </h3>
 
@@ -841,7 +972,8 @@
                 <button onclick="closePlatformSettingModal()"
                     style="position: absolute; top: 15px; right: 15px; font-size: 28px; background: none; border: none; color: #888; cursor: pointer; line-height: 1;">×</button>
                 <h3 style="margin-top: 0; margin-bottom: 16px; text-align: center; padding-bottom: 2px;">플랫폼 설정</h3>
-                <p style="text-align: center; color: #888; font-size: 12px; margin-bottom: 15px;">순서를 꾹 눌러 바꾸거나 스위치를 끄고
+                <p style="text-align: center; color: #888; font-size: 12px; margin-bottom: 15px;">순서를 꾹 눌러 바꾸거나 스위치를
+                    끄고
                     켤 수
                     있어요!</p>
 
