@@ -842,6 +842,13 @@ body.dark-mode .bomtoon-card .no-img-title {
     z-index: 10;
 }
 
+/* 작품 개인설정 버튼의 투명 터치 영역 확대 */
+.more-options-btn::after {
+    content: "";
+    position: absolute;
+    inset: -9px;
+}
+
 .card-info {
     padding: 10px 10px;
 }
@@ -1378,6 +1385,29 @@ body.dark-mode .coinback-label {
     background-color: #d1d8e0;
     border-radius: 50%;
     transition: all 0.3s ease;
+}
+
+/* 지갑 페이지 점 클릭 영역 */
+.wallet-pagination .dot {
+    position: relative;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+/* 보이는 점 크기는 유지하고 클릭 영역만 확대 */
+.wallet-pagination .dot::after {
+    content: '';
+    position: absolute;
+    top: -9px;
+    bottom: -9px;
+    left: -4px;
+    right: -4px;
+}
+
+/* 키보드로 선택했을 때 */
+.wallet-pagination .dot:focus-visible {
+    outline: 2px solid #686c9d;
+    outline-offset: 5px;
 }
 
 .wallet-pagination .dot.active {
@@ -2740,9 +2770,9 @@ body.dark-mode #global-event-alert .event-highlight-text {
     width: 100%;
 }
 
-.calc-mb-15 {
+/* .calc-mb-15 {
     margin-bottom: 15px;
-}
+} */
 
 .calc-mt-15 {
     margin-top: 15px;
@@ -3780,6 +3810,170 @@ body.dark-mode #calc-modal .calc-balance-notice {
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+}
+
+/* =========================================
+   모보 복귀 모드 1차 UI
+========================================= */
+
+#mobo-return-banner {
+    width: 100%;
+    max-width: 468px;
+    margin: 10px auto 16px;
+    padding: 12px;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid #dfe3eb;
+    border-radius: 12px;
+    background: #fff;
+    color: #555;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+#mobo-return-banner>svg {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+    color: #686c9d;
+}
+
+#mobo-return-banner-text {
+    flex: 1;
+    min-width: 0;
+}
+
+#mobo-return-banner button {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+    border: 0;
+    background: transparent;
+    color: #686c9d;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#mobo-return-banner button svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* 복귀 모달: 왼쪽 정렬형 레이아웃 */
+#mobo-return-modal .mobo-return-content {
+    max-width: 340px;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+/* 아이콘 + 제목 가로 배치 */
+.mobo-return-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.mobo-return-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    margin: 0;
+    border-radius: 12px;
+    background: #eef0f8;
+    color: #686c9d;
+}
+
+.mobo-return-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.mobo-return-header-text {
+    flex: 1;
+    min-width: 0;
+}
+
+#mobo-return-title {
+    margin: 0 0 5px;
+    font-size: 18px;
+    text-align: left;
+}
+
+#mobo-return-message {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+}
+
+/* 본문 */
+.mobo-return-description {
+    margin: 0 0 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #777;
+    text-align: left;
+}
+
+/* 보조 안내 */
+.mobo-return-guide {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px;
+    margin: 0 0 16px;
+    border-radius: 8px;
+    background: #f6f7fa;
+    color: #777;
+    font-size: 11px;
+    line-height: 1.6;
+    text-align: left;
+}
+
+.mobo-return-guide svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* 하단 버튼 가로 정렬 */
+.mobo-return-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.mobo-return-actions button {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    margin: 0;
+    padding: 11px 5px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+body.dark-mode #mobo-return-banner {
+    background: #2c2c2e;
+    border-color: #414146;
+    color: #eee;
+}
+
+body.dark-mode .mobo-return-guide {
+    background: #3a3a3c;
+    color: #ddd;
+}
+
+body.dark-mode .mobo-return-description {
+    color: #bbb;
 }
 
 

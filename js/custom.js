@@ -38,12 +38,17 @@ function isWorkOnAutoBreak(work) {
 
     // [추가] 3. 격주 연재 '자동휴재' 판독
     if (work.cycle && work.cycle.includes('격주 연재')) {
-        let match = work.cycle.match(/\((.*?)\)/);
+        const match = work.cycle.match(/격주 연재\s*\((\d{1,2})\/(\d{1,2})\)/);
+
         if (match) {
-            const targetDate = new Date(match[1]);
+            const targetMonth = Number(match[1]);
+            const targetDay = Number(match[2]);
             const today = getWebtoonDate();
-            // 오늘이 연재 예정일과 다르면? -> '자동휴재' 뱃지 띄우기!
-            if (targetDate.getMonth() !== today.getMonth() || targetDate.getDate() !== today.getDate()) {
+
+            if (
+                targetMonth !== today.getMonth() + 1 ||
+                targetDay !== today.getDate()
+            ) {
                 return true;
             }
         }
@@ -117,37 +122,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-
-
-
-// // [모보 전용 얼음! 타임머신]
-// // 여기서 시간을 설정하면, 1초도 흐르지 않고 무조건 딱 이 시간에 멈춰 있습니다!
-// // 평소에 진짜 시간을 쓸 때는 null 로 바꿔주세요.
-
-// const TIME_MACHINE = '2026-06-13T22:00:00'; // 원하는 시간으로 설정 (예: 밤 9시 59분 50초)
-// // const TIME_MACHINE = null; // 끄기 (진짜 시간으로 돌아가기)
-
-// function getKSTDate() {
-//     // 🌟 타임머신이 켜져 있으면, 무조건 설정한 가짜 시간으로 고정!
-//     if (TIME_MACHINE) {
-//         return new Date(TIME_MACHINE);
-//     }
-
-//     // 타임머신이 꺼져 있으면(null) 평소처럼 진짜 한국 시간을 반환!
-//     const now = new Date();
-//     const utc = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
-//     return new Date(utc + (9 * 60 * 60 * 1000));
-// }
-
-// function getWebtoonDate() {
-//     const kst = getKSTDate();
-//     if (kst.getHours() >= 22) kst.setDate(kst.getDate() + 1);
-//     return kst;
-// }
-
-// function formatDate(dateObj) {
-//     return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
-// }
 
 function getKSTDate() { const now = new Date(); const utc = now.getTime() + (now.getTimezoneOffset() * 60 * 1000); return new Date(utc + (9 * 60 * 60 * 1000)); }
 
@@ -299,7 +273,7 @@ window.onload = function () {
     // 🛡️ [안전장치 1] 데이터 부르다 꼬여도 앱 멈추지 않게 방어!
     try { loadAllData(); } catch (e) { console.error("데이터 로드 에러:", e); }
 
-    cleanupIncorrectHistoryV2();
+    // cleanupIncorrectHistoryV2();
     applyTheme();
 
     // 🛡️ [안전장치 2] 오프라인이라 아이콘(lucide) 인터넷에서 못 가져와도 에러 안 나게 방어!
@@ -316,6 +290,11 @@ window.onload = function () {
 
     // 🌟 [유일하게 추가된 줄] 오프라인일 때 통계창이 증발하는 걸 막기 위해 이걸 정산창보다 먼저 실행하게 끌어올렸어요!
     updateWeeklyStatUI();
+
+    // 복귀 여부부터 확인
+    checkMoboReturnVisit();
+
+    // 이후 일반 정산 검사
     askForDeduction();
 
     viewDay = days[getWebtoonDate().getDay()];
@@ -436,6 +415,189 @@ function setAddMode(mode) {
         // 🌟 [핵심] 일괄 추가 탭일 때는 제목 옆에 (플랫폼) 이름 딱 박아주기!
         modalTitle.textContent = `작품 추가 (${currentPltName})`;
     }
+}
+
+// ==========================================
+// 모보 장기 미접속 복귀 안내 시스템
+// ==========================================
+
+const MOBO_LAST_OPENED_KEY = 'moboReturnLastOpenedAt';
+const MOBO_RETURN_PENDING_KEY = 'moboReturnPendingDays';
+
+function checkMoboReturnVisit() {
+    const now = Date.now();
+
+    // 이전 접속 시각 가져오기
+    const rawPrevious = localStorage.getItem(MOBO_LAST_OPENED_KEY);
+    const previous = rawPrevious ? Number(rawPrevious) : NaN;
+
+    // 마지막 접속 시각 갱신
+    localStorage.setItem(MOBO_LAST_OPENED_KEY, String(now));
+
+    let absentDays = 0;
+
+    if (Number.isFinite(previous) && previous > 0 && previous <= now) {
+        absentDays = Math.floor(
+            (now - previous) / (24 * 60 * 60 * 1000)
+        );
+    }
+
+    // 14일 이상 미접속한 경우 복귀 안내 기록
+    if (absentDays >= 14) {
+        localStorage.setItem(
+            MOBO_RETURN_PENDING_KEY,
+            String(absentDays)
+        );
+    }
+
+    const pendingDays =
+        Number(localStorage.getItem(MOBO_RETURN_PENDING_KEY));
+
+    const banner = document.getElementById('mobo-return-banner');
+    const bannerText = document.getElementById('mobo-return-banner-text');
+
+    if (!banner || !bannerText) return;
+
+    // 복귀 안내 대상이 아니면 배너 숨김
+    if (!Number.isSafeInteger(pendingDays) || pendingDays < 14) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    bannerText.textContent =
+        `${pendingDays}일 만의 방문! 복귀 정리 안내를 확인해 보세요.`;
+
+    banner.style.display = 'flex';
+
+    // 30일 이상 새롭게 복귀했을 때만 모달 자동 표시
+    if (absentDays >= 30) {
+        openMoboReturnModal();
+    }
+}
+
+
+// 복귀 안내 모달 열기
+function openMoboReturnModal() {
+    const days = Number(
+        localStorage.getItem(MOBO_RETURN_PENDING_KEY)
+    );
+
+    if (!Number.isSafeInteger(days) || days < 14) return;
+
+    const modal = document.getElementById('mobo-return-modal');
+    const message = document.getElementById('mobo-return-message');
+
+    if (!modal || !message) return;
+
+    const isLongReturn = days >= 30;
+
+    // 복귀 기간 표시
+    message.textContent =
+        `${days}일 만에 모보에 돌아오셨네요!`;
+
+    const title = document.getElementById('mobo-return-title');
+    const description =
+        modal.querySelector('.mobo-return-description');
+    const guide =
+        modal.querySelector('.mobo-return-guide span');
+
+    if (title) {
+        title.textContent = isLongReturn
+            ? '다시 시작해 볼까요?'
+            : '오랜만이에요!';
+    }
+
+    if (description) {
+        description.textContent = isLongReturn
+            ? '그동안 밀린 정산을 건너뛰고, 오늘부터 다시 시작할 수 있어요.'
+            : '오랜만에 돌아오셨네요. 기존 모보를 계속 이용해 보세요.';
+    }
+
+    if (guide) {
+        guide.textContent = isLongReturn
+            ? '과거 미정산은 다시 표시되지 않아요. 기존 지갑 잔액과 작품 정보, 월말정산 기록은 그대로 유지돼요.'
+            : '이번 안내로 기존 작품이나 정산 기록이 변경되지는 않아요.';
+    }
+
+    // 복귀 기간별 버튼 구분
+    const skipBtn =
+        document.getElementById('mobo-return-skip-btn');
+
+    const dismissBtn =
+        document.getElementById('mobo-return-dismiss-btn');
+
+    if (skipBtn) {
+        skipBtn.style.display = isLongReturn ? 'block' : 'none';
+    }
+
+    if (dismissBtn) {
+        dismissBtn.style.display = isLongReturn ? 'none' : 'block';
+    }
+
+    // 14~29일은 '시작하기' 버튼만 표시
+    // 30일 이상은 '나중에 하기' 버튼 표시
+    const laterBtn = document.getElementById('mobo-return-later-btn');
+
+    if (laterBtn) {
+        laterBtn.style.display = isLongReturn ? 'block' : 'none';
+    }
+
+    modal.style.display = 'flex';
+}
+
+// 나중에 하기: 모달만 닫고 배너 유지
+function closeMoboReturnModal() {
+    document.getElementById('mobo-return-modal').style.display = 'none';
+}
+
+
+// 이번 안내 숨기기: 복귀 안내 상태만 해제
+function dismissMoboReturnNotice() {
+    localStorage.removeItem(MOBO_RETURN_PENDING_KEY);
+
+    document.getElementById('mobo-return-modal').style.display = 'none';
+    document.getElementById('mobo-return-banner').style.display = 'none';
+}
+
+// 30일 이상 복귀자: 과거 미정산 건너뛰기
+function skipMoboPastDeductions() {
+
+    const pendingDays = Number(
+        localStorage.getItem(MOBO_RETURN_PENDING_KEY)
+    );
+
+    // 30일 미만 이용자는 실행할 수 없음
+    if (!Number.isSafeInteger(pendingDays) || pendingDays < 30) {
+        return;
+    }
+
+    // 모보의 기존 웹툰 날짜 기준 사용
+    const todayStr = formatDate(getWebtoonDate());
+    const lastCheckDate = localStorage.getItem('lastCheckDate');
+
+    // 과거 정산 기준일만 오늘로 이동
+    // 오늘 이미 미리 정산한 기록이 있다면 유지
+    if (!lastCheckDate || lastCheckDate < todayStr) {
+        localStorage.setItem('lastCheckDate', todayStr);
+    }
+
+    // 메모리에 남아 있을 수 있는 과거 정산 목록 초기화
+    pendingDeductions = {
+        lezhin: [],
+        bomtoon: [],
+        ridi: [],
+        mrblue: []
+    };
+
+    pendingDaysStr = '';
+    isTodayDeduction = false;
+
+    // 복귀 안내 완료 처리
+    dismissMoboReturnNotice();
+
+    // 복귀 중 보류했던 주간 통계와 정산 기준 갱신
+    askForDeduction();
+    updateWeeklyStatUI();
 }
 
 
@@ -1247,33 +1409,125 @@ function deductToday() {
 }
 
 function askForDeduction() {
-    const webtoonDate = getWebtoonDate(); const nowStr = formatDate(webtoonDate); let last = localStorage.getItem('lastCheckDate');
+
+    // 30일 이상 복귀 정리가 아직 완료되지 않았다면
+    // 기존 밀린 정산창을 자동으로 열지 않음
+    const pendingReturnDays = Number(
+        localStorage.getItem(MOBO_RETURN_PENDING_KEY)
+    );
+
+    if (pendingReturnDays >= 30) {
+        return;
+    }
+
+    const webtoonDate = getWebtoonDate();
+    const nowStr = formatDate(webtoonDate);
+    let last = localStorage.getItem('lastCheckDate');
     if (!last) { last = nowStr; localStorage.setItem('lastCheckDate', nowStr); }
 
     const dayOfWeek = webtoonDate.getDay(); const mondayDate = new Date(webtoonDate); mondayDate.setDate(webtoonDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
     const weekStr = formatDate(mondayDate);
 
-    // 🌟 [자동 업데이트] 새로운 주가 시작되었을 때 실행
-    if (localStorage.getItem('currentWeekStr') !== weekStr) {
-        localStorage.setItem('currentWeekStr', weekStr);
-        localStorage.setItem('weeklySpent', 0);
-        localStorage.setItem('weeklySpentWon', 0);
+    // 실제로 몇 주가 지났는지 계산 (연말·연초 대응)
+    const previousWeekStr = localStorage.getItem('currentWeekStr');
 
-        // 🔥 모든 플랫폼의 모든 작품을 돌며 주기를 자동으로 +1주 합니다.
-        ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
-            Object.keys(state[plt]).forEach(day => {
-                state[plt][day].forEach(work => {
-                    // 🌟 [수정] 10일 연재가 섞여 있든 말든, 'N연 M휴'라는 글씨만 있으면 무조건 통과!
-                    if (work.cycle && /\d+연\s*\d+휴/.test(work.cycle)) {
-                        work.cycle = autoIncrementCycleText(work.cycle);
-                    }
+    if (previousWeekStr !== weekStr) {
+        const weekToUTC = (str) => {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(str || '')) return null;
+
+            const [y, m, d] = str.split('-').map(Number);
+            const ms = Date.UTC(y, m - 1, d);
+            const date = new Date(ms);
+
+            if (
+                date.getUTCFullYear() !== y ||
+                date.getUTCMonth() + 1 !== m ||
+                date.getUTCDate() !== d
+            ) return null;
+
+            return ms;
+        };
+
+        const previousUTC = weekToUTC(previousWeekStr);
+        const currentUTC = weekToUTC(weekStr);
+
+        // 이전 기록이 없는 경우 기존 동작(+1주) 유지
+        const elapsedWeeks = previousUTC === null
+            ? 1
+            : Math.max(
+                0,
+                Math.floor((currentUTC - previousUTC) / (7 * 86400000))
+            );
+
+        // 기기 시간이 과거로 변경된 경우에는 주차를 되돌리지 않음
+        if (previousUTC === null || currentUTC >= previousUTC) {
+
+            if (elapsedWeeks > 0) {
+                // 새로운 주의 통계 초기화
+                localStorage.setItem('weeklySpent', '0');
+                localStorage.setItem('weeklySpentWon', '0');
+
+                ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
+                    const updatedById = new Map();
+
+                    Object.keys(state[plt]).forEach(day => {
+                        state[plt][day].forEach(work => {
+
+                            // 동일 작품이 여러 요일에 있으면 결과만 동기화
+                            if (work.id && updatedById.has(work.id)) {
+                                work.cycle = updatedById.get(work.id);
+                                return;
+                            }
+
+                            if (typeof work.cycle !== 'string') return;
+
+                            const pattern = /(\d+)연\s*(\d+)휴\s*(\d+)주차/;
+                            const match = work.cycle.match(pattern);
+
+                            if (!match) return;
+
+                            const totalWeeks =
+                                Number(match[1]) + Number(match[2]);
+
+                            const previousPosition = Number(match[3]);
+
+                            if (
+                                !Number.isSafeInteger(totalWeeks) ||
+                                totalWeeks <= 0 ||
+                                !Number.isSafeInteger(previousPosition) ||
+                                previousPosition <= 0
+                            ) return;
+
+                            // 경과한 주 수를 반영하고 마지막 뒤에는 1주차로
+                            const newPosition = (
+                                (previousPosition - 1 +
+                                    (elapsedWeeks % totalWeeks)) % totalWeeks
+                            ) + 1;
+
+                            // 다른 연재 방식의 날짜는 건드리지 않음
+                            work.cycle = work.cycle.replace(
+                                pattern,
+                                `${match[1]}연 ${match[2]}휴 ${newPosition}주차`
+                            );
+
+                            if (work.id) {
+                                updatedById.set(work.id, work.cycle);
+                            }
+                        });
+                    });
                 });
-            });
-        });
 
-        // 변경된 주기를 금고에 영구 저장!
-        saveData();
-        console.log("새로운 주가 시작되어 모든 작품의 연재 주기를 업데이트했습니다. 🚀");
+                // 기존 자동 정렬과 화면 갱신 유지
+                saveData();
+
+                console.log(
+                    `연재 주차를 ${elapsedWeeks}주 반영했습니다.`
+                );
+            }
+
+            // 마지막으로 처리한 주 기록
+            localStorage.setItem('currentWeekStr', weekStr);
+        }
     }
 
     if (last < nowStr) {
@@ -1327,39 +1581,198 @@ function askForDeduction() {
     // (기존의 맨 밑에 있던 updateWeeklyStatUI()는 지워주셔도 됩니다!)
 }
 
+// 오늘·어제 정산: 체크한 작품 기준 예상 잔액 안내
+// 실제 지갑, 작품, 정산 기록은 변경하지 않음
+function updateDeductionBalanceNotice() {
+    const notice = document.getElementById('deduction-balance-notice');
+    if (!notice) return;
+
+    const labels = {
+        lezhin: ['레진', 'C'],
+        bomtoon: ['봄툰', 'C'],
+        ridi: ['리디', '캐시'],
+        mrblue: ['미블', '머니']
+    };
+
+    const insufficient = [];
+
+    platformOrder.forEach(plt => {
+        const total = (pendingDeductions[plt] || []).reduce((sum, item, i) => {
+            const checkbox = document.getElementById(`deduct-chk-${plt}-${i}`);
+
+            if (!checkbox || !checkbox.checked) return sum;
+
+            // 기존 정산과 동일하게 작품 금액 합산
+            return sum + (parseInt(item.work.coin) || 0);
+        }, 0);
+
+        if (total <= 0) return;
+
+        // 기존에 만든 예상 잔액 함수 재사용
+        const preview = getDeductionPreview(plt, total);
+
+        if (preview && preview.isInsufficient) {
+            const [name, unit] = labels[plt];
+
+            insufficient.push(
+                `${name} ${formatNum(preview.expectedWallet)} ${unit}`
+            );
+        }
+    });
+
+    notice.textContent = insufficient.length
+        ? `ⓘ 차감 후 예상 잔액: ${insufficient.join(' · ')}`
+        : '';
+
+    notice.style.display = insufficient.length ? 'block' : 'none';
+}
+
+
 
 function showDeductionModal() {
-    const listEl = document.getElementById('deduction-list'); listEl.innerHTML = '';
+    const listEl = document.getElementById('deduction-list');
+    listEl.innerHTML = '';
 
-    let popupMsg = isTodayDeduction ? `오늘(${pendingDaysStr}) 볼 작품을 미리 정산할까요?` : `어제(${pendingDaysStr}) 본 작품 정산을 진행할까요?`;
+    // 화면에서만 작품별로 묶기
+    // 기존 개별 정산 데이터는 그대로 유지
+    const groupedByPlatform = {};
+    let originalCount = 0;
+    let groupedCount = 0;
+
+    platformOrder.forEach(plt => {
+        const groups = new Map();
+
+        (pendingDeductions[plt] || []).forEach((item, i) => {
+            // 동일 플랫폼 + 동일 작품 ID 기준
+            const key = item.work.id
+                ? `id:${item.work.id}`
+                : `legacy:${item.day}:${item.idx}`;
+
+            if (!groups.has(key)) {
+                groups.set(key, {
+                    title: item.work.title,
+                    indices: [],
+                    amount: 0
+                });
+            }
+
+            const group = groups.get(key);
+            group.indices.push(i);
+            group.amount += parseInt(item.work.coin, 10) || 0;
+            originalCount++;
+        });
+
+        groupedByPlatform[plt] = groups;
+        groupedCount += groups.size;
+    });
+
+    // 상단 긴 요일 안내를 간단한 요약으로 변경
+    let popupMsg = isTodayDeduction
+        ? `오늘 볼 ${groupedCount}개 작품을 미리 정산할까요?`
+        : `밀린 정산 ${originalCount}건 · ${groupedCount}개 작품`;
+
     const todayDate = getKSTDate().getDate();
-    // 할인일 알림도 켠 플랫폼만 뜨게 예외 처리!
-    if (todayDate === 20 && platformOrder.includes('lezhin')) popupMsg += `<br><span style="color:#e60012; font-size:12px; font-weight:bold;">(오늘 레진 20일 코인 할인 날이에요!)</span>`;
-    if (todayDate === 22 && platformOrder.includes('bomtoon')) popupMsg += `<br><span style="color:#ff69b4; font-size:12px; font-weight:bold;">(오늘 봄툰 22일 코인 할인 날이에요!)</span>`;
+
+    // 기존 플랫폼 할인일 안내 유지
+    if (todayDate === 20 && platformOrder.includes('lezhin')) {
+        popupMsg += `<br><span style="color:#e60012; font-size:12px; font-weight:bold;">(오늘 레진 20일 코인 할인 날이에요!)</span>`;
+    }
+
+    if (todayDate === 22 && platformOrder.includes('bomtoon')) {
+        popupMsg += `<br><span style="color:#ff69b4; font-size:12px; font-weight:bold;">(오늘 봄툰 22일 코인 할인 날이에요!)</span>`;
+    }
+
     document.getElementById('deduction-msg').innerHTML = popupMsg;
 
-    // [핵심] 정산 팝업 리스트도 켠 플랫폼만!
-    platformOrder.forEach(plt => {
-        pendingDeductions[plt].forEach((item, i) => {
-            let pltName = '', color = '', unit = 'C';
-            if (plt === 'lezhin') { pltName = '레진'; color = '#e60012'; }
-            else if (plt === 'bomtoon') { pltName = '봄툰'; color = '#ff69b4'; }
-            else if (plt === 'ridi') { pltName = '리디'; color = '#1e90ff'; unit = '캐시'; }
-            else if (plt === 'mrblue') { pltName = '미블'; color = '#004e9a'; unit = '원'; }
+    const platformInfo = {
+        lezhin: ['레진', '#e60012', 'C'],
+        bomtoon: ['봄툰', '#ff69b4', 'C'],
+        ridi: ['리디', '#1e90ff', '캐시'],
+        mrblue: ['미블', '#004e9a', '머니']
+    };
 
-            const div = document.createElement('div');
-            div.style.display = 'flex'; div.style.justifyContent = 'space-between'; div.style.marginBottom = '8px'; div.style.fontSize = '14px';
-            div.innerHTML = `
-                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; width:100%;">
-                            <input type="checkbox" id="deduct-chk-${plt}-${i}" checked style="width:16px; height:16px; margin:0;">
-                            <span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">[${pltName}] ${item.work.title}</span>
-                            <span style="color:${color}; font-weight:bold;">${item.work.coin} ${unit}</span>
-                        </label>`;
-            listEl.appendChild(div);
+    // 플랫폼별로 묶인 작품 표시
+    platformOrder.forEach(plt => {
+        const [pltName, color, unit] = platformInfo[plt];
+
+        groupedByPlatform[plt].forEach(group => {
+            const row = document.createElement('div');
+            row.style.cssText = 'margin-bottom:8px;font-size:14px;';
+
+            const label = document.createElement('label');
+            label.style.cssText = 'display:flex;align-items:center;gap:8px;cursor:pointer;width:100%;';
+
+            // 이용자에게 보이는 작품별 체크박스
+            const groupCheckbox = document.createElement('input');
+            groupCheckbox.type = 'checkbox';
+            groupCheckbox.checked = true;
+            groupCheckbox.style.cssText = 'width:16px;height:16px;flex-shrink:0;margin:0;';
+
+            const titleBox = document.createElement('span');
+            titleBox.style.cssText = 'flex:1;min-width:0;';
+
+            const title = document.createElement('span');
+            title.textContent = `[${pltName}] ${group.title}`;
+            title.style.cssText = 'display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+            titleBox.appendChild(title);
+
+            // 같은 작품이 여러 번 밀린 경우만 횟수 표시
+            if (group.indices.length > 1) {
+                const count = document.createElement('small');
+                count.textContent = `미정산 ${group.indices.length}회`;
+                count.style.cssText = 'display:block;margin-top:3px;font-size:11px;color:#888;';
+                titleBox.appendChild(count);
+            }
+
+            // 합산된 총 차감 금액
+            const price = document.createElement('span');
+            price.textContent = `${formatNum(group.amount)} ${unit}`;
+            price.style.cssText = `color:${color};font-weight:bold;white-space:nowrap;flex-shrink:0;`;
+
+            label.append(groupCheckbox, titleBox, price);
+            row.appendChild(label);
+
+            // 기존 정산 시스템에서 사용하는 체크박스 유지
+            // 화면에만 보이지 않도록 처리
+            const originals = document.createElement('span');
+            originals.style.display = 'none';
+
+            group.indices.forEach(i => {
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `deduct-chk-${plt}-${i}`;
+                checkbox.checked = true;
+                originals.appendChild(checkbox);
+            });
+
+            row.appendChild(originals);
+
+            // 작품 체크박스와 기존 개별 항목을 동기화
+            groupCheckbox.addEventListener('change', () => {
+                originals.querySelectorAll('input').forEach(checkbox => {
+                    checkbox.checked = groupCheckbox.checked;
+                });
+
+                // 기존 지갑 잔액 미리보기 갱신
+                updateDeductionBalanceNotice();
+            });
+
+            listEl.appendChild(row);
         });
     });
+
+    // 기존 잔액 미리보기와 모달 열기
+    updateDeductionBalanceNotice();
+    // 밀린 정산일 때만 건너뛰기 안내 표시
+    const skipNotice = document.getElementById('deduction-skip-notice');
+
+    if (skipNotice) {
+        skipNotice.style.display =
+            isTodayDeduction ? 'none' : 'block';
+    }
     document.getElementById('deduction-modal').style.display = 'flex';
 }
+
 
 
 
@@ -1492,6 +1905,20 @@ function processDeduction() {
     let checkedCount = 0;
     let totalPendingCount = 0; // 🌟 [핵심] 모달창에 뜬 전체 작품 개수 확인용!
 
+    // 선택한 작품이 없으면 아무 기록도 변경하지 않음
+    const hasSelectedWork = platformOrder.some(plt =>
+        (pendingDeductions[plt] || []).some((item, i) =>
+            document.getElementById(`deduct-chk-${plt}-${i}`)?.checked
+        )
+    );
+
+    if (!hasSelectedWork) {
+        alert(
+            '정산할 작품을 선택해 주세요.\n' +
+            '전체를 건너뛰려면 「모두 건너뛰기」를 눌러 주세요.'
+        );
+        return;
+    }
     const todayKST = getKSTDate();
     const webtoonDate = getWebtoonDate();
     const nowStr = formatDate(webtoonDate);
@@ -1602,13 +2029,15 @@ function processDeduction() {
         alert("선택된 작품이 없어 정산되지 않았습니다.");
     }
 
-    // 🌟 [수정] 유저가 체크박스를 끄고 일부만 정산했다면!
-    if (checkedCount < totalPendingCount) {
-        isTodayDeduction = false; // 내일로 넘어가는 건 막아두되,
-        localStorage.setItem('lastPartialDeductDate', nowStr); // 🌟 '오늘 일부 정산했다'는 흔적을 남겨서 다음 번에 경고 팝업을 띄우게 만듭니다!
-    } else {
-        // 전부 다 정산했으면 찌꺼기 기록 청소!
-        localStorage.removeItem('lastPartialDeductDate');
+    // 오늘 작품 미리 정산은 기존 일부 정산 기능 유지
+    // 밀린 과거 정산은 선택하지 않은 작품을 건너뛰고 종료
+    if (isTodayDeduction) {
+        if (checkedCount < totalPendingCount) {
+            isTodayDeduction = false;
+            localStorage.setItem('lastPartialDeductDate', nowStr);
+        } else {
+            localStorage.removeItem('lastPartialDeductDate');
+        }
     }
 
     finishDeduction();
@@ -1788,7 +2217,6 @@ function loadAllData() {
 
         if (migratedCount > 0) {
             console.log(`총 ${migratedCount}개의 작품에 새 ID를 부여했습니다.`);
-            saveData();
         }
 
         localStorage.setItem('lWallet', p.lWallet || 0);
@@ -1814,6 +2242,10 @@ function loadAllData() {
         if (p.lastAttendDate) localStorage.setItem('lastAttendDate', p.lastAttendDate);
         if (p.lezhinAttend) localStorage.setItem('lezhinAttend', p.lezhinAttend);
         if (p.bomtoonAttend) localStorage.setItem('bomtoonAttend', p.bomtoonAttend);
+        // 백업의 지갑과 정산 기록을 모두 불러온 뒤 저장
+        if (migratedCount > 0) {
+            saveData(true);
+        }
     }
 
     // 🚨 앱을 켤 때마다 자동으로 청소기를 싹~ 돌려서 휴재작들을 전부 뒤로 밀어냅니다!
@@ -1955,7 +2387,23 @@ function getTargetDateForViewDay(dayStr) {
 
 
 function renderList(platform) {
-    const listEl = document.getElementById(`${platform}-list`); listEl.innerHTML = ''; let displayWorks = [];
+    const listEl = document.getElementById(`${platform}-list`);
+
+    // 기존에 표시된 썸네일 이미지 기억하기
+    const loadedThumbs = new Map();
+
+    listEl.querySelectorAll('.card-thumbnail[data-bg]').forEach(thumb => {
+        if (thumb.style.backgroundImage &&
+            thumb.style.backgroundImage !== 'none') {
+            loadedThumbs.set(
+                thumb.dataset.bg,
+                thumb.style.backgroundImage
+            );
+        }
+    });
+
+    listEl.innerHTML = '';
+    let displayWorks = [];
     const todayObj = getWebtoonDate();
 
     // 요일 및 10일 연재 필터링 로직
@@ -2153,6 +2601,12 @@ function renderList(platform) {
         return;
     }
 
+    // 같은 플랫폼의 현재 탭에 기존 연재 뱃지가 있는지 확인
+    const hasOriginalBadgeInList = displayWorks.some(work =>
+        (work.status === '휴재' && work.breakDate) ||
+        (work.cycle && work.cycle.trim() !== '')
+    );
+
     // 🌟 [4단계: 카드 그리기] 이미 필터링과 정렬이 끝났으니, 여기선 그냥 그리기만 하면 됩니다!
     displayWorks.forEach((work, index) => {
         // 🚨 주의: 이 아래에는 if (isHidingFinished) 로 시작하는 숨김 코드가 일절 없어야 합니다! 🚨
@@ -2211,8 +2665,7 @@ function renderList(platform) {
                     } else if (p.includes('격주 연재')) {
                         let match = p.match(/\((.*?)\)/);
                         if (match) {
-                            const d = new Date(match[1]);
-                            shortStr = !isNaN(d) ? `${d.getMonth() + 1}/${d.getDate()}` : match[1];
+                            shortStr = match[1];
                         } else {
                             shortStr = '격주';
                         }
@@ -2237,6 +2690,43 @@ function renderList(platform) {
                                 ${joinedText}
                             </span>
                         </div>`;
+            }
+        }
+
+        // 기존 뱃지가 없는 작품에만 기본 연재 뱃지 추가
+        if (!cycleTag) {
+            const weeklyNames = {
+                '월요일': '월요',
+                '화요일': '화요',
+                '수요일': '수요',
+                '목요일': '목요',
+                '금요일': '금요',
+                '토요일': '토요',
+                '일요일': '일요'
+            };
+
+            const dayName = weeklyNames[work.origDay];
+            let defaultBadge = '';
+
+            if (dayName) {
+                if (viewDay === '휴재' || viewDay === '완결') {
+                    defaultBadge = `${dayName}연재`;
+                } else if (
+                    regularDays.includes(viewDay) &&
+                    hasOriginalBadgeInList &&
+                    work.status === '연재중'
+                ) {
+                    defaultBadge = '매주연재';
+                }
+            }
+
+            if (defaultBadge) {
+                cycleTag = `
+                    <div style="width: 100%; overflow-x: auto; white-space: nowrap; padding-bottom: 2px; scrollbar-width: none; margin-bottom: 4px;">
+                        <span style="background: rgba(255, 244, 212, 0.95); color: #dd8a5b; padding: 4px 3px; border-radius: 4px; font-size: 11px; font-weight: normal; display: inline-block;">
+                            ${defaultBadge}
+                        </span>
+                    </div>`;
             }
         }
 
@@ -2317,6 +2807,15 @@ function renderList(platform) {
             </div>
         </div>
     </div>`;
+        // 이전에 로딩된 이미지는 즉시 복원
+        const thumbnail = card.querySelector('.card-thumbnail');
+        const loadedBackground = loadedThumbs.get(work.img);
+
+        if (thumbnail && loadedBackground) {
+            thumbnail.style.backgroundImage = loadedBackground;
+            thumbnail.classList.remove('lazy-bg');
+        }
+
         listEl.appendChild(card);
     });
 
@@ -2339,7 +2838,16 @@ function incrementProgress(plt, day, idx) {
         work.progress = newProg; // 옛날 데이터 방어막
     }
 
-    saveData();
+    // 전체 카드 재생성 없이 데이터만 저장
+    saveData(true);
+
+    // 클릭한 카드의 진도 표시만 업데이트
+    const progressBadge =
+        document.getElementById(`prog-${plt}-${day}-${idx}`);
+
+    if (progressBadge) {
+        progressBadge.textContent = newProg;
+    }
 
     trackClick('click_plus_one', { 'platform': plt, 'title': work.title });
     let badge = document.getElementById(`prog-${plt}-${day}-${idx}`); if (badge) { const activeColor = plt === 'lezhin' ? '#ff7675' : plt === 'bomtoon' ? '#ff78cb' : plt === 'ridi' ? '#5dade2' : '#66a3ff'; badge.style.transform = "scale(1.2)"; badge.style.backgroundColor = activeColor; setTimeout(() => { badge.style.transform = "scale(1)"; badge.style.backgroundColor = "rgba(0, 0, 0, 0.6)"; }, 250); }
@@ -2368,10 +2876,19 @@ function incrementCycle(plt, day, idx) {
         work.cycle = newCyc;
     }
 
-    // 🌟 3. 데이터 저장하고, 바뀐 숫자가 화면에 바로 보이도록 즉시 새로고침!
-    saveData();
+    // 연재 주기에 따른 자동휴재 정렬 유지
+    forceSortBreaks();
+
+    // 전체 화면을 다시 그리지 않고 데이터만 저장
+    saveData(true);
+
+    // 변경된 플랫폼의 작품 목록만 갱신
     renderList(plt);
+
+    // 주차 변화에 따른 필요 코인 등 갱신
+    refreshBalance();
 }
+
 
 function refreshBalance() {
     const lW = parseInt(localStorage.getItem('lWallet') || 0); const bW = parseInt(localStorage.getItem('bWallet') || 0);
@@ -2534,6 +3051,157 @@ function toggleCycleInputs(changedEl) {
 }
 
 function removeSelectedImage() { tempImg = ""; document.getElementById('image-input').value = ""; document.getElementById('image-status-text').textContent = "사진이 삭제되었습니다."; document.getElementById('image-status-text').style.color = "#e60012"; document.getElementById('remove-img-btn').style.display = 'none'; }
+
+// 작품 추가·수정: 구매 화수 입력 팝업
+let addDeductSaving = false;
+
+function handleAddDeductChange(checkbox) {
+    if (!checkbox.checked) return;
+
+    const titleInput = document.getElementById('input-title');
+    const coinInput = document.getElementById('input-coin');
+
+    const title = titleInput.value.trim();
+    const price = Number(coinInput.value.trim());
+
+    const selectedDays =
+        document.querySelectorAll('input[name="day-chk"]:checked').length;
+
+    const cycleType =
+        document.getElementById('input-cycle-type').value;
+
+    // 필수 입력 확인
+    if (!title) {
+        alert('먼저 작품 제목을 입력해 주세요.');
+        checkbox.checked = false;
+        titleInput.focus();
+        return;
+    }
+
+    if (!Number.isSafeInteger(price) || price <= 0) {
+        alert('1화당 코인·캐시·머니를 1 이상의 정수로 입력해 주세요.');
+        checkbox.checked = false;
+        coinInput.focus();
+        return;
+    }
+
+    if (!selectedDays && cycleType !== '격주 연재') {
+        alert('먼저 연재 요일을 선택해 주세요.');
+        checkbox.checked = false;
+        return;
+    }
+
+    // 입력창 초기화 후 팝업 열기
+    document.getElementById('add-deduct-buy-count').value = '';
+
+    updateAddDeductModalPreview();
+
+    document.getElementById('add-deduct-modal').style.display = 'flex';
+}
+
+
+// 구매 화수 변경 시 예상 잔액 계산
+function updateAddDeductModalPreview() {
+    const input = document.getElementById('add-deduct-buy-count');
+    const totalEl = document.getElementById('add-deduct-total');
+    const warningEl = document.getElementById('add-deduct-warning');
+    const applyBtn = document.getElementById('add-deduct-apply');
+
+    const countRaw = input.value.trim();
+    const count = Number(countRaw);
+
+    const price = Number(document.getElementById('input-coin').value);
+    const cost = count * price;
+
+    const valid =
+        countRaw !== '' &&
+        Number.isSafeInteger(count) &&
+        count > 0 &&
+        Number.isSafeInteger(price) &&
+        price > 0 &&
+        Number.isSafeInteger(cost);
+
+    const unit =
+        currentPlatform === 'ridi' ? '캐시' :
+            currentPlatform === 'mrblue' ? '머니' : 'C';
+
+    totalEl.textContent = valid
+        ? `총 차감 금액: ${formatNum(cost)} ${unit}`
+        : '';
+
+    totalEl.style.display = valid ? 'block' : 'none';
+
+    warningEl.textContent = '';
+    warningEl.style.display = 'none';
+
+    applyBtn.disabled = !valid || addDeductSaving;
+
+    if (!valid) return;
+
+    // 기존 예상 잔액 계산 함수 재사용
+    const preview = getDeductionPreview(currentPlatform, cost);
+
+    if (preview && preview.isInsufficient) {
+        warningEl.textContent =
+            `ⓘ 차감 후 예상 잔액: ${formatNum(preview.expectedWallet)} ${unit}`;
+
+        warningEl.style.display = 'block';
+    }
+}
+
+
+// 취소 시 체크 해제, 저장 및 차감 없음
+function cancelAddDeductModal() {
+    if (addDeductSaving) return;
+
+    document.getElementById('add-deduct-modal').style.display = 'none';
+    document.getElementById('add-deduct-chk').checked = false;
+}
+
+
+// 적용하기 = 작품 저장 + 지갑 차감
+async function applyAddDeductAndSave() {
+    if (addDeductSaving) return;
+
+    const raw =
+        document.getElementById('add-deduct-buy-count').value.trim();
+
+    const buyCount = Number(raw);
+    const price = Number(document.getElementById('input-coin').value);
+    const cost = buyCount * price;
+
+    if (!raw ||
+        !Number.isSafeInteger(buyCount) ||
+        buyCount <= 0 ||
+        !Number.isSafeInteger(price) ||
+        price <= 0 ||
+        !Number.isSafeInteger(cost)) {
+
+        alert('구매 화수를 1 이상의 정수로 입력해 주세요.');
+        return;
+    }
+
+    // 중복 클릭 및 중복 차감 방지
+    addDeductSaving = true;
+
+    const btn = document.getElementById('add-deduct-apply');
+    btn.disabled = true;
+
+    try {
+        const saved = await saveWorkFinal(buyCount);
+
+        // 작품 저장까지 성공했을 때만 팝업 닫기
+        if (saved === true) {
+            document.getElementById('add-deduct-modal').style.display = 'none';
+        }
+    } catch (err) {
+        console.error('작품 저장 및 차감 실패:', err);
+        alert('저장 중 오류가 발생했어요. 다시 확인해 주세요.');
+    } finally {
+        addDeductSaving = false;
+        btn.disabled = false;
+    }
+}
 
 function editFromAction() {
     closeActionModal();
@@ -2869,7 +3537,7 @@ function openAddModal(platform) {
 
 function closeAddModal() { document.getElementById('custom-modal').style.display = 'none'; }
 
-async function saveWorkFinal() {
+async function saveWorkFinal(buyCount = null) {
     const batchSection = document.getElementById('batch-add-section');
     const isBatchMode = batchSection && batchSection.style.display !== 'none';
 
@@ -2940,6 +3608,15 @@ async function saveWorkFinal() {
 
         closeAddModal();
         return;
+    }
+
+    // 차감 체크 상태에서 일반 저장 버튼을 눌러도
+    // 구매 화수 팝업을 먼저 열도록 처리
+    const requestedDeduction = document.getElementById('add-deduct-chk');
+
+    if (requestedDeduction && requestedDeduction.checked && buyCount === null) {
+        handleAddDeductChange(requestedDeduction);
+        return false;
     }
 
     const title = document.getElementById('input-title').value;
@@ -3014,34 +3691,28 @@ async function saveWorkFinal() {
     }
 
     let finalDeductDate = oldDeductDate;
+    let deductionAmount = 0;
 
     const deductChk = document.getElementById('add-deduct-chk');
+
     if (deductChk && deductChk.checked) {
-        let unitStr = '코인';
-        if (currentPlatform === 'ridi') unitStr = '캐시';
-        else if (currentPlatform === 'mrblue') unitStr = '머니';
 
-        // 🌟 [추가된 핵심 예외 처리] 1화당 재화가 0이거나 비어있을 때 차단!
-        if (coin === 0) {
-            alert(`현재 이 작품의 1화당 ${unitStr} 설정이 0이거나 비어있습니다! 설정한 후 다시 시도해 주세요.`);
-            deductChk.checked = false; // 혼동을 막기 위해 스위치도 꺼줌
-            return; // 🛑 여기서 함수를 강제 종료시켜서 에러가 나는 걸 막습니다!
+        // 잘못된 구매 화수와 금액 방지
+        if (!Number.isSafeInteger(coin) ||
+            coin <= 0 ||
+            !Number.isSafeInteger(buyCount) ||
+            buyCount <= 0 ||
+            !Number.isSafeInteger(buyCount * coin)) {
+
+            alert('구매 화수와 1화당 금액을 확인해 주세요.');
+            return false;
         }
 
-        let buyCount = prompt(`[${title}]\n이번에 새로 결제하신 건 몇 화 분량인가요?\n(1화당 ${formatNum(coin)}${unitStr} 차감)`);
-        let parsedBuy = parseInt(buyCount) || 0;
-        let cost = parsedBuy * coin;
+        // 아직 지갑에서 차감하지 않고 금액만 준비
+        deductionAmount = buyCount * coin;
 
-        if (cost > 0) {
-            if (confirm(`총 ${formatNum(cost)} ${unitStr}이(가) 차감됩니다.\n정말 지갑에서 차감하시겠습니까?`)) {
-                executeDeduction(currentPlatform, title, cost);
-                finalDeductDate = formatDate(getWebtoonDate());
-            } else {
-                alert("지갑 차감이 취소되었습니다.\n(작품 내용은 정상적으로 저장됩니다!)");
-            }
-        } else {
-            alert("결제 화수가 입력되지 않아 지갑 차감은 취소되었습니다.");
-        }
+        // 정상 저장될 작품의 마지막 정산일
+        finalDeductDate = formatDate(getWebtoonDate());
     }
 
     // 🚨 여기서부터 ImgBB 업로드 로직 추가! 🚨
@@ -3104,6 +3775,12 @@ async function saveWorkFinal() {
     }
 
     saveData();
+
+    // 사진 업로드와 작품 저장이 끝난 후 실제 지갑 차감
+    if (deductionAmount > 0) {
+        executeDeduction(currentPlatform, title, deductionAmount);
+    }
+
     autoUpdatePastBiweeklyDates();
     renderAll();
 
@@ -3124,6 +3801,8 @@ async function saveWorkFinal() {
     } else {
         showToast(`[${title}] 추가 완료!`);
     }
+
+    return true;
 }
 
 
@@ -3680,6 +4359,43 @@ function updateWalletDots() {
     });
 }
 
+// 지갑 아래 페이지 점 클릭으로 이동
+document.addEventListener('DOMContentLoaded', () => {
+    const slider = document.getElementById('wallet-slider');
+    if (!slider) return;
+
+    const pages = slider.querySelectorAll('.snap-page');
+    const dots = document.querySelectorAll('.wallet-pagination .dot');
+
+    dots.forEach((dot, i) => {
+        if (!pages[i]) return;
+
+        // 기존 span을 키보드로도 조작 가능하게 설정
+        dot.setAttribute('role', 'button');
+        dot.tabIndex = 0;
+        dot.setAttribute(
+            'aria-label',
+            i === 0 ? '첫 번째 지갑 보기' : '두 번째 지갑 보기'
+        );
+
+        const moveWallet = () => {
+            slider.scrollTo({
+                left: pages[i].offsetLeft - pages[0].offsetLeft,
+                behavior: 'smooth'
+            });
+        };
+
+        dot.addEventListener('click', moveWallet);
+
+        dot.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                moveWallet();
+            }
+        });
+    });
+});
+
 // 신규 추가: 숫자 세탁기 (천 단위 쉼표 찍어주는 마법!)
 function formatNum(num) {
     return Number(num).toLocaleString();
@@ -3799,12 +4515,24 @@ async function checkRemoteUpdate() {
 }
 
 
-// 1. 유저가 (다른 앱, 카톡 등) 하다가 '모보'로 다시 돌아왔을 때 확인하기!
+// 1. 유저가 다른 앱에서 모보로 돌아왔을 때 확인하기!
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
+
+        // 1순위: 장기 미접속 복귀 여부 먼저 확인
+        checkMoboReturnVisit();
+
+        // 2순위: 기존 업데이트 확인
         checkRemoteUpdate();
-        if (typeof askForDeduction === 'function') askForDeduction();
-        autoUpdatePastBiweeklyDates(); // 🔥 돌아올 때마다 날짜 지났는지 검사!
+
+        // 3순위: 일반 정산 확인
+        // 30일 이상 복귀자는 askForDeduction 내부에서 제외
+        if (typeof askForDeduction === 'function') {
+            askForDeduction();
+        }
+
+        // 4순위: 기존 연재 일정 및 화면 갱신
+        autoUpdatePastBiweeklyDates();
         renderAll();
     }
 });
@@ -4249,8 +4977,7 @@ function openGlobalDrawerModal(activePlt) {
                             } else if (p.includes('격주 연재')) {
                                 let match = p.match(/\((.*?)\)/);
                                 if (match) {
-                                    const d = new Date(match[1]);
-                                    shortStr = !isNaN(d) ? `${d.getMonth() + 1}/${d.getDate()}` : match[1];
+                                    shortStr = match[1];
                                 } else {
                                     shortStr = '격주';
                                 }
