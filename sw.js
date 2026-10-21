@@ -1,5 +1,5 @@
 // 🌟 버전 숫자를 하나 올렸습니다! (적용을 위해)
-const CACHE_NAME = 'mobo-cache-v13';
+const CACHE_NAME = 'mobo-cache-v14';
 const DYNAMIC_CACHE = 'mobo-dynamic-v4'; // 🌟 외부 이미지/아이콘을 훔쳐(?) 담을 새로운 보조 창고!
 
 const urlsToCache = [
@@ -42,11 +42,20 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-    // POST 요청이나 크롬 내부 요청은 건너뜁니다 (에러 방지)
     if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return;
 
+    // 업데이트 공지는 이전 캐시 대신 서버에서 직접 확인
+    const requestUrl = new URL(event.request.url);
+
+    if (
+        requestUrl.origin === self.location.origin &&
+        requestUrl.pathname.endsWith('/update.json')
+    ) {
+        return;
+    }
+
     event.respondWith(
-        caches.match(event.request, { ignoreSearch: true }).then(cachedResponse => {
+        caches.match(event.request).then(cachedResponse => {
             // 1. 창고에 있으면 즉시 꺼내주기 (오프라인 쌩쌩!)
             if (cachedResponse) return cachedResponse;
 

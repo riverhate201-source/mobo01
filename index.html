@@ -10,6 +10,7 @@
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#f4f6f8">
     <link rel="apple-touch-icon" href="./icon.png">
+    <link rel="icon" type="image/png" href="./icon.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="mobo">
@@ -989,8 +990,13 @@
 
                 <div class="filter-modal-body">
                     <!-- 첫 번째 버튼: 순서 편집 -->
-                    <button class="filter-option-btn" onclick="startReorder()">
+                    <button id="filter-reorder-btn" class="filter-option-btn" onclick="startReorder()">
                         <span>순서 편집</span>
+                    </button>
+
+                    <button id="finished-cleanup-btn" class="filter-option-btn" onclick="openFinishedCleanup()"
+                        style="display:none;">
+                        <span>완결 작품 정리하기</span>
                     </button>
 
                     <!-- 두 번째 버튼: 숨기기/보이기 토글 -->
@@ -1002,6 +1008,61 @@
                         <span>닫기</span>
                     </button>
                 </div>
+            </div>
+        </div>
+
+
+        <!-- 완결 작품 정리하기 팝업 -->
+        <div id="finished-cleanup-modal" class="modal-overlay" style="display:none; z-index:10001;"
+            onclick="if(event.target === this) closeFinishedCleanup()">
+
+            <div class="modal-content" style="max-width:370px; max-height:80vh;
+                display:flex; flex-direction:column; gap:12px;">
+
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 id="finished-cleanup-title" style="margin:0; font-size:17px;">
+                        완결 작품 정리하기
+                    </h3>
+
+                    <button type="button" onclick="closeFinishedCleanup()" style="border:0; background:none; color:inherit;
+                           font-size:25px; cursor:pointer;">
+                        ×
+                    </button>
+                </div>
+
+                <p style="margin:0; font-size:12px; color:#888;">
+                    삭제할 작품을 선택해 주세요.
+                    지갑과 과거 정산 내역은 유지돼요.
+                </p>
+
+                <label style="display:flex; align-items:center;
+                      gap:10px; font-size:13px; font-weight:600;">
+                    <input id="finished-cleanup-all" type="checkbox" onchange="toggleAllFinishedCleanup(this.checked)"
+                        style="width:18px; height:18px;
+                          margin:0; padding:0; accent-color:#444;">
+                    전체 선택
+                </label>
+
+                <div id="finished-cleanup-list" style="overflow-y:auto; min-height:0; flex:1;
+                    border:1px solid rgba(128,128,128,.2);
+                    border-radius:10px;">
+                </div>
+
+                <div id="finished-cleanup-count" style="font-size:12px; color:#888; text-align:right;">
+                    0개 선택됨
+                </div>
+
+                <div class="modal-btns">
+                    <button type="button" class="cancel-btn" onclick="closeFinishedCleanup()">
+                        취소
+                    </button>
+
+                    <button type="button" id="finished-cleanup-delete" class="save-btn"
+                        onclick="deleteFinishedSelected()" disabled style="padding:12px; font-size:13px; opacity:.4;">
+                        선택한 0개 삭제
+                    </button>
+                </div>
+
             </div>
         </div>
 
