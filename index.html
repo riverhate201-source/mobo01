@@ -510,11 +510,17 @@
                 </div>
 
                 <!-- 1️⃣ 단일 추가 전용 윗부분 (제목, 링크, 시간) -->
+
                 <div id="single-add-section-1">
                     <input type="text" id="input-title" placeholder="작품 제목">
-                    <input type="url" id="input-url" placeholder="작품 바로가기 링크 (선택)" style="margin-top: 2px;">
-                    <input type="text" id="input-time" placeholder="업로드 시간 (예: 오전 7시 업로드)" style="flex: 1;">
+
+                    <div class="work-link-time-row">
+                        <input type="url" id="input-url" placeholder="작품 링크" autocomplete="off">
+
+                        <input type="text" id="input-time" placeholder="업로드 시간">
+                    </div>
                 </div>
+
 
                 <!-- 2️⃣ 공통 영역 (요일 체크박스 + 상태) -->
                 <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 5px;">
@@ -543,7 +549,8 @@
                     </div>
 
                     <select id="input-status" class="modal-select"
-                        style="width: 100%; margin-top: 4px; margin-bottom: 0;" onchange="toggleBreakSettingRow(this)">
+                        style="width: 100%; margin-top: 4px; margin-bottom: 0;"
+                        onchange="toggleBreakSettingRow(this, true)">
                         <option value="연재중">연재 중</option>
                         <option value="휴재">휴재 (코인 안 빠짐)</option>
                         <option value="완결">완결 (코인 안 빠짐)</option>
@@ -571,6 +578,21 @@
                             style="display: none; flex: 1; margin-bottom: 0; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
                     </div>
 
+
+                    <!-- 격주 연재 휴재 시 기준일 요약 -->
+                    <div id="biweekly-break-summary" style="display:none; align-items:center; gap:8px;
+            padding:10px 12px; margin:8px 0;
+            background:rgba(104,108,157,0.09);
+            border-radius:8px; font-size:12px; color:#444;">
+
+                        <span style="color:#686C9D; font-size:15px;">↻</span>
+
+                        <span id="biweekly-break-summary-text">
+                            격주연재 · 기준일 미설정
+                        </span>
+                    </div>
+
+
                     <div id="break-setting-row" class="break-setting-row">
                         <input type="date" id="break-return-date" class="break-date-input"
                             onchange="clearActiveBreakBtns()">
@@ -585,7 +607,7 @@
                             onclick="clearBreakDate(this)">미정</button>
                     </div>
 
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; gap: 10px; margin-top: 8px;">
                         <input type="number" id="input-coin" placeholder="코인"
                             style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
                         <input type="text" id="input-progress" placeholder="진도 (예: 1화)"
@@ -1082,6 +1104,7 @@
                 <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                     <button id="btn-sort-az" class="sort-tab-btn" onclick="sortListAZ()">가나다 나열</button>
                     <button id="btn-sort-za" class="sort-tab-btn" onclick="sortListZA()">다나가 나열</button>
+                    <button id="btn-sort-custom" class="sort-tab-btn" onclick="sortListCustom()">커스텀</button>
                 </div>
 
                 <!-- 📜 세로 리스트가 그려질 공간 -->

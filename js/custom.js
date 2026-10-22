@@ -242,6 +242,48 @@ let viewDay = days[getWebtoonDate().getDay()];
 let currentPlatform = ''; let tempImg = ""; let editMode = false; let actionPlt = ''; let actionOrigDay = ''; let actionIdx = -1;
 const STORAGE_KEY = 'WEBTOON_APP_STABLE_V1';
 
+
+// 플랫폼별 기본 정렬 방식
+let platformSortModes = {
+    lezhin: 'manual',
+    bomtoon: 'manual',
+    ridi: 'manual',
+    mrblue: 'manual'
+};
+
+// 플랫폼 기본 정렬보다 우선하는 요일별 커스텀 설정
+let manualDayOverrides = {
+    lezhin: {},
+    bomtoon: {},
+    ridi: {},
+    mrblue: {}
+};
+
+function getEffectiveSortMode(plt, day) {
+    // 특별 탭은 가나다·다나가 정렬의 적용 대상에서 제외
+    if (!isReorderableDay(day)) {
+        return 'manual';
+    }
+
+    return manualDayOverrides[plt]?.[day] === true
+        ? 'manual'
+        : (platformSortModes[plt] || 'manual');
+}
+
+// 저장된 원본 배열은 바꾸지 않고 제목만 비교
+function compareWorkTitlesByMode(a, b, plt, day) {
+    const mode = getEffectiveSortMode(plt, day);
+
+    if (mode === 'manual') return 0;
+
+    const result = String(a.title || '').localeCompare(
+        String(b.title || ''), 'ko'
+    );
+
+    return mode === 'za' ? -result : result;
+}
+
+
 let state = {
     lezhin: { "월요일": [], "화요일": [], "수요일": [], "목요일": [], "금요일": [], "토요일": [], "일요일": [], "10일 연재": [], "격주 연재": [] },
     bomtoon: { "월요일": [], "화요일": [], "수요일": [], "목요일": [], "금요일": [], "토요일": [], "일요일": [], "10일 연재": [], "격주 연재": [] },
@@ -1673,16 +1715,20 @@ function askForDeduction() {
                     });
                 });
 
-                // 기존 자동 정렬과 화면 갱신 유지
-                saveData();
+                // 기존 자동 정렬과 화면 갱신은 주차 저장 후 수행
 
                 console.log(
                     `연재 주차를 ${elapsedWeeks}주 반영했습니다.`
                 );
             }
 
+
             // 마지막으로 처리한 주 기록
             localStorage.setItem('currentWeekStr', weekStr);
+
+            // 주차 기록을 완료한 뒤 통합 데이터 저장
+            saveData(elapsedWeeks === 0);
+
         }
     }
 
@@ -2364,18 +2410,13 @@ function checkAttendance(plt) {
 
 
 // 🧹 [핵심 마법] 휴재/완결/자동휴재 작품을 무조건 맨 뒤로 밀어내는 전용 청소기 함수!
+
 function forceSortBreaks() {
-    ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
-        Object.keys(state[plt]).forEach(day => {
-            state[plt][day].sort((a, b) => {
-                // isWorkOnBreak 만능 판독기로 수동 휴재 + 완결 + 자동휴재까지 싹 다 잡아서 무거운 돌덩이(1)로 만듭니다!
-                let aBreak = isWorkOnBreak(a) ? 1 : 0;
-                let bBreak = isWorkOnBreak(b) ? 1 : 0;
-                return aBreak - bBreak;
-            });
-        });
-    });
+    // 기존 함수 호출과의 호환성을 위해 유지
+    // 사용자가 직접 정한 저장 순서는 절대 변경하지 않음
+    // 휴재 작품의 화면 정렬은 renderList()에서만 처리
 }
+
 
 // 1. 데이터 불러오기
 function loadAllData() {
@@ -2383,6 +2424,37 @@ function loadAllData() {
     if (data) {
         const p = JSON.parse(data);
         state = p.state || state;
+
+
+        // 백업에 정렬 설정이 있다면 함께 복원
+        if (p.platformSortModes &&
+            typeof p.platformSortModes === 'object') {
+
+            Object.keys(platformSortModes).forEach(plt => {
+                const mode = p.platformSortModes[plt];
+
+                if (['manual', 'az', 'za'].includes(mode)) {
+                    platformSortModes[plt] = mode;
+                }
+            });
+        }
+
+        if (p.manualDayOverrides &&
+            typeof p.manualDayOverrides === 'object') {
+
+            Object.keys(manualDayOverrides).forEach(plt => {
+                const saved = p.manualDayOverrides[plt];
+
+                if (!saved || typeof saved !== 'object') return;
+
+                Object.keys(state[plt] || {}).forEach(day => {
+                    if (saved[day] === true) {
+                        manualDayOverrides[plt][day] = true;
+                    }
+                });
+            });
+        }
+
 
         let migratedCount = 0;
 
@@ -2449,6 +2521,8 @@ function saveData(silent = false) {
 
     const d = {
         state: state,
+        platformSortModes: platformSortModes,
+        manualDayOverrides: manualDayOverrides,
         lWallet: localStorage.getItem('lWallet') || 0,
         bWallet: localStorage.getItem('bWallet') || 0,
         rWallet: localStorage.getItem('rWallet') || 0,
@@ -2598,6 +2672,61 @@ function formatBiweeklyBadgeText(cyclePart) {
 
     return `격주 · ${label} ${month}/${day}`;
 }
+
+
+function hasWorkReturnedForViewedDay(work, dayStr) {
+    const regularDays = [
+        '월요일', '화요일', '수요일', '목요일',
+        '금요일', '토요일', '일요일'
+    ];
+
+    return regularDays.includes(dayStr) &&
+        work.status === '휴재' &&
+        typeof work.breakDate === 'string' &&
+        /^\d{4}-\d{2}-\d{2}$/.test(work.breakDate) &&
+        formatDate(getTargetDateForViewDay(dayStr)) >= work.breakDate;
+}
+
+
+
+function isWorkOnBreakForViewedDay(work, dayStr) {
+    const regularDays = [
+        '월요일', '화요일', '수요일', '목요일',
+        '금요일', '토요일', '일요일'
+    ];
+
+    if (!regularDays.includes(dayStr)) {
+        return isWorkOnBreak(work);
+    }
+
+    const targetDate = getTargetDateForViewDay(dayStr);
+    const hasReturned = hasWorkReturnedForViewedDay(work, dayStr);
+
+    // 완결이나 복귀일 이전의 수동 휴재는 그대로 유지
+    if (
+        work.status === '완결' ||
+        (work.status === '휴재' && !hasReturned)
+    ) {
+        return true;
+    }
+
+    // 복귀일 이후라면 화면에서만 연재중으로 판단
+    const viewWork = hasReturned
+        ? { ...work, status: '연재중' }
+        : work;
+
+    // 정기휴재 주기 역시 선택한 날짜 기준
+    if (isWorkOnBreakOnDate(viewWork, targetDate)) {
+        return true;
+    }
+
+    // 격주 연재일 판정
+    return (work.cycle || '').includes('격주 연재') &&
+        !isBiweeklyReleaseOnViewedDate(work, targetDate);
+}
+
+
+
 
 function renderList(platform) {
     const listEl = document.getElementById(`${platform}-list`);
@@ -2763,13 +2892,9 @@ function renderList(platform) {
         if (isHidingFinished[platform]) {
             displayWorks = displayWorks.filter(work => {
                 if (work.status === '완결') return false;
+                if (work.isReturningToday) return true;
 
-                if (work.status === '휴재' || isWorkOnAutoBreak(work)) {
-                    // 💡 위에서 무조건 달아준 VIP 이름표 덕분에 이제 절대 안 숨겨집니다!
-                    if (work.isReturningToday) return true;
-                    return false;
-                }
-                return true;
+                return !isWorkOnBreakForViewedDay(work, viewDay);
             });
         }
     }
@@ -2859,22 +2984,64 @@ function renderList(platform) {
             return 0;
         });
 
+
     } else if (viewDay !== '전체') {
 
-        // 👉 (2) 일반 요일 탭 전용: 10일/격주(1등) -> 오늘 복귀작(2등) -> 일반작(3등)
+        // 저장 순서는 그대로 두고 화면 표시 순서만 변경
         displayWorks.sort((a, b) => {
-            const isVipA = (a.isToday10Day || a.isTodayBiweekly) && a.status !== '휴재';
-            const isVipB = (b.isToday10Day || b.isTodayBiweekly) && b.status !== '휴재';
+
+            // 일반 요일 탭에서는 휴재 작품을 화면 뒤쪽으로
+            if (regularDays.includes(viewDay)) {
+                const aBreak = isWorkOnBreakForViewedDay(a, viewDay);
+                const bBreak = isWorkOnBreakForViewedDay(b, viewDay);
+
+                if (aBreak !== bBreak) {
+                    return aBreak ? 1 : -1;
+                }
+
+                // 휴재 작품끼리는 저장된 상대적 순서 유지
+                if (aBreak && bBreak) {
+                    return 0;
+                }
+            }
+
+            // 기존 10일·격주 연재일 우선 표시 유지
+            const isVipA =
+                (a.isToday10Day || a.isTodayBiweekly) &&
+                a.status !== '휴재';
+
+            const isVipB =
+                (b.isToday10Day || b.isTodayBiweekly) &&
+                b.status !== '휴재';
+
             if (isVipA && !isVipB) return -1;
             if (!isVipA && isVipB) return 1;
 
-            if (a.isReturningToday && !b.isReturningToday) return -1;
-            if (!a.isReturningToday && b.isReturningToday) return 1;
-            if (a.isReturningToday && b.isReturningToday) return new Date(a.breakDate) - new Date(b.breakDate);
+            // 다른 요일에서 복귀한 작품만 우선 표시
+            // 원래 요일로 복귀한 작품은 기존 자리 유지
 
-            return 0;
+            const todayStr = formatDate(getWebtoonDate());
+
+            const returnA = a.isReturningToday &&
+                a.breakDate > todayStr;
+
+            const returnB = b.isReturningToday &&
+                b.breakDate > todayStr;
+
+
+            if (returnA && !returnB) return -1;
+            if (!returnA && returnB) return 1;
+
+            if (returnA && returnB) {
+                return new Date(a.breakDate) - new Date(b.breakDate);
+            }
+
+            // 특별 연재·복귀 미리보기 우선순위 다음으로
+            // 플랫폼 정렬 방식 적용
+            return compareWorkTitlesByMode(a, b, platform, viewDay);
         });
     }
+
 
     // 🌟 [3단계: 빈 화면 처리] 만약 오늘 볼 작품이 0개라면? 안내 문구 띄우기!
     if (displayWorks.length === 0) {
@@ -2899,10 +3066,11 @@ function renderList(platform) {
         // 🚨 주의: 이 아래에는 if (isHidingFinished) 로 시작하는 숨김 코드가 일절 없어야 합니다! 🚨
         const hasImg = work.img && work.img !== "";
         let statusBadge = "";
-        let isBreak = isWorkOnBreak(work);
+        const hasReturnedForView = hasWorkReturnedForViewedDay(work, viewDay);
+        let isBreak = isWorkOnBreakForViewedDay(work, viewDay);
 
         // 🌟 1. 상태 뱃지 (휴재/완결) - 날짜 중복 제거하고 깔끔하게 텍스트만!
-        if (work.status === '휴재') {
+        if (work.status === '휴재' && !hasReturnedForView) {
             // 🌟 [최종 방어] breakDate가 아예 없거나(구버전 데이터), 빈 문자열이면 무조건 '장기 휴재'!
             const isLongBreak = !work.breakDate || work.breakDate.trim() === "";
             const label = isLongBreak ? '[장기휴재]' : '[휴재]';
@@ -3050,7 +3218,10 @@ function renderList(platform) {
             card.dataset.day = work.origDay;
         }
 
-        let isStrike = (work.status !== '연재중' || isBreak);
+        let isStrike = (
+            (work.status !== '연재중' && !hasReturnedForView) ||
+            isBreak
+        );
         let unit = 'C';
         if (platform === 'ridi') unit = '캐시';
         else if (platform === 'mrblue') unit = '머니';
@@ -3218,10 +3389,12 @@ function refreshBalance() {
         }
 
         else {
-            lT = lezhinWorks.filter(w => !isWorkOnBreak(w)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
-            bT = bomtoonWorks.filter(w => !isWorkOnBreak(w)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
-            rT = ridiWorks.filter(w => !isWorkOnBreak(w)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
-            mT = mrblueWorks.filter(w => !isWorkOnBreak(w)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
+
+            lT = lezhinWorks.filter(w => !isWorkOnBreakForViewedDay(w, viewDay)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
+            bT = bomtoonWorks.filter(w => !isWorkOnBreakForViewedDay(w, viewDay)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
+            rT = ridiWorks.filter(w => !isWorkOnBreakForViewedDay(w, viewDay)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
+            mT = mrblueWorks.filter(w => !isWorkOnBreakForViewedDay(w, viewDay)).reduce((s, i) => s + (parseInt(i.coin) || 0), 0);
+
         }
 
         // 요일 탭에 해당하는 10일·격주 작품 금액만 추가
@@ -3238,8 +3411,12 @@ function refreshBalance() {
                 let extra = 0;
 
                 const addIfDue = (work, scheduled) => {
+                    const effectiveWork = hasWorkReturnedForViewedDay(work, viewDay)
+                        ? { ...work, status: '연재중' }
+                        : work;
+
                     if (!scheduled ||
-                        isWorkOnBreakOnDate(work, targetDate)) return;
+                        isWorkOnBreakOnDate(effectiveWork, targetDate)) return;
 
                     // 동일 작품 중복 합산 방지
                     if (work.id && seenIds.has(work.id)) return;
@@ -3269,6 +3446,63 @@ function refreshBalance() {
             bT += specialExtra('bomtoon');
             rT += specialExtra('ridi');
             mT += specialExtra('mrblue');
+
+
+            // 다른 요일에 등록됐지만 선택한 날짜에 복귀하는 작품도 합산
+            const returningExtra = plt => {
+                const targetDateStr = formatDate(targetDate);
+
+                // 이미 현재 요일 탭에 표시될 작품 제목 기록
+                const seenTitles = new Set(
+                    (state[plt][viewDay] || []).map(w => w.title)
+                );
+
+                // 10일·격주 작품과 중복 합산 방지
+                (state[plt]['10일 연재'] || []).forEach(w => {
+                    if (isDateMatch(w.cycle, targetDate, plt)) {
+                        seenTitles.add(w.title);
+                    }
+                });
+
+                (state[plt]['격주 연재'] || []).forEach(w => {
+                    if (isBiweeklyReleaseOnViewedDate(w, targetDate)) {
+                        seenTitles.add(w.title);
+                    }
+                });
+
+                let extra = 0;
+
+                Object.entries(state[plt]).forEach(([dayKey, works]) => {
+                    if (
+                        dayKey === viewDay ||
+                        dayKey === '10일 연재' ||
+                        dayKey === '격주 연재'
+                    ) return;
+
+                    works.forEach(work => {
+                        if (
+                            work.status !== '휴재' ||
+                            work.breakDate !== targetDateStr ||
+                            seenTitles.has(work.title)
+                        ) return;
+
+                        seenTitles.add(work.title);
+
+                        // 복귀일이라도 정기휴재일이면 코인 합산 제외
+                        if (!isWorkOnBreakForViewedDay(work, viewDay)) {
+                            extra += parseInt(work.coin, 10) || 0;
+                        }
+                    });
+                });
+
+                return extra;
+            };
+
+            lT += returningExtra('lezhin');
+            bT += returningExtra('bomtoon');
+            rT += returningExtra('ridi');
+            mT += returningExtra('mrblue');
+
         }
     }
 
@@ -3406,6 +3640,36 @@ function toggleCycleInputs(changedEl) {
         }
     }
 
+
+    // 마지막 연재 요일이나 주기를 해제했을 때 휴재 상태 검사
+    if (changedEl) {
+        const statusSelect = document.getElementById('input-status');
+
+        const hasDay = Array.from(dayChecks).some(chk => chk.checked);
+        const hasBiweekly = typeSelect?.value === '격주 연재';
+
+        if (
+            statusSelect?.value === '휴재' &&
+            !hasDay &&
+            !hasBiweekly
+        ) {
+            // 연재 정보가 없다면 휴재 상태를 유지하지 않음
+            statusSelect.value = '연재중';
+
+            // 이전 복귀 날짜 초기화
+            const breakDate = document.getElementById('break-return-date');
+            if (breakDate) breakDate.value = '';
+
+            clearActiveBreakBtns();
+            toggleBreakSettingRow(statusSelect);
+
+            alert(
+                '연재 요일 또는 연재주기를 최소 하나 선택해야 휴재 상태를 유지할 수 있어요.'
+            );
+        }
+    }
+
+
     // 2. [입력창 노출 관리]
     // 10일 연재 칸 보이기/숨기기
     const input10 = document.getElementById('input-10day-dates');
@@ -3431,6 +3695,17 @@ function toggleCycleInputs(changedEl) {
             }
         }
     }
+    updateBreakReturnDateMin();
+
+    if (document.getElementById('input-status')?.value === '휴재') {
+        toggleBreakSettingRow(
+            document.getElementById('input-status')
+        );
+    }
+
+    updateBiweeklyBreakSummary();
+
+    toggleBreakSettingRow(document.getElementById('input-status'));
 }
 
 function removeSelectedImage() { tempImg = ""; document.getElementById('image-input').value = ""; document.getElementById('image-status-text').textContent = "사진이 삭제되었습니다."; document.getElementById('image-status-text').style.color = "#e60012"; document.getElementById('remove-img-btn').style.display = 'none'; }
@@ -3719,6 +3994,8 @@ function editFromAction() {
     // 🌟 [수정] 그 다음에 값을 넣어줘야 달력에 날짜가 제대로 표시됩니다.
     if (cWeek) document.getElementById('input-cycle-week').value = cWeek;
 
+    updateBiweeklyBreakSummary();
+
     document.getElementById('custom-modal').style.display = 'flex';
 }
 
@@ -3838,6 +4115,8 @@ function duplicateFromAction() {
     if (typeof toggleCycleInputs === "function") toggleCycleInputs();
     if (cWeek) document.getElementById('input-cycle-week').value = cWeek;
 
+    updateBiweeklyBreakSummary();
+
     document.getElementById('custom-modal').style.display = 'flex';
 }
 
@@ -3930,6 +4209,191 @@ function openAddModal(platform) {
 
 function closeAddModal() { document.getElementById('custom-modal').style.display = 'none'; }
 
+
+
+function getMinimumBreakReturnDate() {
+    if (document.getElementById('input-status')?.value !== '휴재') {
+        return '';
+    }
+
+    const today = getWebtoonDate();
+    today.setHours(0, 0, 0, 0);
+
+    // 10일 연재: 다음 실제 연재일
+    if (document.getElementById('chk-10day')?.checked) {
+        const next = getNextTenDayBreakDate(today, true);
+        return next ? formatDate(next) : '';
+    }
+
+    // 격주 연재: 다음 14일 주기의 연재일
+    if (document.getElementById('input-cycle-type')?.value === '격주 연재') {
+        const next = getBiweeklyBreakStartDate();
+        return next ? formatDate(next) : '';
+    }
+
+    const weekdays = [
+        '월요일', '화요일', '수요일', '목요일',
+        '금요일', '토요일', '일요일'
+    ];
+
+    const selectedDays = Array.from(
+        document.querySelectorAll('input[name="day-chk"]:checked')
+    )
+        .map(el => el.value)
+        .filter(day => weekdays.includes(day));
+
+    let minimumDate = '';
+
+    selectedDays.forEach(day => {
+        const nextDate = getTargetDateForViewDay(day);
+
+        if (formatDate(nextDate) < formatDate(today)) {
+            nextDate.setDate(nextDate.getDate() + 7);
+        }
+
+        const nextStr = formatDate(nextDate);
+
+        // 복수 요일은 가장 빠른 연재 예정일 사용
+        if (!minimumDate || nextStr < minimumDate) {
+            minimumDate = nextStr;
+        }
+    });
+
+    return minimumDate;
+}
+
+
+// 달력에서 선택 가능한 최소 날짜 갱신
+function updateBreakReturnDateMin() {
+    const input = document.getElementById('break-return-date');
+    if (!input) return;
+
+    input.min = getMinimumBreakReturnDate();
+}
+
+
+// 10일·격주 연재의 실제 연재일인지 검사
+function isScheduledBreakReturnDate(dateStr) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+
+    if (formatDate(date) !== dateStr) return false;
+
+    // 10일 연재: 매월 지정한 날짜만 선택
+    if (document.getElementById('chk-10day')?.checked) {
+        const raw =
+            document.getElementById('input-10day-dates')?.value.trim()
+            || '10/20/30';
+
+        const match = raw.match(
+            /^\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*$/
+        );
+
+        if (!match) return false;
+
+        const releaseDays = match.slice(1).map(Number);
+
+        if (releaseDays.some(n => n < 1 || n > 31)) {
+            return false;
+        }
+
+        const lastDay = new Date(year, month, 0).getDate();
+
+        // 30일 또는 31일이 없는 달은 말일로 변경
+        return releaseDays.some(n =>
+            Math.min(n, lastDay) === day
+        );
+    }
+
+    // 격주 연재: 다음 실제 연재일로부터 14일 간격
+    if (
+        document.getElementById('input-cycle-type')?.value
+        === '격주 연재'
+    ) {
+        const anchor = getBiweeklyBreakStartDate();
+        if (!anchor) return false;
+
+        const utcDay = d => Date.UTC(
+            d.getFullYear(),
+            d.getMonth(),
+            d.getDate()
+        );
+
+        const difference = utcDay(date) - utcDay(anchor);
+
+        return difference >= 0 &&
+            difference % (14 * 86400000) === 0;
+    }
+
+    // 일반 요일 작품은 기존 날짜 선택 방식 유지
+    return true;
+}
+
+
+// 날짜를 직접 입력하거나 요일을 변경해도 저장 전 검사
+
+function validateBreakReturnDate(fromPicker = false) {
+    const status = document.getElementById('input-status')?.value;
+    if (status !== '휴재') return true;
+
+    const input = document.getElementById('break-return-date');
+
+    const checkedCount = document.querySelectorAll(
+        'input[name="day-chk"]:checked'
+    ).length;
+
+    const isBiweekly =
+        document.getElementById('input-cycle-type')?.value
+        === '격주 연재';
+
+    const reject = message => {
+        alert(message);
+
+        // 경고창에서 확인을 누른 후 잘못된 날짜 삭제
+        if (input) {
+            input.value = '';
+            input.min = getMinimumBreakReturnDate();
+        }
+
+        input?.focus();
+        return false;
+    };
+
+    if (checkedCount === 0 && !isBiweekly) {
+        return reject('연재 요일을 1개 이상 선택해 주세요.');
+    }
+
+    // 미정은 장기휴재로 허용
+    if (!input?.value) return true;
+
+    const minimumDate = getMinimumBreakReturnDate();
+
+    if (!minimumDate) {
+        return reject(
+            '연재주기 또는 기준 연재일을 먼저 확인해 주세요.'
+        );
+    }
+
+    if (input.value < minimumDate) {
+        return reject(
+            `복귀 날짜가 너무 빨라요!\n` +
+            `${minimumDate} 이후 날짜로 설정해 주세요.`
+        );
+    }
+
+    if (!isScheduledBreakReturnDate(input.value)) {
+        return reject(
+            '선택한 날짜가 실제 연재주기와 맞지 않아요!\n' +
+            '연재 예정일을 다시 선택해 주세요.'
+        );
+    }
+
+    return true;
+}
+
+
 async function saveWorkFinal(buyCount = null) {
     const batchSection = document.getElementById('batch-add-section');
     const isBatchMode = batchSection && batchSection.style.display !== 'none';
@@ -4003,6 +4467,9 @@ async function saveWorkFinal(buyCount = null) {
         closeAddModal();
         return;
     }
+
+    // 복귀일이 연재 예정일보다 빠르면 저장하지 않음
+    if (!validateBreakReturnDate()) return false;
 
     // 차감 체크 상태에서 일반 저장 버튼을 눌러도
     // 구매 화수 팝업을 먼저 열도록 처리
@@ -5635,6 +6102,14 @@ let horizontalSortables = {}; // 🌟 가로 스크롤 마법사 바구니
 // 💡 방금 누른 필터 버튼이 어떤 플랫폼인지 기억할 변수(메모장)
 let currentFilterPlt = '';
 
+// 순서 편집은 일반 요일 탭에서만 허용
+function isReorderableDay(day) {
+    return [
+        '월요일', '화요일', '수요일', '목요일',
+        '금요일', '토요일', '일요일'
+    ].includes(day);
+}
+
 // 🌟 [업그레이드] 숨기기 스위치를 플랫폼별로 4개 달아줍니다!
 let isHidingFinished = { lezhin: false, bomtoon: false, ridi: false, mrblue: false };
 
@@ -5675,7 +6150,7 @@ function toggleFilterMenu(plt) {
         viewDay === '완결' ? '' : 'none';
 
     document.getElementById('filter-reorder-btn').style.display =
-        viewDay === '완결' ? 'none' : '';
+        isReorderableDay(viewDay) ? '' : 'none';
 
     document.getElementById('filter-modal').style.display = 'flex';
 }
@@ -5902,6 +6377,11 @@ function deleteFinishedSelected() {
 
 // 1. 순서 편집 창 열 때 불 켜기/끄기 자동 판독!
 function startReorder() {
+    // 일반 요일 탭이 아니면 순서 편집 차단
+    if (!isReorderableDay(viewDay)) {
+        closeFilterMenu();
+        return;
+    }
     closeFilterMenu();
     let pltName = '';
     if (currentFilterPlt === 'lezhin') pltName = '레진';
@@ -5911,37 +6391,7 @@ function startReorder() {
 
     document.getElementById('reorder-title').textContent = `${pltName} (${viewDay}) 순서 편집`;
 
-    // 🌟 [핵심] 현재 리스트가 가나다순인지 다가나순인지 똑똑하게 스캔하는 로직!
-    const arr = state[currentFilterPlt][viewDay] || [];
-    let isAZ = true;
-    let isZA = true;
-
-    // 카드가 2개 이상일 때만 앞뒤 글자 비교
-    if (arr.length > 1) {
-        for (let i = 0; i < arr.length - 1; i++) {
-            let compare = arr[i].title.localeCompare(arr[i + 1].title, 'ko');
-            if (compare > 0) isAZ = false; // 앞글자가 더 뒤쪽(ㅎ)이면 가나다(AZ) 아님
-            if (compare < 0) isZA = false; // 앞글자가 더 앞쪽(ㄱ)이면 다가나(ZA) 아님
-        }
-    } else {
-        isAZ = false; isZA = false; // 1개 이하면 굳이 불 켤 필요 없음
-    }
-
-    // 🌟 스캔 결과에 따라 똑똑하게 버튼 불 켜주기!
-    const btnAZ = document.getElementById('btn-sort-az');
-    const btnZA = document.getElementById('btn-sort-za');
-
-    if (isAZ) {
-        btnAZ.classList.add('active');
-        btnZA.classList.remove('active');
-    } else if (isZA) {
-        btnZA.classList.add('active');
-        btnAZ.classList.remove('active');
-    } else {
-        // 섞여 있으면 둘 다 끄기
-        btnAZ.classList.remove('active');
-        btnZA.classList.remove('active');
-    }
+    refreshReorderSortButtons();
 
     document.getElementById('reorder-modal').style.display = 'flex';
     renderReorderList();
@@ -5953,37 +6403,105 @@ function closeReorderModal() {
     renderAll(); // 혹시 순서가 바뀌었을지 모르니 닫을 때 메인 화면 새로고침!
 }
 
-// 2. 가나다 정렬 버튼 기능
+
+// 현재 적용 중인 정렬 버튼 표시
+function refreshReorderSortButtons() {
+    const mode = getEffectiveSortMode(
+        currentFilterPlt, viewDay
+    );
+
+    document.getElementById('btn-sort-az')
+        .classList.toggle('active', mode === 'az');
+
+    document.getElementById('btn-sort-za')
+        .classList.toggle('active', mode === 'za');
+
+    document.getElementById('btn-sort-custom')
+        .classList.toggle('active', mode === 'manual');
+}
+
+
+function setPlatformSortMode(mode) {
+    if (!isReorderableDay(viewDay)) {
+        alert('이 탭에선 자동 정렬을 할 수 없어요!');
+        return;
+    }
+
+    const plt = currentFilterPlt;
+
+    // 이미 같은 정렬 방식이고 요일별 예외도 없다면 변경하지 않음
+    const sameMode =
+        platformSortModes[plt] === mode &&
+        !Object.values(manualDayOverrides[plt] || {})
+            .some(value => value === true);
+
+    if (sameMode) return;
+
+    platformSortModes[plt] = mode;
+    manualDayOverrides[plt] = {};
+
+    saveData();
+    renderReorderList();
+    refreshReorderSortButtons();
+
+    const platformName = {
+        lezhin: '레진',
+        bomtoon: '봄툰',
+        ridi: '리디',
+        mrblue: '미블'
+    }[plt] || '해당 플랫폼';
+
+    const sortName = mode === 'az' ? '가나다순' : '다나가순';
+
+    showToast(
+        `${platformName}의 모든 요일에 ${sortName}을 적용했어요.`
+    );
+}
+
+
+// 가나다순 버튼
 function sortListAZ() {
-    if (viewDay === '휴재' || viewDay === '완결') return alert("이 탭에선 자동 정렬을 할 수 없어요!");
-
-    const arr = state[currentFilterPlt][viewDay];
-    if (arr.length === 0) return;
-
-    arr.sort((a, b) => a.title.localeCompare(b.title, 'ko'));
-    saveData();
-    renderReorderList();
-
-    // 🌟 탭 색상 변경 로직 (가나다에 불 켜고, 다가나 불 끄기)
-    document.getElementById('btn-sort-az').classList.add('active');
-    document.getElementById('btn-sort-za').classList.remove('active');
+    setPlatformSortMode('az');
 }
 
-// 3. 다가나 정렬 버튼 기능
+// 다나가순 버튼
 function sortListZA() {
-    if (viewDay === '휴재' || viewDay === '완결') return alert("이 탭에선 자동 정렬을 할 수 없어요!");
+    setPlatformSortMode('za');
+}
 
-    const arr = state[currentFilterPlt][viewDay];
-    if (arr.length === 0) return;
 
-    arr.sort((a, b) => b.title.localeCompare(a.title, 'ko'));
+function sortListCustom() {
+    if (!isReorderableDay(viewDay)) {
+        alert('이 탭에선 순서를 편집할 수 없어요!');
+        return;
+    }
+
+    const plt = currentFilterPlt;
+
+    // 이미 커스텀 모드라면 중복 안내하지 않음
+    if (getEffectiveSortMode(plt, viewDay) === 'manual') {
+        return;
+    }
+
+    manualDayOverrides[plt][viewDay] = true;
+
     saveData();
     renderReorderList();
+    refreshReorderSortButtons();
 
-    // 🌟 탭 색상 변경 로직 (다가나에 불 켜고, 가나다 불 끄기)
-    document.getElementById('btn-sort-za').classList.add('active');
-    document.getElementById('btn-sort-az').classList.remove('active');
+    const platformName = {
+        lezhin: '레진',
+        bomtoon: '봄툰',
+        ridi: '리디',
+        mrblue: '미블'
+    }[plt] || '해당 플랫폼';
+
+    showToast(
+        `${platformName} ${viewDay}을 커스텀 순서로 변경했어요.`
+    );
 }
+
+
 
 
 // 모달창 닫기
@@ -6043,7 +6561,32 @@ function renderReorderList() {
         return;
     }
 
+
     const works = state[currentFilterPlt][viewDay] || [];
+
+    // 연재 중 작품과 휴재·완결·자동휴재 작품 구분
+    const isReorderInactive = work =>
+        work.status === '휴재' ||
+        work.status === '완결' ||
+        isWorkOnBreakForViewedDay(work, viewDay);
+
+    // 실제 저장 순서는 바꾸지 않고 화면에서만 그룹 정렬
+
+    const orderedWorks = [...works].sort((a, b) => {
+        // 1순위: 연재 중 → 휴재·완결
+        const breakDiff =
+            Number(isReorderInactive(a)) -
+            Number(isReorderInactive(b));
+
+        if (breakDiff !== 0) return breakDiff;
+
+        // 2순위: 플랫폼에서 선택한 정렬 방식
+        return compareWorkTitlesByMode(
+            a, b, currentFilterPlt, viewDay
+        );
+    });
+
+
 
     if (works.length === 0) {
         listEl.innerHTML = '<p style="text-align: center; color: #888; font-size: 14px;">작품이 없습니다!</p>';
@@ -6051,16 +6594,18 @@ function renderReorderList() {
     }
 
     // 작품들을 하나씩 세로 박스로 만들기
-    works.forEach((work, idx) => {
+    orderedWorks.forEach((work, idx) => {
         const div = document.createElement('div');
         div.dataset.idx = idx;
+        div.dataset.group = isReorderInactive(work)
+            ? 'inactive' : 'active';
 
         // 🌟 JS에서는 인라인 스타일 빼고 깔끔하게 클래스 이름표만 붙여줍니다!
         div.className = 'reorder-list-item';
 
         // 🌟 [추가] 순서 편집 창에도 상태 뱃지를 달아줍니다!
         let badgeHtml = '';
-        let isBreak = isWorkOnBreak(work);
+        let isBreak = isReorderInactive(work);
         if (work.status === '휴재') {
             // 🌟 [최종 방어] 기존 유저 데이터까지 모두 포용하는 장기 휴재 로직
             const isLongBreak = !work.breakDate || work.breakDate.trim() === "";
@@ -6091,25 +6636,63 @@ function renderReorderList() {
     reorderSortable = new Sortable(listEl, {
         animation: 150,
         handle: '.drag-handle',
+
         ghostClass: 'sortable-ghost',
 
+        // 다른 구역으로 드래그할 수 없게 제한
+        onMove: function (evt) {
+            return evt.related &&
+                evt.dragged.dataset.group ===
+                evt.related.dataset.group;
+        },
+
+
         onEnd: function (evt) {
-            const arr = state[currentFilterPlt][viewDay];
+            if (evt.oldIndex === evt.newIndex) return;
 
-            // 배열에서 옛날 자리(oldIndex)에 있던 걸 뽑아서, 새 자리(newIndex)에 끼워 넣기!
-            const draggedItem = arr.splice(evt.oldIndex, 1)[0];
-            arr.splice(evt.newIndex, 0, draggedItem);
+            const plt = currentFilterPlt;
+            const day = viewDay;
+            const arr = state[plt][day];
 
-            // 🚨 [디테일] 유저가 직접 드래그해서 섞었으니, 더 이상 가나다순이 아님! 탭 버튼 불 끄기!
-            document.getElementById('btn-sort-az').classList.remove('active');
-            document.getElementById('btn-sort-za').classList.remove('active');
+            // 사용자가 팝업에서 실제로 배치한 순서
+            const displayedOrder = Array.from(listEl.children)
+                .map(el => orderedWorks[Number(el.dataset.idx)]);
 
-            // 데이터 영구 저장! (이때 만능 청소기가 뒤에서 휴재작을 쓸어 내림)
+            if (
+                displayedOrder.length !== arr.length ||
+                displayedOrder.some(work => !work)
+            ) {
+                renderReorderList();
+                return;
+            }
+
+            const active = displayedOrder.filter(
+                work => !isReorderInactive(work)
+            );
+
+            const inactive = displayedOrder.filter(
+                work => isReorderInactive(work)
+            );
+
+            let ai = 0;
+            let ii = 0;
+
+            // 휴재 작품의 원래 슬롯은 보존하면서
+            // 두 그룹 내부의 수동 정렬 결과만 저장
+            state[plt][day] = arr.map(work =>
+                isReorderInactive(work)
+                    ? inactive[ii++]
+                    : active[ai++]
+            );
+
+            // 드래그한 요일만 커스텀으로 전환
+            manualDayOverrides[plt][day] = true;
+
             saveData();
-
-            // 🚨👇 [핵심 추가] 데이터가 갱신됐으니, 유저가 보고 있는 이 모달창도 1초 만에 새로고침!
             renderReorderList();
+            refreshReorderSortButtons();
         }
+
     });
 }
 
@@ -6285,14 +6868,140 @@ async function uploadImageToImgBB(base64Data) {
     }
 }
 
+
+
+function updateBiweeklyBreakSummary() {
+    const summary = document.getElementById(
+        'biweekly-break-summary'
+    );
+    const summaryText = document.getElementById(
+        'biweekly-break-summary-text'
+    );
+    const breakRow = document.getElementById(
+        'break-setting-row'
+    );
+    const btnBreak1 = document.getElementById('btn-break-1');
+    const btnBreak2 = document.getElementById('btn-break-2');
+
+    if (!summary || !summaryText) return;
+
+    const isBreak =
+        document.getElementById('input-status')?.value === '휴재';
+
+    const isBiweekly =
+        document.getElementById('input-cycle-type')?.value === '격주 연재';
+
+    const showBiweekly = isBreak && isBiweekly;
+
+    // 격주 휴재일 때만 요약줄과 전용 버튼 디자인 표시
+    summary.style.display = showBiweekly ? 'flex' : 'none';
+    breakRow?.classList.toggle(
+        'biweekly-break-mode',
+        showBiweekly
+    );
+
+    if (!showBiweekly) return;
+
+    const nextDate = getNextBiweeklyReleaseDate();
+
+    if (!nextDate) {
+        summaryText.textContent =
+            '격주 연재 · 기준일 미설정';
+
+        if (btnBreak1) {
+            btnBreak1.innerHTML =
+                '<span class="break-btn-label">다음 회차 복귀</span>' +
+                '<small class="break-btn-date">날짜 미정</small>';
+
+            btnBreak1.setAttribute(
+                'onclick',
+                "setBreakBiweeklyReturn('next', this)"
+            );
+        }
+
+        if (btnBreak2) {
+            btnBreak2.innerHTML =
+                '<span class="break-btn-label">한 회차 더 쉬기</span>' +
+                '<small class="break-btn-date">날짜 미정</small>';
+
+            btnBreak2.setAttribute(
+                'onclick',
+                "setBreakBiweeklyReturn('skip', this)"
+            );
+        }
+
+        return;
+    }
+
+    // 다음 연재 예정일
+    const nextText =
+        `${nextDate.getMonth() + 1}/${nextDate.getDate()}`;
+
+    // 한 회차 건너뛴 복귀 예정일
+    const skipDate = new Date(nextDate);
+    skipDate.setDate(skipDate.getDate() + 14);
+
+    const skipText =
+        `${skipDate.getMonth() + 1}/${skipDate.getDate()}`;
+
+    // 요약줄 업데이트
+    summaryText.textContent =
+        `다음 연재 예정일 · ${nextText} · 14일 간격`;
+
+    // 첫 번째 버튼
+    if (btnBreak1) {
+        btnBreak1.innerHTML =
+            '<span class="break-btn-label">다음 회차 복귀</span>' +
+            `<small class="break-btn-date">${nextText}</small>`;
+
+        btnBreak1.setAttribute(
+            'onclick',
+            "setBreakBiweeklyReturn('next', this)"
+        );
+    }
+
+    // 두 번째 버튼
+    if (btnBreak2) {
+        btnBreak2.innerHTML =
+            '<span class="break-btn-label">한 회차 더 쉬기</span>' +
+            `<small class="break-btn-date">${skipText}</small>`;
+
+        btnBreak2.setAttribute(
+            'onclick',
+            "setBreakBiweeklyReturn('skip', this)"
+        );
+    }
+}
+
+
+
 // 🌟 '연재 중 / 휴재' 상태 바뀔 때 달력 나타나게 하는 함수
-function toggleBreakSettingRow(selectElement) {
+function toggleBreakSettingRow(selectElement, fromUser = false) {
     let statusValue = "";
     if (selectElement) {
         statusValue = selectElement.value;
     } else {
         const backupSelect = document.getElementById('input-status'); // 예은님 상태창 ID에 맞게!
         if (backupSelect) statusValue = backupSelect.value;
+    }
+
+
+    // 사용자가 직접 휴재를 선택했을 때만 검사
+    if (fromUser && statusValue === '휴재') {
+        const hasDay = document.querySelector(
+            'input[name="day-chk"]:checked'
+        );
+
+        const hasBiweekly =
+            document.getElementById('input-cycle-type')?.value
+            === '격주 연재';
+
+        if (!hasDay && !hasBiweekly) {
+            alert('휴재로 변경하려면 연재 요일을 1개 이상 선택해 주세요.');
+
+            selectElement.value = '연재중';
+            statusValue = '연재중';
+        }
     }
 
     const cycleRow = document.getElementById('cycle-row');
@@ -6339,6 +7048,9 @@ function toggleBreakSettingRow(selectElement) {
         cycleRow.style.display = 'flex';
         breakRow.style.display = 'none';
     }
+
+    updateBreakReturnDateMin();
+    updateBiweeklyBreakSummary();
 }
 
 
@@ -6564,6 +7276,59 @@ function alignBreakWeekday(date, weekday) {
 
     date.setDate(date.getDate() + extraDays);
 }
+
+
+function getNextBiweeklyReleaseDate() {
+    const date = getBiweeklyBreakStartDate();
+    if (!date) return null;
+
+    const today = getWebtoonDate();
+    today.setHours(0, 0, 0, 0);
+
+    // 기준일이 오늘이면 다음 격주 연재일로 이동
+    if (date <= today) {
+        date.setDate(date.getDate() + 14);
+    }
+
+    return date;
+}
+
+
+
+/* 격주 연재 전용 복귀 날짜 설정 */
+function setBreakBiweeklyReturn(mode, btnElement) {
+    const dateInput = document.getElementById('break-return-date');
+    if (!dateInput) return;
+
+    // 저장된 격주 기준일을 토대로 다음 연재일 계산
+    const nextDate = getNextBiweeklyReleaseDate();
+
+    if (!nextDate) {
+        showToast('격주 연재 기준일을 먼저 설정해 주세요.');
+        return;
+    }
+
+    if (mode === 'skip') {
+        // 다음 회차를 한 번 건너뛰고 그다음 회차에 복귀
+        nextDate.setDate(nextDate.getDate() + 14);
+    } else if (mode !== 'next') {
+        return;
+    }
+
+    // 기존 입력 날짜와 관계없이 항상 다음 예정일 기준
+    dateInput.value = formatDate(nextDate);
+
+    clearActiveBreakBtns();
+
+    if (btnElement?.classList) {
+        btnElement.classList.add('active-btn');
+    }
+
+    dateInput.classList.remove('flash-effect');
+    void dateInput.offsetWidth;
+    dateInput.classList.add('flash-effect');
+}
+
 // 🌟 주 단위 더하기 (+1주 등 버튼용)
 function setBreakWeeks(arg1, arg2) {
     const dateInput = document.getElementById('break-return-date');
@@ -6686,16 +7451,32 @@ function showToast(message) {
         toast.classList.remove('show');
     }, 2500);
 }
-// 🌟 4. 미정 버튼 (날짜 비우기)
+
+
 function clearBreakDate(btnElement) {
     const dateInput = document.getElementById('break-return-date');
-    dateInput.value = '';
 
-    // 모든 버튼의 색상을 먼저 싹 지우고!
+    // 클릭하기 전 미정 버튼이 활성화되어 있었는지 확인
+    const wasActive = btnElement?.classList.contains('active-btn');
+
+    // 기존 버튼 선택 상태 초기화
     clearActiveBreakBtns();
 
-    // 🚨 방금 누른 미정 버튼에만 주황색(기본) + 파란색 테두리 이름표를 같이 달아줍니다!
-    if (btnElement) btnElement.classList.add('active-btn', 'active-btn-long-break');
+    // 미정이 이미 활성화되어 있었다면 해제만 진행
+    if (wasActive) {
+        showToast("미정 설정을 해제했어요.");
+        return;
+    }
+
+    // 미정 활성화
+    dateInput.value = '';
+
+    if (btnElement) {
+        btnElement.classList.add(
+            'active-btn',
+            'active-btn-long-break'
+        );
+    }
 
     dateInput.classList.remove('flash-effect');
     void dateInput.offsetWidth;
@@ -6703,6 +7484,7 @@ function clearBreakDate(btnElement) {
 
     showToast("복귀 일정이 없는 장기 휴재로 설정됩니다.");
 }
+
 
 
 /* =========================================================================
