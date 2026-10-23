@@ -3191,7 +3191,20 @@ function renderList(platform) {
         const card = document.createElement('div'); card.className = `webtoon-card-link ${platform}-card`;
 
         // 🌟 오늘이 10일 연재일이거나 OR 격주 연재일인 경우 하이라이트 테두리!
-        if (work.isToday10Day || work.isTodayBiweekly || (viewDay === '10일 연재' && isDateMatch(work.cycle, todayObj))) {
+
+        if (
+            work.status === '연재중' &&
+            !isWorkOnBreak(work) &&
+            (
+                work.isToday10Day ||
+                work.isTodayBiweekly ||
+                (
+                    viewDay === '10일 연재' &&
+                    isDateMatch(work.cycle, todayObj)
+                )
+            )
+        ) {
+
             const isDark = document.body.classList.contains('dark-mode');
             let borderColor = '';
             if (isDark) {
@@ -6137,22 +6150,52 @@ function toggleFilterMenu(plt) {
     }
 
     // 🌟 [무적 숨기기] 탭 이름이 '휴재'나 '완결'일 때는 하얀 버튼 전체를 흔적도 없이 날려버립니다!
+
     if (hideBtn) {
-        if (viewDay === '휴재' || viewDay === '완결') {
-            hideBtn.style.display = 'none'; // 싹 숨기기
-        } else {
-            hideBtn.style.display = ''; // 일반 요일 탭에서는 원래 예쁜 모양으로 복구하기!
-        }
+        const hideToggleUnavailable = [
+            '휴재',
+            '완결',
+            '10일 연재',
+            '격주 연재'
+        ].includes(viewDay);
+
+        hideBtn.style.display =
+            hideToggleUnavailable ? 'none' : '';
     }
 
-    // 완결 탭에서는 순서 편집 대신 작품 정리 버튼 표시
-    document.getElementById('finished-cleanup-btn').style.display =
-        viewDay === '완결' ? '' : 'none';
 
+    // 완결 탭에서는 순서 편집 대신 작품 정리 버튼 표시
+
+    // 완결 / 휴재 / 10일 연재 / 격주 연재 작품 관리
+    const isManageTab = [
+        '완결',
+        '휴재',
+        '10일 연재',
+        '격주 연재'
+    ].includes(viewDay);
+
+    // 현재 탭에 따라 작품 정리 버튼 표시
+    const manageBtn = document.getElementById('finished-cleanup-btn');
+
+    manageBtn.style.display = isManageTab ? '' : 'none';
+
+    // 현재 탭에 맞게 메뉴 이름 변경
+    const manageBtnText = manageBtn.querySelector('span');
+
+    if (manageBtnText) {
+        manageBtnText.textContent =
+            viewDay === '휴재'
+                ? '휴재 작품 관리 및 정리'
+                : `${viewDay} 작품 정리하기`;
+    }
+
+    // 기존 요일별 순서 편집 조건 유지
     document.getElementById('filter-reorder-btn').style.display =
         isReorderableDay(viewDay) ? '' : 'none';
 
+    // 설정 메뉴 열기
     document.getElementById('filter-modal').style.display = 'flex';
+
 }
 
 
@@ -6161,20 +6204,97 @@ function toggleFilterMenu(plt) {
 // ========================================
 
 let finishedCleanupPlatform = '';
+let finishedCleanupTab = '';
 let finishedCleanupWorks = [];
 
 // 1. 완결 작품 정리 창 열기
+
 function openFinishedCleanup() {
-    if (viewDay !== '완결' || !state[currentFilterPlt]) return;
+
+    const manageTabs = [
+        '완결',
+        '휴재',
+        '10일 연재',
+        '격주 연재'
+    ];
+
+    if (
+        !manageTabs.includes(viewDay) ||
+        !state[currentFilterPlt]
+    ) return;
 
     finishedCleanupPlatform = currentFilterPlt;
+    finishedCleanupTab = viewDay;
     finishedCleanupWorks = [];
+
+
+    // 장기휴재만 선택 버튼은 휴재 탭에서만 표시
+    const selectLongBtn = document.getElementById(
+        'finished-cleanup-select-long'
+    );
+
+
+    if (selectLongBtn) {
+        selectLongBtn.style.display =
+            finishedCleanupTab === '휴재' ? '' : 'none';
+
+        selectLongBtn.textContent = '장기휴재만 선택';
+    }
+
+
+
+
+    // 현재 작품 관리 탭에 맞는 상단 안내 문구
+    const cleanupHelp = document.getElementById(
+        'finished-cleanup-help'
+    );
+
+    if (cleanupHelp) {
+        cleanupHelp.textContent =
+            finishedCleanupTab === '휴재'
+                ? '장기휴재 작품만 연재중으로 전환할 수 있어요.'
+                : '삭제할 작품을 선택해 주세요.';
+    }
+
+
 
     const seenIds = new Set();
 
+
     Object.keys(state[finishedCleanupPlatform]).forEach(day => {
         (state[finishedCleanupPlatform][day] || []).forEach(work => {
-            if (work.status !== '완결') return;
+
+            const cycle = String(work.cycle || '');
+
+            const matches =
+
+                // 완결 작품
+                (
+                    finishedCleanupTab === '완결' &&
+                    work.status === '완결'
+                ) ||
+
+                // 휴재 작품: 수동휴재 + 자동휴재
+                (
+                    finishedCleanupTab === '휴재' &&
+                    work.status !== '완결' &&
+                    isWorkOnBreak(work)
+                ) ||
+
+                // 10일 연재 작품
+                (
+                    finishedCleanupTab === '10일 연재' &&
+                    day === '10일 연재'
+                ) ||
+
+                // 격주 연재 작품
+                (
+                    finishedCleanupTab === '격주 연재' &&
+                    cycle.includes('격주 연재')
+                );
+
+            if (!matches) return;
+
 
             // 같은 작품이 여러 요일에 있어도 한 번만 표시
             if (work.id && seenIds.has(work.id)) return;
@@ -6191,10 +6311,11 @@ function openFinishedCleanup() {
     // 완결 작품이 없으면 안내 후 종료
     if (finishedCleanupWorks.length === 0) {
         closeFilterMenu();
-        alert('정리할 작품이 없습니다.');
+        alert('관리할 작품이 없어요.');
 
         finishedCleanupWorks = [];
         finishedCleanupPlatform = '';
+        finishedCleanupTab = '';
         return;
     }
 
@@ -6205,8 +6326,14 @@ function openFinishedCleanup() {
         mrblue: '미스터블루'
     };
 
+
     document.getElementById('finished-cleanup-title').textContent =
-        `${names[finishedCleanupPlatform]} 완결 작품 정리하기`;
+        `${names[finishedCleanupPlatform] || finishedCleanupPlatform} ` +
+        (
+            finishedCleanupTab === '휴재'
+                ? '휴재 작품 관리 및 정리'
+                : `${finishedCleanupTab} 작품 정리하기`
+        );
 
     const list = document.getElementById('finished-cleanup-list');
     list.replaceChildren();
@@ -6217,6 +6344,53 @@ function openFinishedCleanup() {
         empty.style.cssText =
             'text-align:center;color:#888;font-size:13px;padding:20px 0;';
         list.appendChild(empty);
+    }
+
+
+
+    // 휴재 작품 관리: 장기휴재 → 복귀예정 → 자동휴재
+    if (finishedCleanupTab === '휴재') {
+
+        const getPriority = (entry) => {
+            const work = entry.ref;
+            const returnDate = String(work.breakDate || '').trim();
+
+            if (work.status === '휴재') {
+                return returnDate ? 1 : 0;
+            }
+
+            if (isWorkOnAutoBreak(work)) {
+                return 2;
+            }
+
+            return 3;
+        };
+
+
+        finishedCleanupWorks.sort((a, b) => {
+            const priorityA = getPriority(a);
+            const priorityB = getPriority(b);
+
+            // 1. 장기휴재 → 복귀예정 → 자동휴재
+            if (priorityA !== priorityB) {
+                return priorityA - priorityB;
+            }
+
+            // 2. 복귀예정 작품은 복귀일이 빠른 순서대로
+            if (priorityA === 1) {
+                const dateA = String(a.ref.breakDate || '')
+                    .trim().replace(/[./]/g, '-');
+
+                const dateB = String(b.ref.breakDate || '')
+                    .trim().replace(/[./]/g, '-');
+
+                return dateA.localeCompare(dateB);
+            }
+
+            // 3. 나머지 작품은 기존 순서 유지
+            return 0;
+        });
+
     }
 
     // 작품별 체크박스 만들기
@@ -6241,12 +6415,70 @@ function openFinishedCleanup() {
             updateFinishedCleanupCount
         );
 
+
+
         const name = document.createElement('span');
         name.textContent = entry.title;
         name.style.cssText =
             'font-size:14px;line-height:1.4;overflow-wrap:anywhere;';
 
-        label.append(checkbox, name);
+        // 작품명과 뱃지를 배치하는 영역
+        const info = document.createElement('div');
+        info.style.cssText =
+            'display:flex;flex-direction:column;' +
+            'gap:3px;min-width:0;flex:1;';
+
+        const titleRow = document.createElement('div');
+        titleRow.style.cssText =
+            'display:flex;align-items:center;flex-wrap:wrap;' +
+            'gap:6px;min-width:0;';
+
+        titleRow.appendChild(name);
+
+        // 휴재 탭에서만 뱃지 표시
+        if (finishedCleanupTab === '휴재') {
+
+            const work = entry.ref;
+            const returnDate = String(work.breakDate || '').trim();
+
+            const badge = document.createElement('span');
+            badge.className = 'cleanup-status-badge';
+
+            if (work.status === '휴재' && !returnDate) {
+                badge.textContent = '장기휴재';
+                badge.classList.add('cleanup-badge-long');
+
+            } else if (work.status === '휴재' && returnDate) {
+                badge.textContent = '복귀예정';
+                badge.classList.add('cleanup-badge-return');
+
+            } else if (isWorkOnAutoBreak(work)) {
+                badge.textContent = '자동휴재';
+                badge.classList.add('cleanup-badge-auto');
+            }
+
+            if (badge.textContent) {
+                titleRow.appendChild(badge);
+            }
+
+            info.appendChild(titleRow);
+
+            // 복귀 예정 작품만 날짜 표시
+            if (work.status === '휴재' && returnDate) {
+                const dateText = document.createElement('small');
+                dateText.className = 'cleanup-return-date';
+                dateText.textContent = `${returnDate} 복귀`;
+
+                info.appendChild(dateText);
+            }
+
+        } else {
+            info.appendChild(titleRow);
+        }
+
+        label.append(checkbox, info);
+
+
         list.appendChild(label);
     });
 
@@ -6280,12 +6512,204 @@ function updateFinishedCleanupCount() {
     document.getElementById('finished-cleanup-count').textContent =
         `${count}개 선택됨`;
 
-    const deleteBtn = document.getElementById('finished-cleanup-delete');
 
+    // =====================================
+    // 탭별 작품 관리 버튼 설정
+    // =====================================
+
+    const deleteBtn = document.getElementById(
+        'finished-cleanup-delete'
+    );
+
+    const resumeBtn = document.getElementById(
+        'finished-cleanup-resume'
+    );
+
+    const cancelBtn = document.getElementById(
+        'finished-cleanup-cancel'
+    );
+
+    const isBreakTab = finishedCleanupTab === '휴재';
+
+    // 휴재 탭: 연재중 전환 / 삭제
+    // 나머지 탭: 취소 / 삭제
+    if (resumeBtn) {
+        resumeBtn.style.display = isBreakTab ? '' : 'none';
+    }
+
+    if (cancelBtn) {
+        cancelBtn.style.display = isBreakTab ? 'none' : '';
+    }
+
+    // 기존 삭제 기능 유지
+    deleteBtn.style.display = '';
     deleteBtn.disabled = count === 0;
     deleteBtn.textContent = `선택한 ${count}개 삭제`;
     deleteBtn.style.opacity = count === 0 ? '0.4' : '1';
+
+    // 현재 체크된 작품 확인
+    const selected = checks
+        .filter(checkbox => checkbox.checked)
+        .map(checkbox =>
+            finishedCleanupWorks[Number(checkbox.value)]
+        )
+        .filter(Boolean);
+
+    // 장기휴재 작품만 연재중 전환 허용
+    // 같은 작품 ID로 등록된 다른 요일도 검사
+    const canResume = isBreakTab &&
+        count > 0 &&
+        selected.every(entry => {
+
+            let found = false;
+            let eligible = true;
+
+            Object.values(
+                state[finishedCleanupPlatform] || {}
+            ).forEach(works => {
+
+                if (!Array.isArray(works)) return;
+
+                works.forEach(work => {
+
+                    const sameWork = entry.id
+                        ? work.id === entry.id
+                        : work === entry.ref;
+
+                    if (!sameWork) return;
+
+                    found = true;
+
+                    if (
+                        work.status !== '휴재' ||
+                        String(work.breakDate || '').trim()
+                    ) {
+                        eligible = false;
+                    }
+                });
+            });
+
+            return found && eligible;
+        });
+
+    if (resumeBtn) {
+
+        // 3-3에서 전환 함수를 추가하면 자동 활성화
+        const handlerReady =
+            typeof resumeFinishedSelected === 'function';
+
+        const enabled = canResume && handlerReady;
+
+        resumeBtn.disabled = !enabled;
+
+        resumeBtn.textContent =
+            `${count}개 연재중 전환`;
+
+        resumeBtn.style.opacity = enabled ? '1' : '0.4';
+
+        resumeBtn.title = !canResume
+            ? '복귀일 없는 장기휴재 작품만 전환할 수 있어요.'
+            : !handlerReady
+                ? '연재중 전환 기능 연결 전이에요.'
+                : '';
+    }
+
 }
+
+
+// 휴재 작품 관리: 장기휴재 작품만 일괄 선택
+
+function selectLongBreakCleanupWorks() {
+    if (finishedCleanupTab !== '휴재') return;
+
+    const checks = Array.from(
+        document.querySelectorAll(
+            '#finished-cleanup-list .finished-cleanup-check'
+        )
+    );
+
+    const longBreakChecks = [];
+
+    // 연재중 전환이 가능한 장기휴재 작품 찾기
+    checks.forEach(checkbox => {
+        const entry = finishedCleanupWorks[Number(checkbox.value)];
+        if (!entry) return;
+
+        let found = false;
+        let eligible = true;
+
+        Object.values(
+            state[finishedCleanupPlatform] || {}
+        ).forEach(works => {
+            if (!Array.isArray(works)) return;
+
+            works.forEach(work => {
+                const sameWork = entry.id
+                    ? work.id === entry.id
+                    : work === entry.ref;
+
+                if (!sameWork) return;
+
+                found = true;
+
+                if (
+                    work.status !== '휴재' ||
+                    String(work.breakDate || '').trim()
+                ) {
+                    eligible = false;
+                }
+            });
+        });
+
+        if (found && eligible) {
+            longBreakChecks.push(checkbox);
+        }
+    });
+
+    if (longBreakChecks.length === 0) {
+        showToast('선택할 수 있는 장기휴재 작품이 없어요.');
+        return;
+    }
+
+    // 모든 장기휴재 작품이 선택되어 있는지 확인
+    const allSelected = longBreakChecks.every(
+        checkbox => checkbox.checked
+    );
+
+    if (allSelected) {
+        // 두 번째 클릭: 장기휴재 선택 해제
+        longBreakChecks.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+
+        showToast('장기휴재 작품 선택을 해제했어요.');
+
+    } else {
+        // 첫 번째 클릭: 장기휴재 작품만 선택
+        checks.forEach(checkbox => {
+            checkbox.checked = longBreakChecks.includes(checkbox);
+        });
+
+        showToast(
+            `장기휴재 작품 ${longBreakChecks.length}개를 선택했어요.`
+        );
+    }
+
+    updateFinishedCleanupCount();
+
+    // 버튼 문구도 선택 상태에 맞게 변경
+    const btn = document.getElementById(
+        'finished-cleanup-select-long'
+    );
+
+    if (btn) {
+        btn.textContent = allSelected
+            ? '장기휴재만 선택'
+            : '장기휴재 선택 해제';
+    }
+}
+
+
 
 // 3. 전체 선택 또는 전체 해제
 function toggleAllFinishedCleanup(checked) {
@@ -6304,7 +6728,105 @@ function closeFinishedCleanup() {
 
     finishedCleanupWorks = [];
     finishedCleanupPlatform = '';
+    finishedCleanupTab = '';
 }
+
+
+// ========================================
+// 휴재 작품 관리 - 장기휴재 작품 연재중 전환
+// ========================================
+function resumeFinishedSelected() {
+
+    // 휴재 탭에서만 실행
+    if (finishedCleanupTab !== '휴재') return;
+
+    const plt = finishedCleanupPlatform;
+
+    if (!state[plt]) return;
+
+    // 체크된 작품 가져오기
+    const selected = Array.from(
+        document.querySelectorAll(
+            '#finished-cleanup-list .finished-cleanup-check:checked'
+        )
+    )
+        .map(checkbox =>
+            finishedCleanupWorks[Number(checkbox.value)]
+        )
+        .filter(Boolean);
+
+    if (!selected.length) return;
+
+    const worksToResume = new Set();
+
+    // 선택한 작품과 같은 ID를 가진 요일별 카드 확인
+    for (const entry of selected) {
+
+        const copies = [];
+
+        Object.keys(state[plt]).forEach(day => {
+            (state[plt][day] || []).forEach(work => {
+
+                const sameWork = entry.id
+                    ? work.id === entry.id
+                    : work === entry.ref;
+
+                if (sameWork) {
+                    copies.push(work);
+                }
+            });
+        });
+
+        // 작품이 없거나 다른 요일에 상태가 다르면 중단
+        if (
+            copies.length === 0 ||
+            copies.some(work =>
+                work.status !== '휴재' ||
+                String(work.breakDate || '').trim() !== ''
+            )
+        ) {
+            alert(
+                `"${entry.title}"은(는) 장기휴재 상태가 아니거나\n` +
+                '다른 요일에 등록된 작품의 상태가 달라요.\n\n' +
+                '복귀 예정·자동휴재 작품은 전환할 수 없어요.'
+            );
+            return;
+        }
+
+        copies.forEach(work => worksToResume.add(work));
+    }
+
+    // 변경 전 최종 확인
+    const confirmed = confirm(
+        `선택한 ${selected.length}개 작품을 연재중으로 전환할까요?\n\n` +
+        selected.map(entry => `• ${entry.title}`).join('\n')
+    );
+
+    if (!confirmed) return;
+
+    // 기존 실행 취소 기능용 백업
+    const backup = JSON.stringify(state);
+
+    // 기존 연재 요일과 연재주기는 유지
+    worksToResume.forEach(work => {
+        work.status = '연재중';
+        work.breakDate = '';
+    });
+
+    // 실행 취소 연결
+    stateBackupForUndo = backup;
+
+    // 모달 닫기
+    closeFinishedCleanup();
+
+    // 변경 사항 저장 및 화면 갱신
+    saveData();
+
+    showUndoToast(
+        `${selected.length}개 작품을 연재중으로 전환했어요.`
+    );
+}
+
 
 // 5. 선택한 완결 작품 삭제
 function deleteFinishedSelected() {
@@ -6321,14 +6843,90 @@ function deleteFinishedSelected() {
 
     if (!selected.length || !state[finishedCleanupPlatform]) return;
 
-    // 실수 방지를 위한 최종 확인
+
+    // 실수 방지를 위한 첫 번째 삭제 확인
     const confirmed = confirm(
-        `선택한 ${selected.length}개의 완결 작품을 삭제할까요?\n` +
+        `선택한 ${selected.length}개 작품을 삭제할까요?\n` +
         '같은 플랫폼의 다른 요일에 등록된 동일 작품도 삭제돼요.\n' +
         '지갑 잔액과 과거 정산 내역은 유지됩니다.'
     );
 
     if (!confirmed) return;
+
+
+    // ========================================
+    // 자동휴재 / 복귀 예정 작품 삭제 시 추가 확인
+    // ========================================
+
+    if (finishedCleanupTab !== '완결') {
+
+        const warningWorks = [];
+
+        selected.forEach(entry => {
+
+            const warningTypes = new Set();
+
+            // 같은 작품이 다른 요일에도 등록되어 있다면
+            // 해당 카드들의 상태까지 확인
+            Object.values(
+                state[finishedCleanupPlatform] || {}
+            ).forEach(works => {
+
+                (works || []).forEach(work => {
+
+                    const sameWork = entry.id
+                        ? work.id === entry.id
+                        : work === entry.ref;
+
+                    if (!sameWork) return;
+
+                    // 복귀일이 정해진 휴재 작품
+                    if (
+                        work.status === '휴재' &&
+                        String(work.breakDate || '').trim()
+                    ) {
+                        warningTypes.add(
+                            `복귀 예정: ${work.breakDate}`
+                        );
+                    }
+
+                    // 현재 자동휴재 중인 작품
+                    else if (
+                        work.status !== '휴재' &&
+                        work.status !== '완결' &&
+                        isWorkOnAutoBreak(work)
+                    ) {
+                        warningTypes.add('자동휴재 중');
+                    }
+
+                });
+            });
+
+            if (warningTypes.size > 0) {
+
+                warningWorks.push(
+                    `• ${entry.title} (${Array.from(warningTypes).join(', ')})`
+                );
+
+            }
+        });
+
+        // 보호 대상 작품이 포함된 경우에만 2차 확인
+        if (warningWorks.length > 0) {
+
+            const warningMessage =
+                '다음 작품은 자동휴재 중이거나 ' +
+                '복귀일이 정해져 있어요.\n\n' +
+                warningWorks.join('\n') +
+                '\n\n이 작품들을 포함해 정말 삭제할까요?';
+
+            if (!confirm(warningMessage)) {
+                return;
+            }
+        }
+    }
+
+
 
     // 동일한 작품 ID를 가진 요일별 카드 함께 삭제
     const idsToRemove = new Set(
@@ -6369,9 +6967,11 @@ function deleteFinishedSelected() {
     // 작품 변경 사항 저장 및 화면 갱신
     saveData();
 
+
     showUndoToast(
-        `${selected.length}개의 완결 작품이 삭제되었습니다.`
+        `${selected.length}개 작품을 삭제했어요.`
     );
+
 }
 
 

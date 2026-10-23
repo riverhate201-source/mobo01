@@ -257,13 +257,73 @@ body.dark-mode .nav-content {
 }
 
 .close-btn {
-    font-size: 36px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
     border: none;
     background: none;
     cursor: pointer;
     color: #888;
-    line-height: 1;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
+
+.close-btn svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+
+/* 모보 공통 모달 닫기 버튼 */
+.mobo-modal-close {
+    position: absolute;
+    top: 19px;
+    right: 16px;
+
+    width: 32px;
+    height: 32px;
+    padding: 0;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: right;
+    flex-shrink: 0;
+
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #888;
+
+    cursor: pointer;
+    z-index: 1;
+}
+
+/* Lucide X 아이콘 */
+.mobo-modal-close svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+}
+
+/* 터치·클릭 시 */
+.mobo-modal-close:active {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* 다크모드 */
+body.dark-mode .mobo-modal-close {
+    color: #AAA;
+}
+
+body.dark-mode .mobo-modal-close:active {
+    background: rgba(255, 255, 255, 0.08);
+}
+
 
 .nav-section {
     margin-bottom: 20px;
@@ -4086,6 +4146,253 @@ body.dark-mode .mobo-return-description {
     font-weight: 500;
     line-height: 1.25;
     opacity: 0.8;
+}
+
+
+/* 작품 관리 - 연재중 전환 버튼: 기존 검은색 */
+#finished-cleanup-resume {
+    background: #252525;
+    color: #fff;
+    border: 1px solid #252525;
+    border-radius: 8px;
+    font-weight: 600;
+    min-height: 44px;
+}
+
+/* 작품 관리 - 삭제 버튼: 차분한 로즈레드 라인 */
+#finished-cleanup-delete {
+    background: transparent;
+    color: #B96F72;
+    border: 1px solid #B96F72;
+    border-radius: 8px;
+    font-weight: 600;
+    min-height: 44px;
+}
+
+/* 삭제 버튼 터치 피드백 */
+#finished-cleanup-delete:not(:disabled):active {
+    background: rgba(185, 111, 114, 0.08);
+}
+
+/* 비활성화 상태 */
+#finished-cleanup-resume:disabled,
+#finished-cleanup-delete:disabled {
+    cursor: not-allowed;
+}
+
+
+/* ========================================
+   작품 관리 버튼 - 다크모드
+======================================== */
+
+/* 연재중 전환: 기존 다크모드 검은색 유지 */
+body.dark-mode #finished-cleanup-resume {
+    background: #474747;
+    color: #FFFFFF;
+    border: 1px solid #474747;
+}
+
+/* 작품 삭제: 차분하고 부드러운 로즈레드 */
+body.dark-mode #finished-cleanup-delete {
+    background: transparent;
+    color: #D19498;
+    border: 1px solid #D19498;
+}
+
+/* 삭제 버튼 터치 피드백 */
+body.dark-mode #finished-cleanup-delete:not(:disabled):active {
+    background: rgba(209, 148, 152, 0.12);
+}
+
+/* 다크모드 비활성화 상태 */
+body.dark-mode #finished-cleanup-resume:disabled,
+body.dark-mode #finished-cleanup-delete:disabled {
+    cursor: not-allowed;
+}
+
+
+
+/* 작품 정리 모달 - 상태 뱃지 공통 */
+.cleanup-status-badge {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 3px 7px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+/* 라이트모드 */
+.cleanup-badge-long {
+    background: #F3E8C8;
+    color: #80622D;
+}
+
+.cleanup-badge-return {
+    background: #E7EDF7;
+    color: #566B8B;
+}
+
+.cleanup-badge-auto {
+    background: #EEEEEE;
+    color: #666666;
+}
+
+.cleanup-return-date {
+    font-size: 12px;
+    color: #888;
+    line-height: 1.35;
+}
+
+/* 다크모드 */
+body.dark-mode .cleanup-badge-long {
+    background: #453A27;
+    color: #E3C98B;
+}
+
+body.dark-mode .cleanup-badge-return {
+    background: #303D52;
+    color: #B7C9E7;
+}
+
+body.dark-mode .cleanup-badge-auto {
+    background: #414141;
+    color: #CECECE;
+}
+
+body.dark-mode .cleanup-return-date {
+    color: #AAAAAA;
+}
+
+.cleanup-select-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+
+/* 작품 관리 - 선택 도구 영역 */
+.cleanup-select-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* 장기휴재만 선택: 보조 버튼 */
+.cleanup-select-long-btn {
+    border: 1px solid #D8D8DE;
+    background: transparent;
+    color: #686C9D;
+    border-radius: 7px;
+    padding: 7px 10px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.cleanup-select-long-btn:active {
+    background: rgba(104, 108, 157, 0.08);
+}
+
+/* 다크모드 */
+body.dark-mode .cleanup-select-long-btn {
+    border-color: #55555E;
+    background: transparent;
+    color: #B8BBDD;
+}
+
+body.dark-mode .cleanup-select-long-btn:active {
+    background: rgba(184, 187, 221, 0.10);
+}
+
+
+
+/* 모든 작품 관리 모달보다 토스트를 위에 표시 */
+#mobo-toast,
+#toast-popup {
+    z-index: 10010;
+}
+
+
+/* ==========================
+   작품 관리 모달 - 독립 간격
+   ========================== */
+
+/* 모달 전체 gap 제거 */
+#finished-cleanup-modal .modal-content {
+    gap: 0;
+}
+
+/* 제목과 닫기 버튼 */
+.cleanup-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+#finished-cleanup-title {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Lucide 닫기 버튼 */
+.cleanup-modal-close {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: right;
+    flex-shrink: 0;
+}
+
+.cleanup-modal-close svg,
+.cleanup-modal-close i {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+/* 제목 → 안내 문구: 8px */
+#finished-cleanup-help {
+    margin: 4px 0 0;
+}
+
+/* 안내 문구 → 전체 선택 영역: 16px */
+#finished-cleanup-modal .cleanup-select-toolbar {
+    margin-top: 16px;
+    gap: 8px;
+}
+
+/* 전체 선택 영역 → 작품 목록: 8px */
+#finished-cleanup-list {
+    margin-top: 8px;
+}
+
+/* 작품 목록 → 선택 개수: 8px */
+#finished-cleanup-count {
+    margin-top: 8px;
+}
+
+/* 선택 개수 → 하단 버튼: 16px */
+#finished-cleanup-modal .modal-btns {
+    margin-top: 16px;
+    gap: 8px;
 }
 
 
