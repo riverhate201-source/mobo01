@@ -130,6 +130,8 @@ function getWebtoonDate() { const kst = getKSTDate(); if (kst.getHours() >= 22) 
 function formatDate(dateObj) { return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`; }
 
 
+
+
 function isWorkOnBreak(work) {
     if (work.status === '휴재' || work.status === '완결') return true;
 
@@ -312,7 +314,6 @@ window.onload = function () {
     checkCoinExpiration();
     checkSaleDays();
     checkAttendanceReset();
-    checkAndShowAttendPopup();
 
     // 🌟 [유일하게 추가된 줄] 오프라인일 때 통계창이 증발하는 걸 막기 위해 이걸 정산창보다 먼저 실행하게 끌어올렸어요!
     updateWeeklyStatUI();
@@ -322,6 +323,9 @@ window.onload = function () {
 
     // 이후 일반 정산 검사
     askForDeduction();
+
+    // 복귀·정산 팝업이 없을 때만 출석 확인
+    checkAndShowAttendPopup();
 
     // 화면을 그리기 전에 연재일 갱신
     autoUpdatePastBiweeklyDates();
@@ -518,8 +522,8 @@ function checkMoboReturnVisit() {
 
     banner.style.display = 'flex';
 
-    // 30일 이상 새롭게 복귀했을 때만 모달 자동 표시
-    if (absentDays >= 30) {
+    // 20일 이상 복귀했을 때 선택 안내 모달 표시
+    if (absentDays >= 20) {
         openMoboReturnModal();
     }
 }
@@ -539,6 +543,7 @@ function openMoboReturnModal() {
     if (!modal || !message) return;
 
     const isLongReturn = days >= 30;
+    const needsSelectionGuide = days >= 20 && days < 30;
 
     // 복귀 기간 표시
     message.textContent =
@@ -565,7 +570,7 @@ function openMoboReturnModal() {
     if (guide) {
         guide.textContent = isLongReturn
             ? '과거 미정산은 다시 표시되지 않아요. 기존 지갑 잔액과 작품 정보, 월말정산 기록은 그대로 유지돼요.'
-            : '이번 안내로 기존 작품이나 정산 기록이 변경되지는 않아요.';
+            : '기존 작품이나 정산 기록이 변경되지는 않아요.';
     }
 
     // 복귀 기간별 버튼 구분
@@ -576,11 +581,25 @@ function openMoboReturnModal() {
         document.getElementById('mobo-return-dismiss-btn');
 
     if (skipBtn) {
-        skipBtn.style.display = isLongReturn ? 'block' : 'none';
+        skipBtn.style.display = days >= 20 ? 'block' : 'none';
+
+        skipBtn.textContent = needsSelectionGuide
+            ? '모두 건너뛰기'
+            : '건너뛰고 시작하기';
+
+        skipBtn.classList.toggle('save-btn', !needsSelectionGuide);
+        skipBtn.classList.toggle('cancel-btn', needsSelectionGuide);
     }
 
     if (dismissBtn) {
         dismissBtn.style.display = isLongReturn ? 'none' : 'block';
+
+        dismissBtn.textContent = needsSelectionGuide
+            ? '밀린 작품 정산하기'
+            : '시작하기';
+
+        dismissBtn.classList.toggle('save-btn', needsSelectionGuide);
+        dismissBtn.classList.toggle('cancel-btn', !needsSelectionGuide);
     }
 
     // 14~29일은 '시작하기' 버튼만 표시
@@ -594,9 +613,45 @@ function openMoboReturnModal() {
     modal.style.display = 'flex';
 }
 
+// 14~19일은 기존 시작하기,
+// 20~29일은 밀린 작품 정산하기
+function handleMoboReturnStart() {
+    const pendingDays = Number(
+        localStorage.getItem(MOBO_RETURN_PENDING_KEY)
+    );
+
+    // 14~19일 기존 동작 유지
+    if (
+        !Number.isSafeInteger(pendingDays) ||
+        pendingDays < 20 ||
+        pendingDays >= 30
+    ) {
+        dismissMoboReturnNotice();
+        return;
+    }
+
+    // 복귀 안내 완료
+    dismissMoboReturnNotice();
+
+    // 기존 밀린 정산 검사 및 팝업 열기
+    askForDeduction();
+
+    const deductionModal =
+        document.getElementById('deduction-modal');
+
+    if (
+        !deductionModal ||
+        deductionModal.style.display !== 'flex'
+    ) {
+        alert('현재 정산할 밀린 작품이 없습니다.');
+    }
+}
+
 // 나중에 하기: 모달만 닫고 배너 유지
 function closeMoboReturnModal() {
     document.getElementById('mobo-return-modal').style.display = 'none';
+
+    setTimeout(checkAndShowAttendPopup, 0);
 }
 
 
@@ -606,6 +661,8 @@ function dismissMoboReturnNotice() {
 
     document.getElementById('mobo-return-modal').style.display = 'none';
     document.getElementById('mobo-return-banner').style.display = 'none';
+
+    setTimeout(checkAndShowAttendPopup, 0);
 }
 
 // 30일 이상 복귀자: 과거 미정산 건너뛰기
@@ -615,8 +672,19 @@ function skipMoboPastDeductions() {
         localStorage.getItem(MOBO_RETURN_PENDING_KEY)
     );
 
-    // 30일 미만 이용자는 실행할 수 없음
-    if (!Number.isSafeInteger(pendingDays) || pendingDays < 30) {
+    // 20일 미만 이용자는 이 버튼을 사용할 수 없음
+    if (!Number.isSafeInteger(pendingDays) || pendingDays < 20) {
+        return;
+    }
+
+    // 20~29일에는 건너뛰기 전 추가 확인
+    if (
+        pendingDays < 30 &&
+        !confirm(
+            '밀린 정산을 모두 건너뛰시겠습니까?\n' +
+            '건너뛴 과거 내역은 다시 표시되지 않습니다.'
+        )
+    ) {
         return;
     }
 
@@ -650,15 +718,41 @@ function skipMoboPastDeductions() {
 }
 
 
+let attendWarningShownThisPage = false;
+
 function checkAndShowAttendPopup() {
+    if (attendWarningShownThisPage) return;
+
+    const deductionModal = document.getElementById('deduction-modal');
+    const returnModal = document.getElementById('mobo-return-modal');
+
+    // 복귀 또는 정산 팝업이 열려 있다면 출석 안내 보류
+    if (
+        deductionModal?.style.display === 'flex' ||
+        returnModal?.style.display === 'flex'
+    ) {
+        return;
+    }
+
     const lAttend = localStorage.getItem('lezhinAttend') === 'true';
     const bAttend = localStorage.getItem('bomtoonAttend') === 'true';
-    let missing = [];
-    if (!lAttend) missing.push("레진"); if (!bAttend) missing.push("봄툰");
-    if (missing.length > 0) {
-        document.getElementById('attend-missing-text').innerHTML = `(현재 <b>${missing.join(', ')}</b> 출석 전입니다)`;
-        document.getElementById('attend-warning-modal').style.display = 'flex';
-    }
+
+    const missing = [];
+
+    if (!lAttend) missing.push('레진');
+    if (!bAttend) missing.push('봄툰');
+
+    if (!missing.length) return;
+
+    const message = document.getElementById('attend-missing-text');
+    const modal = document.getElementById('attend-warning-modal');
+
+    if (!message || !modal) return;
+
+    message.innerHTML = `(현재 <b>${missing.join(', ')}</b> 출석 전입니다)`;
+
+    modal.style.display = 'flex';
+    attendWarningShownThisPage = true;
 }
 
 // 📊 24시간 레진 보너스 코인 소멸 검사기
@@ -1608,13 +1702,13 @@ function isWorkEligibleForPastDeduction(work, checkDate) {
 
 function askForDeduction() {
 
-    // 30일 이상 복귀 정리가 아직 완료되지 않았다면
-    // 기존 밀린 정산창을 자동으로 열지 않음
+    // 20일 이상 복귀 선택이 끝나기 전에는
+    // 밀린 정산창을 자동으로 열지 않음
     const pendingReturnDays = Number(
         localStorage.getItem(MOBO_RETURN_PENDING_KEY)
     );
 
-    if (pendingReturnDays >= 30) {
+    if (pendingReturnDays >= 20) {
         return;
     }
 
@@ -1890,10 +1984,10 @@ function showDeductionModal() {
         groupedCount += groups.size;
     });
 
-    // 상단 긴 요일 안내를 간단한 요약으로 변경
+    // 밀린 정산 요일 안내 + 기존 작품별 묶음 요약 유지
     let popupMsg = isTodayDeduction
         ? `오늘 볼 ${groupedCount}개 작품을 미리 정산할까요?`
-        : `밀린 정산 ${originalCount}건 · ${groupedCount}개 작품`;
+        : `밀린 정산 ${originalCount}건 · ${groupedCount}개 작품<br><span style="display:inline-block;margin-top:8px;">밀린 요일: ${pendingDaysStr}</span>`;
 
     const todayDate = getKSTDate().getDate();
 
@@ -2063,7 +2157,14 @@ function autoUpdatePastBiweeklyDates() {
                         work.breakDate = '';
 
                         // 🌟 [핵심 1] 원래 집(origDay)으로 이사
-                        if (work.origDay && work.origDay !== '휴재' && work.origDay !== '10일 연재' && work.origDay !== '격주 연재') {
+                        if (
+                            work.origDay &&
+                            work.origDay !== day &&
+                            work.origDay !== '휴재' &&
+                            work.origDay !== '10일 연재' &&
+                            work.origDay !== '격주 연재' &&
+                            Array.isArray(state[plt][work.origDay])
+                        ) {
                             let targetArr = state[plt][work.origDay];
 
                             // 중복 방지 체크
@@ -2286,6 +2387,8 @@ function skipDeduction() {
 function closeDeductionModal() {
     document.getElementById('deduction-modal').style.display = 'none';
     isTodayDeduction = false; // 정산 모드 초기화
+
+    setTimeout(checkAndShowAttendPopup, 0);
 }
 
 function finishDeduction() {
@@ -2304,6 +2407,8 @@ function finishDeduction() {
     updateWeeklyStatUI();
     refreshBalance();
     renderAll(); // 🌟 화면 새로고침
+
+    setTimeout(checkAndShowAttendPopup, 0);
 }
 
 
@@ -2513,8 +2618,6 @@ function loadAllData() {
 
 // 2. 데이터 저장하기 (🌟 완전 무소음 완벽판!)
 function saveData(silent = false) {
-    // 🚨 [핵심 방어막] 배경에서 몰래 저장할 때(silent=true)는 청소기를 안 돌립니다!
-    // 유저가 앱을 조작 중일 때 갑자기 작품 순서가 덜컹거리는 부작용 100% 차단!
     if (!silent) {
         forceSortBreaks();
     }
@@ -2553,18 +2656,32 @@ function saveData(silent = false) {
 
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-
-        if (!silent) {
-            renderAll();
-            checkStorage();
-        }
     } catch (error) {
-        if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+        console.error('모보 데이터 저장 실패:', error);
+
+        if (
+            error.name === 'QuotaExceededError' ||
+            error.name === 'NS_ERROR_DOM_QUOTA_REACHED'
+        ) {
             alert("모보의 저장 공간(5MB)이 꽉 찼습니다!\n새로운 내용을 저장하려면 기존 작품의 '사진'을 몇 개 삭제해 주세요.");
         } else {
             alert("데이터 저장 중 알 수 없는 오류가 발생했습니다.");
         }
+
+        return false;
     }
+
+    // 저장 성공 후 화면 갱신은 별도로 처리
+    if (!silent) {
+        try {
+            renderAll();
+            checkStorage();
+        } catch (error) {
+            console.error('모보 화면 갱신 오류:', error);
+        }
+    }
+
+    return true;
 }
 
 function toggleDarkMode() { const isDark = document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); saveData(); }
@@ -4426,6 +4543,14 @@ async function saveWorkFinal(buyCount = null) {
         let addedCount = 0;
         const dayList = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일', '10일 연재', '격주 연재'];
 
+        // 일괄 등록 전에 요일별 기존 작품 수 보관
+        const previousLengths = Object.fromEntries(
+            dayList.map(day => [
+                day,
+                state[currentPlatform][day].length
+            ])
+        );
+
         dayList.forEach(day => {
             const tagList = document.getElementById(`tag-list-${day}`);
             const input = document.getElementById(`batch-input-${day}`);
@@ -4461,7 +4586,16 @@ async function saveWorkFinal(buyCount = null) {
 
         if (addedCount === 0) return alert("추가할 작품 제목을 하나 이상 적어주세요!");
 
-        saveData();
+        // 저장 실패 시 이번에 추가한 작품만 취소
+        if (saveData() !== true) {
+            dayList.forEach(day => {
+                state[currentPlatform][day].length =
+                    previousLengths[day];
+            });
+
+            return false;
+        }
+
         autoUpdatePastBiweeklyDates();
         renderAll();
 
@@ -4627,6 +4761,11 @@ async function saveWorkFinal(buyCount = null) {
     };
     // 🚨 여기까지 추가 완료 🚨
 
+    // 저장 실패 시 복구할 기존 작품 목록 보관
+    const previousPlatformState = JSON.parse(
+        JSON.stringify(state[currentPlatform])
+    );
+
     if (editMode) {
         Object.keys(state[currentPlatform]).forEach(day => {
             const arr = state[currentPlatform][day];
@@ -4634,8 +4773,11 @@ async function saveWorkFinal(buyCount = null) {
 
             if (!isOldGhost) targetIdx = arr.findIndex(w => w.id === workId);
             else {
-                if (day === actionOrigDay) targetIdx = actionIdx;
-                else targetIdx = arr.findIndex(w => !w.id && w.title === originalWork.title);
+                // ID가 없는 구버전 작품은 제목만으로
+                // 다른 요일의 작품을 동일 작품으로 판단하지 않음
+                if (day === actionOrigDay) {
+                    targetIdx = actionIdx;
+                }
             }
 
             if (targetIdx !== -1) {
@@ -4651,7 +4793,11 @@ async function saveWorkFinal(buyCount = null) {
         });
     }
 
-    saveData();
+    if (saveData() !== true) {
+        // 저장에 실패했다면 작품 목록을 이전 상태로 복구
+        state[currentPlatform] = previousPlatformState;
+        return false;
+    }
 
     // 사진 업로드와 작품 저장이 끝난 후 실제 지갑 차감
     if (deductionAmount > 0) {
@@ -4819,7 +4965,9 @@ function checkStorage() { const used = encodeURIComponent(JSON.stringify(localSt
 
 // 파일로 내보내기 (다운로드 직전에 한 번 더 꽉 묶어주기!)
 function exportDataToFile() {
-    saveData();
+    // 최신 데이터 저장에 성공했을 때만 백업 진행
+    if (saveData() !== true) return;
+
     const d = localStorage.getItem(STORAGE_KEY);
     if (!d) return alert("백업할 데이터가 없습니다!");
     const date = getKSTDate();
@@ -4841,6 +4989,96 @@ function triggerImport() {
     document.getElementById('backup-file-input').click();
 }
 
+// 구버전 백업 호환성 보완
+// 원본 백업 객체는 변경하지 않음
+function prepareLegacyMoboBackup(source) {
+    const result = { data: source, changes: [] };
+
+    if (
+        !source ||
+        typeof source !== 'object' ||
+        Array.isArray(source) ||
+        !source.state ||
+        typeof source.state !== 'object' ||
+        Array.isArray(source.state)
+    ) {
+        return result;
+    }
+
+    // 복사본에서만 누락된 구조 보완
+    const data = JSON.parse(JSON.stringify(source));
+    result.data = data;
+
+    const platforms = ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
+
+    const weekdays = [
+        '월요일', '화요일', '수요일', '목요일',
+        '금요일', '토요일', '일요일'
+    ];
+
+    const allDays = [
+        ...weekdays, '10일 연재', '격주 연재'
+    ];
+
+    const has = (obj, key) =>
+        Object.prototype.hasOwnProperty.call(obj, key);
+
+    // 1. 누락된 요일 목록 보완
+    for (const plt of platforms) {
+        const folders = data.state[plt];
+
+        if (
+            !folders ||
+            typeof folders !== 'object' ||
+            Array.isArray(folders)
+        ) continue;
+
+        // 플랫폼의 모든 목록이 사라졌다면 자동 보완하지 않음
+        if (!allDays.some(day => has(folders, day))) continue;
+
+        for (const day of weekdays) {
+            if (!has(folders, day)) {
+                folders[day] = [];
+
+                result.changes.push(
+                    `${plt}: ${day} 빈 목록 추가`
+                );
+            }
+        }
+    }
+
+    // 2. 월말정산의 누락된 플랫폼 항목 보완
+    const history = data.monthlyHistory;
+
+    if (
+        history &&
+        typeof history === 'object' &&
+        !Array.isArray(history)
+    ) {
+        for (const [month, records] of Object.entries(history)) {
+            if (
+                !records ||
+                typeof records !== 'object' ||
+                Array.isArray(records)
+            ) continue;
+
+            // 모든 플랫폼 기록이 사라진 달은 자동 보완하지 않음
+            if (!platforms.some(plt => has(records, plt))) continue;
+
+            for (const plt of platforms) {
+                if (!has(records, plt)) {
+                    records[plt] = {};
+
+                    result.changes.push(
+                        `${month}: ${plt} 빈 정산 기록 추가`
+                    );
+                }
+            }
+        }
+    }
+
+    return result;
+}
 
 // 백업 파일 구조 검사: 기존 데이터를 덮어쓰기 전에 확인
 function isValidMoboBackup(data) {
@@ -4858,6 +5096,16 @@ function isValidMoboBackup(data) {
 
         if (!folders || typeof folders !== 'object' ||
             Array.isArray(folders)) return false;
+
+        // 월요일~일요일 필수 목록 검사
+        const requiredDays = [
+            '월요일', '화요일', '수요일', '목요일',
+            '금요일', '토요일', '일요일'
+        ];
+
+        if (!requiredDays.every(day => Array.isArray(folders[day]))) {
+            return false;
+        }
 
         for (const works of Object.values(folders)) {
             if (!Array.isArray(works)) return false;
@@ -4888,10 +5136,49 @@ function isValidMoboBackup(data) {
         return false;
     }
 
-    if (data.monthlyHistory != null &&
-        (typeof data.monthlyHistory !== 'object' ||
-            Array.isArray(data.monthlyHistory))) {
-        return false;
+    // 월말정산 기록의 내부 구조 검사
+    if (data.monthlyHistory != null) {
+        if (
+            typeof data.monthlyHistory !== 'object' ||
+            Array.isArray(data.monthlyHistory)
+        ) {
+            return false;
+        }
+
+        for (const [month, monthData] of Object.entries(data.monthlyHistory)) {
+            // YYYY-MM 형식 및 월별 기록 확인
+            if (
+                !/^\d{4}-(0[1-9]|1[0-2])$/.test(month) ||
+                !monthData ||
+                typeof monthData !== 'object' ||
+                Array.isArray(monthData)
+            ) {
+                return false;
+            }
+
+            // 각 플랫폼의 작품별 정산 기록 확인
+            for (const plt of platforms) {
+                const records = monthData[plt];
+
+                if (
+                    !records ||
+                    typeof records !== 'object' ||
+                    Array.isArray(records)
+                ) {
+                    return false;
+                }
+
+                for (const amount of Object.values(records)) {
+                    if (
+                        typeof amount !== 'number' ||
+                        !Number.isSafeInteger(amount) ||
+                        amount < 0
+                    ) {
+                        return false;
+                    }
+                }
+            }
+        }
     }
 
     return true;
@@ -4928,11 +5215,29 @@ function handleImport(event) {
 
         try {
             const content = e.target.result;
-            const parsedData = JSON.parse(content);
 
-            // 구조가 잘못되었다면 저장하기 전에 중단
+            // 구버전 데이터의 누락 항목을 복사본에서 보완
+            const prepared = prepareLegacyMoboBackup(JSON.parse(content));
+            const parsedData = prepared.data;
+
+            // 보완한 데이터도 기존의 엄격한 검증을 통과해야 함
             if (!isValidMoboBackup(parsedData)) {
                 throw new Error('모보 백업 구조가 올바르지 않습니다.');
+            }
+
+            // 누락 항목이 있었다면 사용자에게 먼저 확인
+            if (prepared.changes.length > 0) {
+                const changesText = prepared.changes.join('\n');
+
+                const approved = confirm(
+                    '오래된 백업의 누락 항목을 보완했습니다.\n\n' +
+                    changesText +
+                    '\n\n없는 항목만 빈 목록으로 채웠습니다. ' +
+                    '원래 그곳에 작품이 있었는지는 확인할 수 없습니다.\n' +
+                    '원본 백업 파일은 변경되지 않습니다. 복원을 계속할까요?'
+                );
+
+                if (!approved) return;
             }
 
             if (parsedData && parsedData.state) {
@@ -5074,6 +5379,17 @@ function handleImport(event) {
         }
     };
 
+    // 백업 파일을 읽지 못했을 때 오류 안내
+    reader.onerror = function () {
+        console.error('모보 백업 파일 읽기 실패:', reader.error);
+
+        alert('백업 파일을 읽지 못했습니다. 파일을 다시 선택해 주세요.');
+
+        const input = document.getElementById('backup-file-input');
+        if (input) {
+            input.value = '';
+        }
+    };
 
     reader.readAsText(file);
 }
@@ -5170,9 +5486,54 @@ let toastTimeout = null;
 function deleteFromAction() {
     if (confirm("이 작품을 영구 삭제할까요? (다른 요일에 있는 같은 작품도 모두 삭제됩니다!)")) {
 
-        stateBackupForUndo = JSON.stringify(state);
-
         let work = state[actionPlt][actionOrigDay][actionIdx];
+
+        // 잘못 중복된 작품 ID가 있다면 삭제 중단
+        if (work.id) {
+            const conflictingId = Object.values(state[actionPlt]).some(list => {
+                if (!Array.isArray(list)) return false;
+
+                const sameIdWorks = list.filter(
+                    item => item.id === work.id
+                );
+
+                return sameIdWorks.length > 1 ||
+                    sameIdWorks.some(item => item.title !== work.title);
+            });
+
+            if (conflictingId) {
+                alert(
+                    '작품 ID가 충돌해 삭제를 중단했습니다.\n' +
+                    '백업을 보관하고 작품 정보를 확인해 주세요.'
+                );
+                return;
+            }
+        }
+
+        // 실행 취소를 위해 삭제할 작품의 위치와 데이터만 보관
+        const deletedEntries = [];
+
+        Object.keys(state[actionPlt]).forEach(day => {
+            state[actionPlt][day].forEach((candidate, index) => {
+                const removed = work.id
+                    ? candidate.id === work.id
+                    : day === actionOrigDay && index === actionIdx;
+
+                if (removed) {
+                    deletedEntries.push({
+                        day,
+                        index,
+                        work: JSON.parse(JSON.stringify(candidate))
+                    });
+                }
+            });
+        });
+
+        stateBackupForUndo = {
+            type: 'single-delete',
+            platform: actionPlt,
+            entries: deletedEntries
+        };
 
         if (work.id) {
             Object.keys(state[actionPlt]).forEach(d => {
@@ -5210,7 +5571,79 @@ function showUndoToast(msg) {
 function undoDelete() {
     if (!stateBackupForUndo) return;
 
-    state = JSON.parse(stateBackupForUndo);
+    if (typeof stateBackupForUndo === 'string') {
+        // 기존 일괄 작업의 실행 취소 방식 유지
+        state = JSON.parse(stateBackupForUndo);
+
+    } else if (
+        stateBackupForUndo.type === 'single-delete' ||
+        stateBackupForUndo.type === 'bulk-delete'
+    ) {
+        // 일반 작품 삭제는 삭제된 작품만 복구
+        const { platform, entries } = stateBackupForUndo;
+
+        entries.forEach(({ day, index, work }) => {
+            const list = state[platform]?.[day];
+
+            if (!Array.isArray(list)) return;
+
+            // 이미 동일 ID의 작품이 있다면 중복 복구 방지
+            if (
+                work.id &&
+                list.some(item => item.id === work.id)
+            ) {
+                return;
+            }
+
+            // 다른 작품의 수정 내용은 유지하면서 원래 위치에 복구
+            list.splice(
+                Math.min(index, list.length),
+                0,
+                work
+            );
+        });
+
+    } else if (stateBackupForUndo.type === 'bulk-resume') {
+        // 장기휴재 일괄 전환 시 변경한 상태만 복구
+        const { platform, entries } = stateBackupForUndo;
+
+        entries.forEach(({
+            work,
+            status,
+            breakDate,
+            hadBreakDate
+        }) => {
+            // 작품이 여전히 목록에 존재하는지 확인
+            const stillExists = Object.values(
+                state[platform] || {}
+            ).some(list =>
+                Array.isArray(list) && list.includes(work)
+            );
+
+            if (!stillExists) return;
+
+            // 전환 이후 상태가 다시 변경되었다면 덮어쓰지 않음
+            if (
+                work.status !== '연재중' ||
+                work.breakDate !== ''
+            ) {
+                return;
+            }
+
+            // 기존 휴재 상태 복구
+            work.status = status;
+
+            if (hadBreakDate) {
+                work.breakDate = breakDate;
+            } else {
+                delete work.breakDate;
+            }
+        });
+
+    } else {
+        return;
+    }
+
     saveData();
 
     const toast = document.getElementById("toast-popup");
@@ -6804,8 +7237,19 @@ function resumeFinishedSelected() {
 
     if (!confirmed) return;
 
-    // 기존 실행 취소 기능용 백업
-    const backup = JSON.stringify(state);
+    // 상태가 변경되는 작품만 실행 취소용으로 보관
+    const backup = {
+        type: 'bulk-resume',
+        platform: plt,
+        entries: Array.from(worksToResume, work => ({
+            work,
+            status: work.status,
+            breakDate: work.breakDate,
+            hadBreakDate: Object.prototype.hasOwnProperty.call(
+                work, 'breakDate'
+            )
+        }))
+    };
 
     // 기존 연재 요일과 연재주기는 유지
     worksToResume.forEach(work => {
@@ -6938,8 +7382,30 @@ function deleteFinishedSelected() {
         selected.filter(entry => !entry.id).map(entry => entry.ref)
     );
 
-    // 기존 실행 취소 기능에 사용할 백업
-    const backup = JSON.stringify(state);
+    // 삭제되는 작품의 데이터와 원래 위치만 보관
+    const backup = {
+        type: 'bulk-delete',
+        platform: finishedCleanupPlatform,
+        entries: Object.entries(
+            state[finishedCleanupPlatform]
+        ).flatMap(([day, works]) =>
+            (Array.isArray(works) ? works : []).flatMap(
+                (work, index) => {
+                    const shouldRemove =
+                        (work.id && idsToRemove.has(work.id)) ||
+                        legacyToRemove.has(work);
+
+                    return shouldRemove
+                        ? [{
+                            day,
+                            index,
+                            work: JSON.parse(JSON.stringify(work))
+                        }]
+                        : [];
+                }
+            )
+        )
+    };
 
     let removed = 0;
 
