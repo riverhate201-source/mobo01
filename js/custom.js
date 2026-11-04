@@ -1062,6 +1062,11 @@ function savePlatformSetting() {
 function openCalcModal() {
     closeNav();
 
+    // 이전 계산 결과가 중복으로 담기지 않도록 초기화
+    moboCumInvalidateClassic();
+
+    // 누적 계산 화면이 열려 있었더라도 일반 계산기로 시작
+    moboCumBack();
     // 계산기 열 때마다 드롭다운 초기화
     const pltSelect = document.getElementById('calc-platform');
     if (pltSelect) { pltSelect.value = 'coin'; updateCalcLabels(); }
@@ -1117,13 +1122,25 @@ function closeCalcModal() {
 function setCalcMode(mode) {
     const isQuick = mode === 'quick';
 
+    // 일반 계산기 / 빠른 차감에서는 닫기 버튼 표시
+    const closeButton = document.getElementById('calc-main-close');
+
+    if (closeButton) {
+        closeButton.style.removeProperty('display');
+    }
+
+    // 탭을 누르면 누적 화면에서 기존 화면으로 복귀
+    const classic = document.getElementById('calc-classic-view');
+    const cumulative = document.getElementById('mobo-cum-view');
+
+    if (classic) classic.style.display = 'block';
+    if (cumulative) cumulative.style.display = 'none';
+
     // 선택한 탭에 맞춰 모달 제목 변경
     const modalTitle = document.getElementById('calc-modal-title');
 
     if (modalTitle) {
-        modalTitle.textContent = isQuick
-            ? '빠른 차감'
-            : '정주행 계산기';
+        modalTitle.textContent = '계산기';
     }
 
     const calcTab = document.getElementById('calc-mode-calc');
@@ -1144,6 +1161,1648 @@ function setCalcMode(mode) {
     quickTab.setAttribute('aria-selected', String(isQuick));
 }
 
+// =========================================
+// 모보 누적 계산기 V1
+// 기존 지갑 / 정산 / 진도와 완전히 독립
+// =========================================
+
+const MOBO_CUM_KEY = 'MOBO_CUMULATIVE_CALC_V1';
+
+const MOBO_CUM_PLATFORMS = {
+    lezhin: ['레진', 'C'],
+    bomtoon: ['봄툰', 'C'],
+    ridi: ['리디', '캐시'],
+    mrblue: ['미스터블루', '머니']
+};
+
+let moboCumEditingId = null;
+let moboCumEditingOriginal = null;
+let moboCumSaving = false;
+
+
+// 계산값 검증 및 계산
+function moboCumCalculate(values) {
+    const int = value => {
+        const raw = String(value ?? '').trim();
+
+        return /^\d+$/.test(raw)
+            ? Number(raw)
+            : NaN;
+    };
+
+    const total = int(values.total);
+    const current = int(values.current);
+    const price = int(values.price);
+
+    const percentRaw =
+        String(values.percent ?? '').trim();
+
+    if (!/^\d+(?:\.\d{1,2})?$/.test(percentRaw)) {
+        return null;
+    }
+
+    const percent = Number(percentRaw);
+
+    if (
+        !Number.isSafeInteger(total) ||
+        total < 1 ||
+        total > 100000 ||
+
+        !Number.isSafeInteger(current) ||
+        current < 0 ||
+        current >= total ||
+
+        !Number.isSafeInteger(price) ||
+        price < 0 ||
+        price > 100000 ||
+
+        !Number.isFinite(percent) ||
+        percent < 0 ||
+        percent > 1000
+    ) {
+        return null;
+    }
+
+    const amount = (total - current) * price;
+
+    // 비율을 100배 정수화해 소수점 오차 최소화
+    const numerator =
+        amount * Math.round(percent * 100);
+
+    if (
+        !Number.isSafeInteger(amount) ||
+        !Number.isSafeInteger(numerator)
+    ) {
+        return null;
+    }
+
+    return {
+        total,
+        current,
+        price,
+        percent,
+        amount,
+        cashback: Math.floor(numerator / 10000)
+    };
+}
+
+
+// 저장된 누적 목록 읽기 + 손상 검증
+function moboCumRead() {
+    try {
+        const raw = localStorage.getItem(MOBO_CUM_KEY);
+
+        if (raw === null) return [];
+
+        const parsed = JSON.parse(raw);
+
+        if (
+            parsed?.version !== 1 ||
+            !Array.isArray(parsed.items) ||
+            parsed.items.length > 200
+        ) {
+            throw Error('누적 계산 목록 구조 오류');
+        }
+
+        const ids = new Set();
+
+        for (const item of parsed.items) {
+            const calc =
+                item && moboCumCalculate(item);
+
+            if (
+                !item ||
+                typeof item.id !== 'string' ||
+                item.id.length > 100 ||
+                !item.id ||
+                ids.has(item.id) ||
+
+                typeof item.title !== 'string' ||
+                !item.title.trim() ||
+                item.title.length > 80 ||
+
+                !Object.prototype.hasOwnProperty.call(
+                    MOBO_CUM_PLATFORMS,
+                    item.platform
+                ) ||
+
+                typeof item.included !== 'boolean' ||
+                !calc ||
+                item.amount !== calc.amount ||
+                item.cashback !== calc.cashback
+            ) {
+                throw Error('누적 계산 항목 오류');
+            }
+
+            ids.add(item.id);
+        }
+
+        return parsed.items;
+
+    } catch (error) {
+        console.warn(
+            '누적 계산 목록 읽기 실패:',
+            error
+        );
+
+        // 손상된 데이터를 임의로 덮어쓰지 않음
+        return null;
+    }
+}
+
+
+// 목록 저장: 성공 확인 후에만 화면 변경
+function moboCumWrite(items) {
+    try {
+        localStorage.setItem(
+            MOBO_CUM_KEY,
+            JSON.stringify({
+                version: 1,
+                items
+            })
+        );
+
+        return true;
+
+    } catch (error) {
+        console.error(
+            '누적 계산 목록 저장 실패:',
+            error
+        );
+
+        alert(
+            '계산 목록을 저장하지 못했어요.\n' +
+            '저장 공간이나 브라우저 설정을 확인해 주세요.'
+        );
+
+        return false;
+    }
+}
+
+// =========================================
+// 기존 정주행 계산기 → 누적 계산에 담기
+// =========================================
+
+let moboCumLastClassicSnapshot = null;
+
+
+// 계산값이 바뀌면 이전 계산 결과 무효화
+function moboCumInvalidateClassic() {
+    moboCumLastClassicSnapshot = null;
+
+    [
+        'mobo-cum-add-coin',
+        'mobo-cum-add-other'
+    ].forEach(id => {
+        const button = document.getElementById(id);
+
+        if (button) {
+            button.disabled = true;
+        }
+    });
+}
+
+
+// 기존 정주행 계산기 입력값 검사
+function moboCumClassicDraft() {
+    const get = id =>
+        document.getElementById(id);
+
+    const unit = get('calc-platform')?.value;
+
+    if (!['coin', 'cash', 'won'].includes(unit)) {
+        return null;
+    }
+
+    const isCoinback =
+        get('calc-coinback-toggle')?.checked === true;
+
+    const percentRaw = isCoinback
+        ? get('calc-coinback-percent').value.trim()
+        : '0';
+
+    // 기존 계산기는 코인백 %를 정수로 처리하므로
+    // 누적 저장에서도 정수 비율만 허용
+    if (!/^\d+$/.test(percentRaw)) {
+        return null;
+    }
+
+    const currentRaw =
+        get('calc-current').value.trim();
+
+    const values = {
+        total: get('calc-total').value,
+        current: currentRaw === '' ? '0' : currentRaw,
+        price: get('calc-price').value,
+        percent: percentRaw
+    };
+
+    const result = moboCumCalculate(values);
+
+    if (!result) return null;
+
+    // 0원에 코인백을 적용하면 기존 계산기에
+    // 추가 시청 가능 화수가 NaN으로 표시될 수 있음
+    if (isCoinback && result.price === 0) {
+        return null;
+    }
+
+    return {
+        unit,
+        ...result
+    };
+}
+
+
+// 기존 계산기의 실제 계산 완료 결과 기록
+function moboCumCaptureClassicResult() {
+    const draft = moboCumClassicDraft();
+
+    if (
+        draft &&
+        Number.isSafeInteger(currentCalcCoin) &&
+        draft.amount === currentCalcCoin
+    ) {
+        moboCumLastClassicSnapshot =
+            JSON.stringify(draft);
+    } else {
+        moboCumLastClassicSnapshot = null;
+    }
+
+    const ready =
+        moboCumLastClassicSnapshot !== null;
+
+    [
+        'mobo-cum-add-coin',
+        'mobo-cum-add-other'
+    ].forEach(id => {
+        const button = document.getElementById(id);
+
+        if (button) {
+            button.disabled = !ready;
+        }
+    });
+}
+
+
+// 결과 화면의 버튼 위치 변경
+function moboCumPlaceButtons(unit) {
+    const row = document.getElementById(
+        'mobo-cum-deduct-actions'
+    );
+
+    const deductButton = document.getElementById(
+        'calc-deduct-btn'
+    );
+
+    if (!row || !deductButton) return;
+
+    const isCoin = unit === 'coin';
+
+    row.classList.toggle(
+        'mobo-cum-paired',
+        !isCoin
+    );
+
+    // 리디·미블은 글자가 두 줄로 내려가지 않도록 축약
+    deductButton.textContent = isCoin
+        ? '지갑에서 바로 차감하기'
+        : '바로 차감하기';
+}
+
+// =========================================
+// 누적 계산 - 작품명 입력 팝업
+// =========================================
+
+// 기존 누적 담기 버튼에서 호출
+function moboCumAddFromClassic() {
+    const draft = moboCumClassicDraft();
+
+    // 계산 완료 여부 확인
+    if (
+        !draft ||
+        !moboCumLastClassicSnapshot ||
+        JSON.stringify(draft) !== moboCumLastClassicSnapshot
+    ) {
+        alert(
+            '계산 결과를 다시 확인해 주세요.\n' +
+            '「얼마나 필요할까?」를 먼저 눌러 주세요.'
+        );
+        return;
+    }
+
+    // 코인 플랫폼은 지갑 선택 필수
+    if (draft.unit === 'coin') {
+        const wallet = document.getElementById(
+            'calc-deduct-wallet'
+        )?.value;
+
+        if (!['lezhin', 'bomtoon'].includes(wallet)) {
+            alert('레진 또는 봄툰 지갑을 먼저 선택해 주세요.');
+            return;
+        }
+    }
+
+    // 저장 목록이 정상인지 먼저 검사
+    const items = moboCumRead();
+
+    if (items === null) {
+        alert('기존 계산 목록을 읽을 수 없어요.');
+        return;
+    }
+
+    if (items.length >= 200) {
+        alert('누적 계산 목록은 최대 200개까지 저장할 수 있어요.');
+        return;
+    }
+
+    const dialog = document.getElementById(
+        'mobo-cum-name-dialog'
+    );
+
+    const input = document.getElementById(
+        'mobo-cum-name-input'
+    );
+
+    // 매번 새로운 작품명 입력
+    input.value = '';
+    dialog.style.display = 'flex';
+
+    setTimeout(() => input.focus(), 0);
+}
+
+
+// 취소하거나 저장이 성공한 경우 닫기
+function moboCumCloseNameDialog() {
+    const dialog = document.getElementById(
+        'mobo-cum-name-dialog'
+    );
+
+    dialog.style.display = 'none';
+}
+
+
+// 팝업의 담기 버튼
+function moboCumConfirmName(event) {
+    event.preventDefault();
+
+    const dialog = document.getElementById(
+        'mobo-cum-name-dialog'
+    );
+
+    if (dialog.style.display !== 'flex') return;
+
+    const input = document.getElementById(
+        'mobo-cum-name-input'
+    );
+
+    const button = document.getElementById(
+        'mobo-cum-name-confirm'
+    );
+
+    if (button.disabled) return;
+
+    button.disabled = true;
+
+    try {
+        // 기존 누적 저장 로직 실행
+        moboCumCommitFromClassic(input.value);
+    } finally {
+        button.disabled = false;
+    }
+}
+
+// 현재 계산 결과를 누적 계산에 추가
+function moboCumCommitFromClassic(nameFromPopup = '') {
+    const draft = moboCumClassicDraft();
+
+    if (
+        !draft ||
+        !moboCumLastClassicSnapshot ||
+        JSON.stringify(draft) !==
+        moboCumLastClassicSnapshot
+    ) {
+        alert(
+            '계산 내용이 변경되었어요.\n' +
+            '「얼마나 필요할까?」를 다시 눌러 주세요.'
+        );
+
+        return;
+    }
+
+    // 레진 / 봄툰은 현재 지갑 선택값으로 구분
+    const platform = draft.unit === 'coin'
+        ? document.getElementById(
+            'calc-deduct-wallet'
+        ).value
+
+        : draft.unit === 'cash'
+            ? 'ridi'
+            : 'mrblue';
+
+    if (
+        !Object.prototype.hasOwnProperty.call(
+            MOBO_CUM_PLATFORMS,
+            platform
+        )
+    ) {
+        alert('레진 또는 봄툰 지갑을 선택해 주세요.');
+        return;
+    }
+
+    // 마지막에 저장된 목록을 다시 읽음
+    const items = moboCumRead();
+
+    if (items === null) {
+        alert(
+            '기존 계산 목록을 읽지 못했어요.\n' +
+            '데이터 보호를 위해 추가를 중단합니다.'
+        );
+
+        return;
+    }
+
+    if (items.length >= 200) {
+        alert('누적 계산 목록은 최대 200개까지 저장할 수 있어요.');
+        return;
+    }
+
+    // 사용자가 바로 담을 수 있도록 자동 작품명 부여
+    let number = 1;
+
+    const usedTitles = new Set(
+        items.map(item => item.title)
+    );
+
+    while (usedTitles.has(`작품 ${number}`)) {
+        number++;
+    }
+
+    // 기존 항목과 충돌하지 않는 고유 ID
+    let id;
+
+    do {
+        id =
+            `${Date.now().toString(36)}-` +
+            Math.random().toString(36).slice(2, 10);
+    } while (items.some(item => item.id === id));
+
+    const entry = {
+        id,
+        title: nameFromPopup.trim() || `작품 ${number}`,
+        platform,
+
+        total: draft.total,
+        current: draft.current,
+        price: draft.price,
+        percent: draft.percent,
+
+        amount: draft.amount,
+        cashback: draft.cashback,
+
+        included: true
+    };
+
+    // 저장이 성공했을 때만 완료 처리
+    if (!moboCumWrite([...items, entry])) {
+        return;
+    }
+
+    // 실제 저장 성공 후에만 팝업 닫기
+    moboCumCloseNameDialog();
+
+    // 누적 담기 성공 후 일반 계산기 전체 초기화
+    moboCumInvalidateClassic();
+
+    currentCalcCoin = 0;
+
+    // 플랫폼을 기본값으로 복원하고
+    // 화수·가격·코인백·결과창 초기화
+    document.getElementById('calc-platform').value = 'coin';
+    updateCalcLabels();
+
+    // 이전에 선택했던 지갑도 초기화
+    const wallet = document.getElementById('calc-deduct-wallet');
+
+    if (wallet) {
+        wallet.value = '';
+    }
+
+    // 이전 잔액 부족 안내 초기화
+    const notice = document.getElementById('calc-balance-notice');
+
+    if (notice) {
+        notice.textContent = '';
+        notice.style.display = 'none';
+    }
+
+    // 다음 작품 입력 준비
+    document.getElementById('calc-total').focus();
+
+    // 저장 완료 토스트
+    showToast('누적 계산에 추가했어요!');
+}
+
+
+// 입력값을 바꾸면 누적 담기 비활성화
+document.addEventListener('input', event => {
+    if (
+        event.target?.matches(
+            '#calc-total, ' +
+            '#calc-current, ' +
+            '#calc-price, ' +
+            '#calc-coinback-percent'
+        )
+    ) {
+        moboCumInvalidateClassic();
+    }
+});
+
+document.addEventListener('change', event => {
+    if (
+        event.target?.matches(
+            '#calc-platform, #calc-coinback-toggle'
+        )
+    ) {
+        moboCumInvalidateClassic();
+    }
+});
+
+// 안전한 HTML 요소 생성
+function moboCumNode(tag, className, content) {
+    const node = document.createElement(tag);
+
+    if (className) {
+        node.className = className;
+    }
+
+    if (content !== undefined) {
+        node.textContent = content;
+    }
+
+    return node;
+}
+
+
+// 누적 목록 화면 출력
+function moboCumRender() {
+    const container =
+        document.getElementById('mobo-cum-items');
+
+    const clearButton =
+        document.getElementById('mobo-cum-clear');
+
+    const items = moboCumRead();
+
+    container.replaceChildren();
+
+    clearButton.disabled =
+        items !== null && items.length === 0;
+
+    // 실제 차감할 작품이 있을 때만 버튼 활성화
+    const checkoutButton =
+        document.getElementById('mobo-cum-checkout');
+
+    if (checkoutButton) {
+        checkoutButton.disabled =
+            items === null ||
+            !items.some(item =>
+                item.included && item.amount > 0
+            ) ||
+            moboCumCheckoutBusy;
+    }
+
+    // 손상된 저장 목록은 자동 삭제하지 않음
+    if (items === null) {
+        container.appendChild(
+            moboCumNode(
+                'p',
+                'mobo-cum-hint',
+                '저장된 계산 목록을 읽을 수 없어요. ' +
+                '기존 데이터를 보호하기 위해 추가와 수정을 막았어요. ' +
+                '초기화하면 이전 목록이 삭제돼요.'
+            )
+        );
+
+        return;
+    }
+
+    if (items.length === 0) {
+        container.appendChild(
+            moboCumNode(
+                'p',
+                'mobo-cum-empty',
+                '아직 담은 작품이 없어요. ' +
+                '아래 버튼으로 첫 작품을 계산해 보세요!'
+            )
+        );
+
+        return;
+    }
+
+    // 플랫폼별 합계 및 작품 목록
+    for (
+        const [platform, [label, unit]]
+        of Object.entries(MOBO_CUM_PLATFORMS)
+    ) {
+        const groupItems = items.filter(
+            item => item.platform === platform
+        );
+
+        if (!groupItems.length) continue;
+
+        // '빼기'로 제외한 작품은 합산하지 않음
+        const chosen = groupItems.filter(
+            item => item.included
+        );
+
+        const sum = key => chosen.reduce(
+            (n, item) => n + item[key],
+            0
+        );
+
+        const section = moboCumNode(
+            'section',
+            'mobo-cum-group'
+        );
+
+        section.appendChild(
+            moboCumNode(
+                'h4',
+                'mobo-cum-group-title',
+                `${label} · ${chosen.length}/${groupItems.length}개 포함`
+            )
+        );
+
+        // 총 구매 비용 / 예상 코인백 가로 배치
+        const summary = moboCumNode(
+            'div',
+            'mobo-cum-summary-row'
+        );
+
+        const purchase = moboCumNode(
+            'div',
+            'mobo-cum-summary-cell'
+        );
+
+        purchase.append(
+            moboCumNode(
+                'span',
+                'mobo-cum-summary-label',
+                '총 구매 비용'
+            ),
+            moboCumNode(
+                'strong',
+                'mobo-cum-summary-value',
+                `${sum('amount').toLocaleString()} ${unit}`
+            )
+        );
+
+        const cashback = moboCumNode(
+            'div',
+            'mobo-cum-summary-cell'
+        );
+
+        cashback.append(
+            moboCumNode(
+                'span',
+                'mobo-cum-summary-label',
+                '예상 코인백'
+            ),
+            moboCumNode(
+                'strong',
+                'mobo-cum-summary-value is-cashback',
+                `+${sum('cashback').toLocaleString()} ${unit}`
+            )
+        );
+
+        summary.append(purchase, cashback);
+        section.appendChild(summary);
+
+        // 작품별 카드
+        groupItems.forEach(item => {
+            const card = moboCumNode(
+                'div',
+                `mobo-cum-card${item.included ? '' : ' is-excluded'}`
+            );
+
+            const title = moboCumNode(
+                'div',
+                'mobo-cum-card-title',
+                item.title
+            );
+
+            const desc = moboCumNode(
+                'div',
+                'mobo-cum-card-desc',
+                `${item.amount.toLocaleString()} ${unit}` +
+                ` · 코인백 +${item.cashback.toLocaleString()} ${unit}` +
+                (item.included ? '' : ' · 합계에서 제외')
+            );
+
+            const actions = moboCumNode(
+                'div',
+                'mobo-cum-actions'
+            );
+
+            const toggle = moboCumNode(
+                'button',
+                'mobo-cum-mini',
+                item.included ? '제외' : '포함'
+            );
+
+            toggle.type = 'button';
+            toggle.onclick = () => moboCumToggle(item.id);
+
+            const edit = moboCumNode(
+                'button',
+                'mobo-cum-mini',
+                '수정'
+            );
+
+            edit.type = 'button';
+            edit.onclick = () => moboCumShowEditor(item.id);
+
+            const remove = moboCumNode(
+                'button',
+                'mobo-cum-mini danger',
+                '삭제'
+            );
+
+            remove.type = 'button';
+            remove.onclick = () => moboCumRemove(item.id);
+
+            actions.append(toggle, edit, remove);
+
+            // 작품명과 금액을 왼쪽에 묶기
+            const info = moboCumNode(
+                'div',
+                'mobo-cum-card-info'
+            );
+
+            info.append(title, desc);
+
+            // 왼쪽 작품 정보 / 오른쪽 버튼 3개
+            card.append(info, actions);
+
+            section.appendChild(card);
+        });
+
+        container.appendChild(section);
+    }
+}
+
+
+// 화면 전환 시 스크롤 맨 위로
+function moboCumScrollTop() {
+    const content = document.querySelector(
+        '#calc-modal > .modal-content'
+    );
+
+    if (content) {
+        content.scrollTop = 0;
+    }
+}
+
+
+// 일반 계산기 화면으로 돌아가기
+function moboCumBack() {
+    // 기존 탭 메뉴는 항상 표시
+    document.getElementById(
+        'calc-main-header'
+    ).style.display = 'block';
+
+    // 정주행 계산기 화면 복원
+    document.getElementById(
+        'calc-classic-view'
+    ).style.display = 'block';
+
+    document.getElementById(
+        'mobo-cum-view'
+    ).style.display = 'none';
+
+    // 정주행 계산기 탭 선택
+    setCalcMode('calc');
+
+    moboCumScrollTop();
+}
+
+
+// 누적 계산 화면 열기
+function moboCumOpen() {
+    // 누적 계산도 정주행 계산기의 하위 기능
+    setCalcMode('calc');
+
+    // 상단 탭 메뉴 유지
+    document.getElementById(
+        'calc-main-header'
+    ).style.display = 'block';
+
+    // 기존 계산기 입력 화면만 숨김
+    document.getElementById(
+        'calc-classic-view'
+    ).style.display = 'none';
+
+    // 누적 계산 화면 표시
+    document.getElementById(
+        'mobo-cum-view'
+    ).style.display = 'block';
+
+    // 누적 계산 화면에서는 하단 닫기 버튼 숨기기
+    const closeButton = document.getElementById('calc-main-close');
+
+    if (closeButton) {
+        closeButton.style.display = 'none';
+    }
+
+    moboCumShowList();
+}
+
+
+// 누적 목록 화면
+function moboCumShowList() {
+    moboCumEditingId = null;
+    moboCumEditingOriginal = null;
+
+    // 목록 화면에서는 기본 제목 표시
+    document.getElementById(
+        'mobo-cum-page-title'
+    ).textContent = '누적 계산';
+
+    document.getElementById(
+        'mobo-cum-list-screen'
+    ).style.display = 'block';
+
+    document.getElementById(
+        'mobo-cum-editor-screen'
+    ).style.display = 'none';
+
+    moboCumRender();
+    moboCumScrollTop();
+}
+
+
+// 새 작품 추가 또는 기존 작품 수정
+function moboCumShowEditor(id = null) {
+    const items = moboCumRead();
+
+    if (!items) {
+        return alert('계산 목록을 읽지 못했어요.');
+    }
+
+    const item = id === null
+        ? null
+        : items.find(i => i.id === id);
+
+    if (id !== null && !item) {
+        return alert(
+            '다른 창에서 작품이 변경됐어요.\n' +
+            '목록을 다시 확인해 주세요.'
+        );
+    }
+
+    moboCumEditingId = id;
+
+    moboCumEditingOriginal = item
+        ? JSON.stringify(item)
+        : null;
+
+    // 작업 유형에 따라 상단 제목 변경
+    document.getElementById(
+        'mobo-cum-page-title'
+    ).textContent = item
+            ? '작품 수정'
+            : '새 작품 계산';
+
+    // 작업 유형에 따라 저장 버튼 문구 변경
+    document.getElementById(
+        'mobo-cum-save'
+    ).textContent = item
+            ? '수정 완료'
+            : '계산 목록에 추가';
+
+    document.getElementById(
+        'mobo-cum-title'
+    ).value = item?.title || '';
+
+    document.getElementById(
+        'mobo-cum-platform'
+    ).value = item?.platform || 'lezhin';
+
+    document.getElementById(
+        'mobo-cum-total'
+    ).value = item?.total ?? '';
+
+    document.getElementById(
+        'mobo-cum-current'
+    ).value = item?.current ?? 0;
+
+    document.getElementById(
+        'mobo-cum-price'
+    ).value = item?.price ?? '';
+
+    document.getElementById(
+        'mobo-cum-back-toggle'
+    ).checked = (item?.percent ?? 0) > 0;
+
+    document.getElementById(
+        'mobo-cum-percent'
+    ).value = item?.percent || '100';
+
+    document.getElementById(
+        'mobo-cum-editor-screen'
+    ).style.display = 'block';
+
+    document.getElementById(
+        'mobo-cum-list-screen'
+    ).style.display = 'none';
+
+    moboCumToggleBack();
+    moboCumScrollTop();
+}
+
+
+// 코인백 설정 보이기 / 숨기기
+function moboCumToggleBack() {
+    const on = document.getElementById(
+        'mobo-cum-back-toggle'
+    ).checked;
+
+    document.getElementById(
+        'mobo-cum-back-area'
+    ).style.display = on ? 'block' : 'none';
+
+    moboCumPreview();
+}
+
+
+// 폼 입력값에서 독립된 계산 결과 생성
+function moboCumDraft() {
+    const platform = document.getElementById(
+        'mobo-cum-platform'
+    ).value;
+
+    if (
+        !Object.prototype.hasOwnProperty.call(
+            MOBO_CUM_PLATFORMS,
+            platform
+        )
+    ) {
+        return null;
+    }
+
+    const values = {
+        total: document.getElementById(
+            'mobo-cum-total'
+        ).value,
+
+        current: document.getElementById(
+            'mobo-cum-current'
+        ).value,
+
+        price: document.getElementById(
+            'mobo-cum-price'
+        ).value,
+
+        percent: document.getElementById(
+            'mobo-cum-back-toggle'
+        ).checked
+            ? document.getElementById(
+                'mobo-cum-percent'
+            ).value
+            : '0'
+    };
+
+    const calculation = moboCumCalculate(values);
+
+    return calculation
+        ? { platform, ...calculation }
+        : null;
+}
+
+
+// 입력에 따른 실시간 결과 미리보기
+function moboCumPreview() {
+    const result = document.getElementById(
+        'mobo-cum-preview'
+    );
+
+    const button = document.getElementById(
+        'mobo-cum-save'
+    );
+
+    const draft = moboCumDraft();
+
+    button.disabled = !draft;
+
+    if (!draft) {
+        result.textContent =
+            '총 화수·진도·가격·코인백 비율을 확인해 주세요.';
+
+        return;
+    }
+
+    const unit =
+        MOBO_CUM_PLATFORMS[draft.platform][1];
+
+    result.textContent =
+        `구매 ${draft.total - draft.current}화` +
+        ` · 총 ${draft.amount.toLocaleString()} ${unit}` +
+        ` · 구매 후 예상 코인백` +
+        ` +${draft.cashback.toLocaleString()} ${unit}`;
+}
+
+
+// 계산 결과 추가 / 수정 저장
+function moboCumSaveEntry() {
+    if (moboCumSaving) return;
+
+    const draft = moboCumDraft();
+
+    if (!draft) {
+        return alert('계산 입력값을 확인해 주세요.');
+    }
+
+    // 저장 직전에 최신 목록을 다시 읽음
+    const items = moboCumRead();
+
+    if (!items) {
+        return alert(
+            '기존 계산 목록을 읽을 수 없어 저장을 중단했어요.'
+        );
+    }
+
+    if (
+        moboCumEditingId === null &&
+        items.length >= 200
+    ) {
+        return alert(
+            '계산 목록은 최대 200개까지 저장할 수 있어요.'
+        );
+    }
+
+    const original = moboCumEditingId === null
+        ? null
+        : items.find(
+            i => i.id === moboCumEditingId
+        );
+
+    // 다른 탭에서 수정한 내용을 덮어쓰지 않음
+    if (
+        moboCumEditingId !== null &&
+        (
+            !original ||
+            JSON.stringify(original) !==
+            moboCumEditingOriginal
+        )
+    ) {
+        return alert(
+            '다른 창에서 계산 내용이 바뀌었어요.\n' +
+            '목록에서 다시 수정해 주세요.'
+        );
+    }
+
+    const title =
+        document.getElementById(
+            'mobo-cum-title'
+        ).value.trim() ||
+        `작품 ${items.length + 1}`;
+
+    // 똑같은 작품 / 똑같은 계산 중복 확인
+    const duplicated = items.some(item =>
+        item.id !== moboCumEditingId &&
+        item.title === title &&
+        item.platform === draft.platform &&
+        item.total === draft.total &&
+        item.current === draft.current &&
+        item.price === draft.price &&
+        item.percent === draft.percent
+    );
+
+    if (
+        duplicated &&
+        !confirm(
+            '같은 계산 내용이 이미 있어요.\n' +
+            '그래도 추가할까요?'
+        )
+    ) {
+        return;
+    }
+
+    const next = {
+        id: original?.id ||
+            `${Date.now().toString(36)}-` +
+            Math.random().toString(36).slice(2, 10),
+
+        title,
+        ...draft,
+
+        // 기존 작품 수정 시 포함 여부 유지
+        included: original?.included ?? true
+    };
+
+    const updated = original
+        ? items.map(item =>
+            item.id === original.id ? next : item
+        )
+        : [...items, next];
+
+    moboCumSaving = true;
+
+    try {
+        if (moboCumWrite(updated)) {
+            moboCumShowList();
+        }
+    } finally {
+        moboCumSaving = false;
+    }
+}
+
+
+// 빼기 / 다시 더하기
+function moboCumToggle(id) {
+    const items = moboCumRead();
+
+    if (!items) return;
+
+    const next = items.map(item =>
+        item.id === id
+            ? { ...item, included: !item.included }
+            : item
+    );
+
+    if (moboCumWrite(next)) {
+        moboCumRender();
+    }
+}
+
+
+// 작품 하나 완전히 삭제
+function moboCumRemove(id) {
+    const items = moboCumRead();
+
+    if (!items) return;
+
+    const item = items.find(i => i.id === id);
+
+    if (
+        !item ||
+        !confirm(
+            `'${item.title}' 계산 기록을 삭제할까요?`
+        )
+    ) {
+        return;
+    }
+
+    if (
+        moboCumWrite(
+            items.filter(i => i.id !== id)
+        )
+    ) {
+        moboCumRender();
+    }
+}
+
+
+// 목록 전체 초기화
+function moboCumClear() {
+    const items = moboCumRead();
+
+    if (items && items.length === 0) return;
+
+    if (
+        !confirm(
+            '누적 계산 목록 전체를 삭제할까요?\n' +
+            '기존 계산 기록은 복구할 수 없어요.'
+        )
+    ) {
+        return;
+    }
+
+    try {
+        localStorage.removeItem(MOBO_CUM_KEY);
+        moboCumRender();
+
+    } catch (error) {
+        alert('목록을 초기화하지 못했어요.');
+        console.error(error);
+    }
+}
+
+// =========================================
+// 누적 계산 목록 → 실제 지갑 일괄 차감
+// =========================================
+
+let moboCumCheckoutBusy = false;
+
+function moboCumCheckout() {
+    if (moboCumCheckoutBusy) return;
+
+    const items = moboCumRead();
+
+    if (!items) {
+        alert('계산 목록을 읽을 수 없어 차감을 중단했어요.');
+        return;
+    }
+
+    // 빼기로 제외한 작품은 차감 대상이 아님
+    const included = items.filter(item => item.included);
+    const charged = included.filter(item => item.amount > 0);
+
+    if (!charged.length) {
+        alert('차감할 작품이 없어요.');
+        return;
+    }
+
+    const platforms = ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
+
+    const walletKeys = {
+        lezhin: 'lWallet',
+        bomtoon: 'bWallet',
+        ridi: 'rWallet',
+        mrblue: 'mWallet'
+    };
+
+    const totals = {
+        lezhin: 0,
+        bomtoon: 0,
+        ridi: 0,
+        mrblue: 0
+    };
+
+    // 저장된 작품의 계산값을 다시 검증
+    for (const item of charged) {
+        const calc = moboCumCalculate(item);
+
+        if (
+            !platforms.includes(item.platform) ||
+            !calc ||
+            calc.amount !== item.amount ||
+            calc.cashback !== item.cashback
+        ) {
+            alert('계산 정보가 올바르지 않아 차감을 중단했어요.');
+            return;
+        }
+
+        totals[item.platform] += item.amount;
+
+        if (!Number.isSafeInteger(totals[item.platform])) {
+            alert('차감 금액이 너무 커서 처리할 수 없어요.');
+            return;
+        }
+    }
+
+    const lines = platforms
+        .filter(plt => totals[plt] > 0)
+        .map(plt => {
+            const [name, unit] = MOBO_CUM_PLATFORMS[plt];
+
+            return `${name}: ${totals[plt].toLocaleString()} ${unit}`;
+        });
+
+    const confirmed = confirm(
+        `포함된 ${charged.length}개 작품을 실제 지갑에서 차감할까요?\n\n` +
+        lines.join('\n') +
+        '\n\n월말정산과 주간 통계에도 기록됩니다.' +
+        '\n예상 코인백은 차감액에서 빼지 않습니다.' +
+        '\n완료된 작품은 누적 목록에서 제거됩니다.' +
+        '\n\n진행할까요?'
+    );
+
+    if (!confirmed) return;
+
+    const button = document.getElementById('mobo-cum-checkout');
+
+    moboCumCheckoutBusy = true;
+    if (button) button.disabled = true;
+
+    // 지갑·월말정산·통계·누적 목록 모두 복구 대상
+    const protectedKeys = [
+        STORAGE_KEY,
+        MOBO_CUM_KEY,
+        'lWallet',
+        'bWallet',
+        'rWallet',
+        'mWallet',
+        'lezhinExpire',
+        'bomtoonExpire',
+        'ridiExpire',
+        'mrblueExpire',
+        'lezhinBonusExpire',
+        'monthlyHistory',
+        'weeklySpent',
+        'weeklySpentWon'
+    ];
+
+    let before = null;
+    let mutationStarted = false;
+    let committed = false;
+
+    try {
+        before = new Map(
+            protectedKeys.map(key => [
+                key,
+                localStorage.getItem(key)
+            ])
+        );
+
+        // 확인창이 떠 있는 동안 다른 탭에서 목록이
+        // 변경되었다면 기존 계산을 덮어쓰지 않음
+        const originalCart = before.get(MOBO_CUM_KEY);
+
+        const originalParsed = originalCart
+            ? JSON.parse(originalCart)
+            : null;
+
+        if (
+            !originalParsed ||
+            JSON.stringify(originalParsed.items) !==
+            JSON.stringify(items)
+        ) {
+            throw new Error('계산 목록이 변경되었습니다.');
+        }
+
+        const today = getKSTDate();
+
+        const monthKey =
+            `${today.getFullYear()}-` +
+            String(today.getMonth() + 1).padStart(2, '0');
+
+        const history = JSON.parse(
+            localStorage.getItem('monthlyHistory') || '{}'
+        );
+
+        if (
+            !history ||
+            typeof history !== 'object' ||
+            Array.isArray(history)
+        ) {
+            throw new Error('월말정산 기록 구조 오류');
+        }
+
+        if (!history[monthKey]) {
+            history[monthKey] = {};
+        }
+
+        for (const plt of platforms) {
+            if (!history[monthKey][plt]) {
+                history[monthKey][plt] = {};
+            }
+
+            if (
+                typeof history[monthKey][plt] !== 'object' ||
+                Array.isArray(history[monthKey][plt])
+            ) {
+                throw new Error('플랫폼 정산 기록 구조 오류');
+            }
+        }
+
+        // 작품별로 월말정산 기록 작성
+        for (const item of charged) {
+            const records = history[monthKey][item.platform];
+
+            const old = records[item.title] ?? 0;
+            const next = old + item.amount;
+
+            if (
+                !Number.isSafeInteger(old) ||
+                old < 0 ||
+                !Number.isSafeInteger(next)
+            ) {
+                throw new Error('월말정산 금액 오류');
+            }
+
+            records[item.title] = next;
+        }
+
+        const changes = new Map();
+
+        let coinSpent = 0;
+        let otherSpent = 0;
+
+        // 플랫폼별 소멸 재화와 일반 지갑 계산
+        for (const plt of platforms) {
+            const amount = totals[plt];
+
+            if (amount <= 0) continue;
+
+            const expireKey = plt + 'Expire';
+            const rawExpire = localStorage.getItem(expireKey);
+
+            const expire = rawExpire
+                ? JSON.parse(rawExpire)
+                : null;
+
+            let remaining = amount;
+
+            if (expire && expire.amount != null) {
+                const expireAmount = Number(expire.amount);
+
+                if (
+                    !Number.isSafeInteger(expireAmount) ||
+                    expireAmount < 0
+                ) {
+                    throw new Error('소멸 예정 재화 오류');
+                }
+
+                const used = Math.min(expireAmount, remaining);
+
+                remaining -= used;
+
+                if (used > 0) {
+                    const nextExpire = expireAmount - used;
+
+                    changes.set(
+                        expireKey,
+                        nextExpire === 0
+                            ? null
+                            : JSON.stringify({
+                                ...expire,
+                                amount: nextExpire
+                            })
+                    );
+                }
+            }
+
+            if (remaining > 0) {
+                const walletKey = walletKeys[plt];
+
+                const wallet = Number(
+                    localStorage.getItem(walletKey) ?? '0'
+                );
+
+                const nextWallet = wallet - remaining;
+
+                if (
+                    !Number.isSafeInteger(wallet) ||
+                    !Number.isSafeInteger(nextWallet)
+                ) {
+                    throw new Error('지갑 잔액 오류');
+                }
+
+                // 기존 모보와 동일하게 마이너스 잔액 허용
+                changes.set(walletKey, String(nextWallet));
+            }
+
+            if (plt === 'lezhin' || plt === 'bomtoon') {
+                coinSpent += amount;
+            } else {
+                otherSpent += amount;
+            }
+        }
+
+        const oldWeekly = Number(
+            localStorage.getItem('weeklySpent') ?? '0'
+        );
+
+        const oldWeeklyWon = Number(
+            localStorage.getItem('weeklySpentWon') ?? '0'
+        );
+
+        const nextWeekly = oldWeekly + coinSpent;
+        const nextWeeklyWon = oldWeeklyWon + otherSpent;
+
+        if (
+            !Number.isSafeInteger(nextWeekly) ||
+            !Number.isSafeInteger(nextWeeklyWon) ||
+            !Number.isSafeInteger(oldWeekly) ||
+            !Number.isSafeInteger(oldWeeklyWon)
+        ) {
+            throw new Error('주간 사용 통계 오류');
+        }
+
+        changes.set(
+            'monthlyHistory',
+            JSON.stringify(history)
+        );
+
+        changes.set('weeklySpent', String(nextWeekly));
+        changes.set('weeklySpentWon', String(nextWeeklyWon));
+
+        // 기존 레진 차감 규칙 유지
+        if (totals.lezhin > 0) {
+            changes.set('lezhinBonusExpire', null);
+        }
+
+        // 실제 저장 시작
+        mutationStarted = true;
+
+        for (const [key, value] of changes) {
+            if (value === null) {
+                localStorage.removeItem(key);
+            } else {
+                localStorage.setItem(key, value);
+            }
+        }
+
+        // 모보 통합 저장
+        if (saveData(true) !== true) {
+            throw new Error('모보 통합 저장 실패');
+        }
+
+        // 성공적으로 차감한 작품만 목록에서 제거
+        // '빼기'로 제외했던 작품은 보존
+        const remainingItems = items.filter(
+            item => !item.included
+        );
+
+        localStorage.setItem(
+            MOBO_CUM_KEY,
+            JSON.stringify({
+                version: 1,
+                items: remainingItems
+            })
+        );
+
+        committed = true;
+
+    } catch (error) {
+        console.error('누적 계산 지갑 차감 실패:', error);
+
+        // 변경을 시작했다면 이전 저장값으로 복원
+        let rollbackOK = true;
+
+        if (mutationStarted && before) {
+            for (const [key, value] of before) {
+                try {
+                    if (localStorage.getItem(key) === value) {
+                        continue;
+                    }
+
+                    if (value === null) {
+                        localStorage.removeItem(key);
+                    } else {
+                        localStorage.setItem(key, value);
+                    }
+                } catch (rollbackError) {
+                    rollbackOK = false;
+                    console.error(
+                        '누적 차감 복구 실패:',
+                        key,
+                        rollbackError
+                    );
+                }
+            }
+        }
+
+        if (rollbackOK) {
+            alert(
+                '차감을 완료하지 못했어요.\n' +
+                '변경된 데이터는 이전 상태로 복구했습니다.'
+            );
+        } else {
+            alert(
+                '저장 오류 후 일부 데이터 복구에도 실패했어요.\n' +
+                '추가 차감을 하지 말고 기존 백업을 확인해 주세요.'
+            );
+        }
+
+    } finally {
+        moboCumCheckoutBusy = false;
+
+        if (button) {
+            button.disabled = false;
+        }
+    }
+
+    if (!committed) return;
+
+    // 실제 저장 완료 후에만 화면 갱신
+    try {
+        refreshBalance();
+        updateWeeklyStatUI();
+        moboCumRender();
+    } catch (uiError) {
+        console.error('차감 후 화면 갱신 오류:', uiError);
+    }
+
+    showToast('선택한 작품의 지갑 차감을 완료했어요!');
+}
+
+// 다른 브라우저 탭에서 목록 변경 시 화면 갱신
+window.addEventListener('storage', event => {
+    if (
+        event.key !== MOBO_CUM_KEY &&
+        event.key !== null
+    ) {
+        return;
+    }
+
+    const view = document.getElementById(
+        'mobo-cum-view'
+    );
+
+    const list = document.getElementById(
+        'mobo-cum-list-screen'
+    );
+
+    if (
+        view?.style.display === 'block' &&
+        list?.style.display === 'block'
+    ) {
+        moboCumRender();
+    }
+});
 
 // 빠른 차감 중복 실행 방지
 let quickDeductionInProgress = false;
@@ -1446,8 +3105,10 @@ function prepareCalcWalletChoice(unit) {
     } else {
         wrap.style.display = 'none';
     }
-
     updateCalcBalanceNotice();
+
+    // 코인 / 캐시 / 머니에 따라 버튼 위치 변경
+    moboCumPlaceButtons(unit);
 }
 
 
@@ -1486,6 +3147,7 @@ function updateCalcBalanceNotice() {
 
 // 수정: 계산기 로직 (JS에 숨어있던 인라인 색상 주입 로직 완전 제거!)
 function calculateCoins() {
+    moboCumInvalidateClassic();
     const total = parseInt(document.getElementById('calc-total').value) || 0;
     const current = parseInt(document.getElementById('calc-current').value) || 0;
     const price = parseInt(document.getElementById('calc-price').value) || 0;
@@ -1533,6 +3195,9 @@ function calculateCoins() {
 
     document.getElementById('calc-result-box').style.display = 'block';
     prepareCalcWalletChoice(plt);
+
+    // 화면에 계산된 결과만 누적 저장 대상으로 인정
+    moboCumCaptureClassicResult();
 }
 
 

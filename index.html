@@ -723,193 +723,360 @@
 
         <div id="calc-modal" class="modal-overlay" style="display: none; z-index: 5000;">
             <div class="modal-content" style="max-width: 350px;">
-                <h3 id="calc-modal-title" style="margin-top: 0; margin-bottom: 16px; text-align: center;">
-                    정주행 계산기
-                </h3>
+                <!-- 계산기 상단 헤더 -->
+                <!-- 계산기 상단: 기존 2개 탭 유지 -->
+                <div id="calc-main-header" class="calc-main-header">
 
+                    <div class="calc-mode-toggle" role="tablist" aria-label="계산 및 차감 방식">
 
-                <!-- 정주행 계산 / 빠른 차감 탭 -->
-                <div class="calc-mode-toggle" role="tablist" aria-label="계산 및 차감 방식">
-                    <button id="calc-mode-calc" class="calc-mode-tab active" type="button" role="tab"
-                        aria-selected="true" aria-controls="calc-standard-section" onclick="setCalcMode('calc')">
-                        정주행 계산기
-                    </button>
+                        <button id="calc-mode-calc" class="calc-mode-tab active" type="button" role="tab"
+                            aria-selected="true" aria-controls="calc-standard-section" onclick="setCalcMode('calc')">
+                            정주행 계산기
+                        </button>
 
-                    <button id="calc-mode-quick" class="calc-mode-tab" type="button" role="tab" aria-selected="false"
-                        aria-controls="calc-quick-section" onclick="setCalcMode('quick')">
-                        빠른 차감
-                    </button>
+                        <button id="calc-mode-quick" class="calc-mode-tab" type="button" role="tab"
+                            aria-selected="false" aria-controls="calc-quick-section" onclick="setCalcMode('quick')">
+                            빠른 차감
+                        </button>
+
+                    </div>
+
                 </div>
 
-                <!-- 기존 정주행 계산기 영역 시작 -->
-                <div id="calc-standard-section" role="tabpanel" aria-labelledby="calc-mode-calc">
+                <!-- 기존 계산기 및 빠른 차감: 기능 유지 -->
+                <div id="calc-classic-view">
 
 
-                    <div style="margin-bottom: 15px;">
-                        <select id="calc-platform" class="modal-select" style="font-weight: bold;"
-                            onchange="updateCalcLabels()">
-                            <option value="coin">레진 / 봄툰 (코인)</option>
-                            <option value="cash">리디 (캐시)</option>
-                            <option value="won">미블 (머니)</option>
-                        </select>
-                    </div>
+                    <!-- 기존 정주행 계산기 영역 시작 -->
+                    <div id="calc-standard-section" role="tabpanel" aria-labelledby="calc-mode-calc">
+
+                        <!-- 정주행 계산기의 하위 기능 -->
 
 
-                    <!-- 총 화수 + 현재 진도 : 가로 2열 -->
-                    <div class="calc-input-pair">
-                        <div class="calc-input-field">
-                            <label for="calc-total">작품 총 화수</label>
-                            <input type="number" id="calc-total" placeholder="예: 100">
+                        <!-- 플랫폼 선택 + 여러 작품 누적 계산 -->
+                        <div class="calc-platform-line">
+
+                            <select id="calc-platform" class="modal-select" style="font-weight: bold;"
+                                onchange="updateCalcLabels()">
+                                <option value="coin">레진 / 봄툰 (코인)</option>
+                                <option value="cash">리디 (캐시)</option>
+                                <option value="won">미블 (머니)</option>
+                            </select>
+
+                            <button type="button" class="mobo-cum-entry-link" onclick="moboCumOpen()"
+                                aria-label="여러 작품 누적 계산 열기">
+                                <span>여러작품</span>
+                                <span>누적계산</span>
+                            </button>
+
                         </div>
 
-                        <div class="calc-input-field">
-                            <label for="calc-current">내가 본 화수</label>
-                            <input type="number" id="calc-current" placeholder="예: 15">
-                        </div>
-                    </div>
 
-                    <div style="margin-bottom: 15px;">
-                        <label id="calc-price-label" style="font-size: 13px; color: #666;">1화당 코인</label>
-                        <input type="number" id="calc-price" placeholder="예: 3"
-                            style="margin-bottom: 5px; margin-top: 2px; width: 100%; box-sizing: border-box; padding: 8px;">
-                    </div>
-
-                    <div class="coinback-box" style="margin-bottom: 15px; padding: 12px; border-radius: 8px;">
-                        <label class="coinback-label"
-                            style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: normal; cursor: pointer;">
-                            <input type="checkbox" id="calc-coinback-toggle" onchange="toggleCoinbackInput()"
-                                style="margin: 0; width: 16px; height: 16px;">
-                            코인백 / 페이백(이벤트) 적용하기
-                        </label>
-                        <div id="calc-coinback-area" style="display: none; margin-top: 10px;">
-                            <label style="font-size: 12px; color: #666;">몇 퍼센트 돌려받나요? (%)</label>
-                            <input type="number" id="calc-coinback-percent" placeholder="예: 50"
-                                style="margin-top: 5px; margin-bottom: 0; width: 100%; box-sizing: border-box; padding: 8px;">
-                        </div>
-                    </div>
-
-                    <button onclick="calculateCoins()" class="save-btn calc-btn-full calc-mb-15">얼마나 필요할까?</button>
-
-                    <div id="calc-result-box" style="display: none;">
-
-
-                        <!-- 계산 결과 : 가로 2열 -->
-                        <div class="calc-result-summary">
-
-                            <div class="calc-summary-item">
-                                <span class="calc-summary-label">
-                                    남은 화수
-                                </span>
-                                <span class="calc-summary-value">
-                                    <span id="calc-remain-ep">0</span>화
-                                </span>
+                        <!-- 총 화수 + 현재 진도 : 가로 2열 -->
+                        <div class="calc-input-pair">
+                            <div class="calc-input-field">
+                                <label for="calc-total">작품 총 화수</label>
+                                <input type="number" id="calc-total" placeholder="예: 100">
                             </div>
 
-                            <div class="calc-summary-item">
-                                <span class="calc-summary-label">
-                                    필요한 금액
-                                </span>
-                                <span class="calc-summary-value">
-                                    <span id="calc-need-coin">0</span>
-                                </span>
+                            <div class="calc-input-field">
+                                <label for="calc-current">내가 본 화수</label>
+                                <input type="number" id="calc-current" placeholder="예: 15">
                             </div>
-
                         </div>
 
-
-
-                        <div id="calc-coinback-result" style="display: none;">
-                            <p class="calc-text-coinback">돌려받는 금액: <span id="calc-back-coin">0</span></p>
-                            <p class="calc-text-extra">👉 <span id="calc-extra-ep">0</span>화 더 볼 수 있어요!</p>
+                        <div style="margin-bottom: 15px;">
+                            <label id="calc-price-label" style="font-size: 13px; color: #666;">1화당 코인</label>
+                            <input type="number" id="calc-price" placeholder="예: 3"
+                                style="margin-bottom: 5px; margin-top: 2px; width: 100%; box-sizing: border-box; padding: 8px;">
                         </div>
 
+                        <div class="coinback-box" style="margin-bottom: 15px; padding: 12px; border-radius: 8px;">
+                            <label class="coinback-label"
+                                style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: normal; cursor: pointer;">
+                                <input type="checkbox" id="calc-coinback-toggle" onchange="toggleCoinbackInput()"
+                                    style="margin: 0; width: 16px; height: 16px;">
+                                코인백 / 페이백(이벤트) 적용하기
+                            </label>
+                            <div id="calc-coinback-area" style="display: none; margin-top: 10px;">
+                                <label style="font-size: 12px; color: #666;">몇 퍼센트 돌려받나요? (%)</label>
+                                <input type="number" id="calc-coinback-percent" placeholder="예: 50"
+                                    style="margin-top: 5px; margin-bottom: 0; width: 100%; box-sizing: border-box; padding: 8px;">
+                            </div>
+                        </div>
+
+                        <button onclick="calculateCoins()" class="save-btn calc-btn-full calc-mb-15">얼마나 필요할까?</button>
+
+                        <div id="calc-result-box" style="display: none;">
 
 
-                        <div class="calc-deduct-info">
+                            <!-- 계산 결과 : 가로 2열 -->
+                            <div class="calc-result-summary">
 
-                            <div id="calc-wallet-wrap" class="calc-wallet-wrap" style="display: none;">
-
-                                <div class="calc-wallet-row">
-                                    <select id="calc-deduct-wallet" class="modal-select calc-wallet-select"
-                                        aria-label="차감할 지갑 선택" onchange="updateCalcBalanceNotice()">
-                                    </select>
+                                <div class="calc-summary-item">
+                                    <span class="calc-summary-label">
+                                        남은 화수
+                                    </span>
+                                    <span class="calc-summary-value">
+                                        <span id="calc-remain-ep">0</span>화
+                                    </span>
                                 </div>
+
+                                <div class="calc-summary-item">
+                                    <span class="calc-summary-label">
+                                        필요한 금액
+                                    </span>
+                                    <span class="calc-summary-value">
+                                        <span id="calc-need-coin">0</span>
+                                    </span>
+                                </div>
+
                             </div>
 
-                            <p id="calc-balance-notice" class="calc-balance-notice" role="status" aria-live="polite"
-                                style="display: none;">
+
+
+                            <div id="calc-coinback-result" style="display: none;">
+                                <p class="calc-text-coinback">돌려받는 금액: <span id="calc-back-coin">0</span></p>
+                                <p class="calc-text-extra">👉 <span id="calc-extra-ep">0</span>화 더 볼 수 있어요!</p>
+                            </div>
+
+
+
+                            <div class="calc-deduct-info">
+
+                                <div id="calc-wallet-wrap" class="calc-wallet-wrap" style="display: none;">
+
+                                    <div class="calc-wallet-row mobo-cum-wallet-row">
+
+                                        <select id="calc-deduct-wallet" class="modal-select calc-wallet-select"
+                                            aria-label="차감할 지갑 선택" onchange="updateCalcBalanceNotice()">
+                                        </select>
+
+                                        <button type="button" id="mobo-cum-add-coin" class="mobo-cum-add-from-result"
+                                            onclick="moboCumAddFromClassic()" disabled>
+                                            + 누적 담기
+                                        </button>
+
+                                    </div>
+                                </div>
+
+                                <p id="calc-balance-notice" class="calc-balance-notice" role="status" aria-live="polite"
+                                    style="display: none;">
+                                </p>
+
+                            </div>
+
+
+                            <div id="mobo-cum-deduct-actions" class="mobo-cum-deduct-actions">
+
+                                <button id="calc-deduct-btn" type="button" onclick="deductFromCalculator()">
+                                    지갑에서 바로 차감하기
+                                </button>
+
+                                <button type="button" id="mobo-cum-add-other" class="mobo-cum-add-from-result"
+                                    onclick="moboCumAddFromClassic()" disabled>
+                                    + 누적 담기
+                                </button>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 빠른 차감 화면 시작 -->
+                    <div id="calc-quick-section" role="tabpanel" aria-labelledby="calc-mode-quick"
+                        style="display: none;">
+
+                        <!-- 플랫폼 선택 -->
+                        <div style="margin-bottom: 15px;">
+                            <label class="calc-quick-label" for="quick-deduct-platform">
+                                플랫폼 선택
+                            </label>
+
+
+                            <select id="quick-deduct-platform" class="modal-select"
+                                style="font-weight: bold; margin-top: 5px;" onchange="updateQuickDeductLabel()">
+
+                                <option value="lezhin">레진코믹스 (코인)</option>
+                                <option value="bomtoon">봄툰 (코인)</option>
+                                <option value="ridi">리디 (캐시)</option>
+                                <option value="mrblue">미블 (머니)</option>
+                            </select>
+
+                        </div>
+
+                        <!-- 사용 금액 -->
+                        <div style="margin-bottom: 15px;">
+                            <label id="quick-deduct-amount-label" class="calc-quick-label" for="quick-deduct-amount">
+                                사용 코인
+                            </label>
+
+                            <input type="number" id="quick-deduct-amount" inputmode="numeric" min="1" step="1"
+                                placeholder="차감할 금액을 입력하세요"
+                                style="margin-top: 5px; margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
+
+                            <p id="quick-deduct-balance-notice" class="calc-quick-note" role="status" aria-live="polite"
+                                style="display: none; margin: 6px 0 0; text-align: left;">
                             </p>
 
                         </div>
 
+                        <!-- 작품명 -->
+                        <div style="margin-bottom: 15px;">
+                            <label class="calc-quick-label" for="quick-deduct-title">
+                                작품명 (선택)
+                            </label>
 
-                        <button id="calc-deduct-btn" onclick="deductFromCalculator()">
-                            지갑에서 바로 차감하기
-                        </button>
-                    </div>
-                </div>
+                            <input type="text" id="quick-deduct-title" maxlength="200" placeholder="비워두면 기타 지출로 기록"
+                                style="margin-top: 5px; margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
+                        </div>
 
-                <!-- 빠른 차감 화면 시작 -->
-                <div id="calc-quick-section" role="tabpanel" aria-labelledby="calc-mode-quick" style="display: none;">
-
-                    <!-- 플랫폼 선택 -->
-                    <div style="margin-bottom: 15px;">
-                        <label class="calc-quick-label" for="quick-deduct-platform">
-                            플랫폼 선택
-                        </label>
-
-
-                        <select id="quick-deduct-platform" class="modal-select"
-                            style="font-weight: bold; margin-top: 5px;" onchange="updateQuickDeductLabel()">
-
-                            <option value="lezhin">레진코믹스 (코인)</option>
-                            <option value="bomtoon">봄툰 (코인)</option>
-                            <option value="ridi">리디 (캐시)</option>
-                            <option value="mrblue">미블 (머니)</option>
-                        </select>
-
-                    </div>
-
-                    <!-- 사용 금액 -->
-                    <div style="margin-bottom: 15px;">
-                        <label id="quick-deduct-amount-label" class="calc-quick-label" for="quick-deduct-amount">
-                            사용 코인
-                        </label>
-
-                        <input type="number" id="quick-deduct-amount" inputmode="numeric" min="1" step="1"
-                            placeholder="차감할 금액을 입력하세요"
-                            style="margin-top: 5px; margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
-
-                        <p id="quick-deduct-balance-notice" class="calc-quick-note" role="status" aria-live="polite"
-                            style="display: none; margin: 6px 0 0; text-align: left;">
+                        <p class="calc-quick-note">
+                            작품 등록 없이도 바로 차감하고
+                            월말정산에 기록할 수 있어요.
                         </p>
 
+                        <button id="quick-deduct-submit" type="button" onclick="quickDeductFromModal()"
+                            class="save-btn calc-btn-full">
+                            차감하고 기록하기
+                        </button>
+
                     </div>
+                    <!-- 빠른 차감 화면 종료 -->
 
-                    <!-- 작품명 -->
-                    <div style="margin-bottom: 15px;">
-                        <label class="calc-quick-label" for="quick-deduct-title">
-                            작품명 (선택)
-                        </label>
-
-                        <input type="text" id="quick-deduct-title" maxlength="200" placeholder="비워두면 기타 지출로 기록"
-                            style="margin-top: 5px; margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
-                    </div>
-
-                    <p class="calc-quick-note">
-                        작품 등록 없이도 바로 차감하고
-                        월말정산에 기록할 수 있어요.
-                    </p>
-
-                    <button id="quick-deduct-submit" type="button" onclick="quickDeductFromModal()"
-                        class="save-btn calc-btn-full">
-                        차감하고 기록하기
+                    <!-- 일반 계산기와 빠른 차감에서만 보이는 닫기 버튼 -->
+                    <button id="calc-main-close" type="button" onclick="closeCalcModal()"
+                        class="cancel-btn calc-btn-full calc-mt-15">
+                        닫기
                     </button>
 
                 </div>
-                <!-- 빠른 차감 화면 종료 -->
+                <!-- 기존 계산기 화면 끝 -->
 
-                <button onclick="closeCalcModal()" class="cancel-btn calc-btn-full calc-mt-15">닫기</button>
+
+                <!-- 누적 계산 전용 화면 -->
+                <div id="mobo-cum-view" style="display: none;">
+
+                    <!-- 누적 계산 상단 -->
+                    <div class="mobo-cum-head">
+
+                        <button type="button" class="mobo-cum-back-button" onclick="moboCumBack()"
+                            aria-label="정주행 계산기로 돌아가기">
+                            <i data-lucide="arrow-left" aria-hidden="true"></i>
+                            <span>계산기로</span>
+                        </button>
+
+                        <h3 id="mobo-cum-page-title">누적 계산</h3>
+
+                        <button type="button" class="mobo-cum-close-button" onclick="closeCalcModal()"
+                            aria-label="계산기 닫기">
+                            <i data-lucide="x" aria-hidden="true"></i>
+                        </button>
+
+                    </div>
+
+                    <!-- 계산 목록 화면 -->
+                    <div id="mobo-cum-list-screen">
+
+                        <p class="mobo-cum-description">
+                            사고 싶은 작품의 총 재화를 계산해 보세요.
+                        </p>
+
+                        <div id="mobo-cum-items"></div>
+
+                        <!-- 누적 계산 하단 버튼 -->
+                        <div id="mobo-cum-bottom-actions">
+
+                            <!-- 목록 전체 초기화 -->
+                            <button type="button" id="mobo-cum-clear" class="cancel-btn" onclick="moboCumClear()">
+                                <i data-lucide="trash-2" aria-hidden="true"></i>
+                                <span>목록 비우기</span>
+                            </button>
+
+                            <!-- 실제 지갑 차감 -->
+                            <button type="button" id="mobo-cum-checkout" class="mobo-cum-checkout-btn"
+                                onclick="moboCumCheckout()">
+                                <i data-lucide="wallet" aria-hidden="true"></i>
+                                <span>지갑 차감</span>
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <!-- 작품 계산 및 수정 화면 -->
+                    <div id="mobo-cum-editor-screen" style="display: none;">
+
+                        <div class="mobo-cum-field">
+                            <label for="mobo-cum-title">작품명 (선택)</label>
+                            <input type="text" id="mobo-cum-title" maxlength="80" placeholder="예: 보고 싶은 작품">
+                        </div>
+
+                        <div class="mobo-cum-field">
+                            <label for="mobo-cum-platform">플랫폼</label>
+                            <select id="mobo-cum-platform" onchange="moboCumPreview()">
+                                <option value="lezhin">레진코믹스 (C)</option>
+                                <option value="bomtoon">봄툰 (C)</option>
+                                <option value="ridi">리디 (캐시)</option>
+                                <option value="mrblue">미스터블루 (머니)</option>
+                            </select>
+                        </div>
+
+                        <div class="mobo-cum-input-row">
+
+                            <div class="mobo-cum-field">
+                                <label for="mobo-cum-total">작품 총 화수</label>
+                                <input type="number" id="mobo-cum-total" min="1" step="1" inputmode="numeric"
+                                    placeholder="예: 100" oninput="moboCumPreview()">
+                            </div>
+
+                            <div class="mobo-cum-field">
+                                <label for="mobo-cum-current">내가 본 화수</label>
+                                <input type="number" id="mobo-cum-current" min="0" step="1" inputmode="numeric"
+                                    placeholder="예: 5" oninput="moboCumPreview()">
+                            </div>
+
+                        </div>
+
+                        <div class="mobo-cum-field">
+                            <label for="mobo-cum-price">1화당 가격</label>
+                            <input type="number" id="mobo-cum-price" min="0" step="1" inputmode="numeric"
+                                placeholder="예: 3" oninput="moboCumPreview()">
+                        </div>
+
+                        <label class="mobo-cum-check-label">
+                            <input type="checkbox" id="mobo-cum-back-toggle" onchange="moboCumToggleBack()">
+                            코인백 / 페이백 적용하기
+                        </label>
+
+                        <div id="mobo-cum-back-area" style="display: none;">
+
+                            <div class="mobo-cum-field">
+                                <label for="mobo-cum-percent">
+                                    구매 후 돌려받는 비율 (%)
+                                </label>
+                                <input type="number" id="mobo-cum-percent" min="0" max="1000" step="0.01"
+                                    inputmode="decimal" placeholder="예: 100" oninput="moboCumPreview()">
+                            </div>
+
+                        </div>
+
+                        <div id="mobo-cum-preview" class="mobo-cum-preview" role="status" aria-live="polite">
+                            계산할 작품의 정보를 입력해 주세요.
+                        </div>
+
+                        <button type="button" id="mobo-cum-save" class="save-btn calc-btn-full"
+                            onclick="moboCumSaveEntry()" disabled>
+                            계산 결과 목록에 추가
+                        </button>
+
+                        <button type="button" class="cancel-btn calc-btn-full calc-mt-15" onclick="moboCumShowList()">
+                            목록으로 돌아가기
+                        </button>
+
+                    </div>
+
+                </div>
+                <!-- 누적 계산 전용 화면 끝 -->
             </div>
         </div>
 
@@ -1005,6 +1172,44 @@
         </div>
 
         <div id="mobo-toast" class="mobo-toast"></div>
+
+        <!-- 누적 계산 작품명 입력 팝업 -->
+        <div id="mobo-cum-name-dialog" class="modal-overlay" role="dialog" aria-modal="true"
+            aria-labelledby="mobo-cum-name-heading" style="display: none; z-index: 10020;">
+            <div class="modal-content mobo-cum-name-content">
+
+                <h3 id="mobo-cum-name-heading">
+                    누적 계산에 담기
+                </h3>
+
+                <p class="mobo-cum-name-desc">
+                    계산한 작품의 이름을 입력해 주세요.
+                </p>
+
+                <form onsubmit="moboCumConfirmName(event)">
+
+                    <input type="text" id="mobo-cum-name-input" maxlength="80" placeholder="작품명 (선택)" autocomplete="off"
+                        aria-label="작품명">
+
+                    <p class="mobo-cum-name-guide">
+                        비워두면 작품 번호가 자동으로 지정돼요.
+                    </p>
+
+                    <div class="mobo-cum-name-actions">
+
+                        <button type="button" class="cancel-btn" onclick="moboCumCloseNameDialog()">
+                            취소
+                        </button>
+
+                        <button type="submit" id="mobo-cum-name-confirm" class="save-btn">
+                            담기
+                        </button>
+
+                    </div>
+
+                </form>
+            </div>
+        </div>
 
         <div id="drawer-modal" class="modal-overlay" style="display: none; z-index: 5500;">
             <div class="modal-content"

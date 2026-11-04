@@ -4395,7 +4395,1137 @@ body.dark-mode .cleanup-select-long-btn:active {
     gap: 8px;
 }
 
+/* =========================================
+   정주행 계산기 - 상단 헤더
+========================================= */
 
+#calc-modal .calc-main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+#calc-modal #calc-modal-title {
+    margin: 0;
+    min-width: 0;
+    font-size: 17px;
+    font-weight: 700;
+    text-align: left;
+}
+
+#calc-modal .calc-cumulative-open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    flex-shrink: 0;
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid #d8d8dc;
+    border-radius: 20px;
+    background: transparent;
+    color: #666;
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+#calc-modal .calc-cumulative-open svg {
+    width: 15px;
+    height: 15px;
+}
+
+body.dark-mode #calc-modal .calc-cumulative-open {
+    border-color: #555;
+    color: #ddd;
+}
+
+
+/* =========================================
+   누적 계산 - 전용 화면
+========================================= */
+
+#mobo-cum-view {
+    min-width: 0;
+}
+
+.mobo-cum-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.mobo-cum-head h3 {
+    margin: 0;
+    font-size: 17px;
+    color: inherit;
+}
+
+.mobo-cum-back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 0;
+    border: none;
+    background: transparent;
+    color: #777;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.mobo-cum-back-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.mobo-cum-description,
+.mobo-cum-footnote,
+.mobo-cum-field-hint {
+    color: #888;
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.mobo-cum-description {
+    margin: 0 0 14px;
+    margin-top: 8px;
+}
+
+.mobo-cum-footnote {
+    margin: 14px 0 0;
+    text-align: center;
+}
+
+.mobo-cum-field-hint {
+    margin: -4px 0 12px;
+}
+
+
+/* 작품 그룹 */
+
+.mobo-cum-group {
+    margin-bottom: 14px;
+    padding: 12px;
+    border: 1px solid #e4e4e8;
+    border-radius: 10px;
+    background: #fafafa;
+}
+
+.mobo-cum-group-title {
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+}
+
+.mobo-cum-total {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.mobo-cum-back {
+    margin-top: 3px;
+    font-size: 12px;
+    color: #3a7c59;
+    overflow-wrap: anywhere;
+}
+
+
+/* 작품별 카드 */
+
+.mobo-cum-card {
+    padding: 11px 0;
+    border-top: 1px solid #e6e6e8;
+    margin-top: 8px;
+}
+
+.mobo-cum-card:first-of-type {
+    margin-top: 12px;
+}
+
+.mobo-cum-card.is-excluded {
+    opacity: 0.55;
+}
+
+.mobo-cum-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    overflow-wrap: anywhere;
+}
+
+.mobo-cum-card-desc {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #777;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.mobo-cum-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 9px;
+}
+
+.mobo-cum-mini {
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #555;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.mobo-cum-mini.danger {
+    color: #b45b5b;
+}
+
+.mobo-cum-empty,
+.mobo-cum-hint {
+    padding: 24px 12px;
+    margin: 0 0 12px;
+    border-radius: 8px;
+    background: #f5f5f7;
+    color: #888;
+    font-size: 12px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+
+/* 작품 추가 / 수정 폼 */
+
+.mobo-cum-editor-title {
+    margin: 0 0 15px;
+    font-size: 14px;
+    color: inherit;
+}
+
+.mobo-cum-field {
+    min-width: 0;
+    margin-bottom: 12px;
+}
+
+.mobo-cum-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 12px;
+    color: #777;
+}
+
+.mobo-cum-field input,
+.mobo-cum-field select {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 9px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #333;
+    font-size: 14px;
+}
+
+.mobo-cum-input-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.mobo-cum-check-label {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: inherit;
+    cursor: pointer;
+}
+
+.mobo-cum-check-label input {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.mobo-cum-preview {
+    margin: 10px 0 14px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #f1f3f5;
+    color: #444;
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+#mobo-cum-view button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+/* 누적 계산 다크 모드 */
+
+body.dark-mode .mobo-cum-group {
+    background: #29292b;
+    border-color: #48484a;
+}
+
+body.dark-mode .mobo-cum-group-title,
+body.dark-mode .mobo-cum-total,
+body.dark-mode .mobo-cum-card-title {
+    color: #f4f4f4;
+}
+
+body.dark-mode .mobo-cum-card {
+    border-top-color: #48484a;
+}
+
+body.dark-mode .mobo-cum-card-desc,
+body.dark-mode .mobo-cum-description,
+body.dark-mode .mobo-cum-footnote,
+body.dark-mode .mobo-cum-field-hint,
+body.dark-mode .mobo-cum-field label {
+    color: #aaa;
+}
+
+body.dark-mode .mobo-cum-mini {
+    background: #38383a;
+    border-color: #555;
+    color: #eee;
+}
+
+body.dark-mode .mobo-cum-mini.danger {
+    color: #ff9b9b;
+}
+
+body.dark-mode .mobo-cum-empty,
+body.dark-mode .mobo-cum-hint,
+body.dark-mode .mobo-cum-preview {
+    background: #343436;
+    color: #ddd;
+}
+
+body.dark-mode .mobo-cum-field input,
+body.dark-mode .mobo-cum-field select {
+    background: #29292b;
+    color: #fff;
+    border-color: #555;
+}
+
+/* =========================================
+   계산기 최종 상단 디자인
+========================================= */
+
+/* 상단에는 기존 탭만 표시 */
+#calc-modal .calc-main-header {
+    display: block;
+    margin-bottom: 14px;
+    width: 100%;
+    min-width: 0;
+}
+
+/* 기존 2분할 탭 스타일 유지 */
+#calc-modal .calc-main-header .calc-mode-toggle {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+/* 정주행 계산기 안의 누적 계산 링크 */
+#calc-modal .mobo-cum-entry {
+    display: flex;
+    justify-content: flex-end;
+    margin: -3px 0 12px;
+}
+
+/* 다른 입력 요소보다 가볍게 표현 */
+#calc-modal .mobo-cum-entry-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+
+    min-height: 28px;
+    padding: 2px 0;
+
+    border: none;
+    background: transparent;
+
+    color: #858585;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+
+    cursor: pointer;
+}
+
+#calc-modal .mobo-cum-entry-link svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+}
+
+#calc-modal .mobo-cum-entry-link:hover {
+    color: #444;
+}
+
+/* 다크 모드 */
+body.dark-mode #calc-modal .mobo-cum-entry-link {
+    color: #aaa;
+}
+
+body.dark-mode #calc-modal .mobo-cum-entry-link:hover {
+    color: #eee;
+}
+
+/* 작은 모바일 화면 대응 */
+@media (max-width: 360px) {
+    #calc-modal .mobo-cum-entry-link {
+        font-size: 10.5px;
+    }
+}
+
+/* =========================================
+   플랫폼 선택 + 누적 계산 버튼 최종 디자인
+========================================= */
+
+/* 두 요소를 같은 높이로 한 줄 배치 */
+#calc-modal .calc-platform-line {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 66px;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+/* 기존 플랫폼 선택창 */
+#calc-modal .calc-platform-line #calc-platform {
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+    margin: 0;
+    box-sizing: border-box;
+    font-size: 12px;
+}
+
+/* 누적 계산 버튼 */
+#calc-modal .calc-platform-line .mobo-cum-entry-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+
+    width: 66px;
+    min-width: 0;
+    height: 42px;
+    min-height: 42px;
+    box-sizing: border-box;
+
+    margin: 0;
+    padding: 4px;
+
+    border: 1px solid #dedee2;
+    border-radius: 8px;
+    background: transparent;
+
+    color: #777;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* 마우스를 올렸을 때 */
+#calc-modal .calc-platform-line .mobo-cum-entry-link:hover {
+    background: #292929;
+    border-color: #292929;
+    color: #fff;
+}
+
+/* 버튼을 누르는 순간 */
+#calc-modal .calc-platform-line .mobo-cum-entry-link:active {
+    background: #000;
+    border-color: #000;
+    color: #fff;
+}
+
+/* 키보드로 선택했을 때 */
+#calc-modal .calc-platform-line .mobo-cum-entry-link:focus-visible {
+    background: #292929;
+    border-color: #292929;
+    color: #fff;
+    outline: 2px solid #888;
+    outline-offset: 2px;
+}
+
+/* 색상 전환을 부드럽게 */
+#calc-modal .calc-platform-line .mobo-cum-entry-link {
+    transition: background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+/* 다크 모드에서도 동일하게 */
+body.dark-mode #calc-modal .calc-platform-line .mobo-cum-entry-link:hover,
+body.dark-mode #calc-modal .calc-platform-line .mobo-cum-entry-link:active,
+body.dark-mode #calc-modal .calc-platform-line .mobo-cum-entry-link:focus-visible {
+    background: #000;
+    border-color: #000;
+    color: #fff;
+}
+
+/* 각 글자를 한 줄씩 */
+#calc-modal .calc-platform-line .mobo-cum-entry-link span {
+    display: block;
+}
+
+/* 다크 모드 */
+body.dark-mode #calc-modal .calc-platform-line .mobo-cum-entry-link {
+    border-color: #555;
+    color: #ccc;
+}
+
+/* =========================================
+   정주행 계산 결과 - 누적 담기 버튼
+========================================= */
+
+/* 레진 / 봄툰: 지갑 선택 + 누적 담기 */
+#calc-modal #calc-result-box .mobo-cum-wallet-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 88px;
+    align-items: stretch;
+    gap: 7px;
+    min-width: 0;
+}
+
+#calc-modal #calc-result-box .mobo-cum-wallet-row #calc-deduct-wallet {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 38px;
+    margin: 0;
+    box-sizing: border-box;
+
+    padding: 0 5px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+
+/* 공통 누적 담기 버튼 */
+#calc-modal .mobo-cum-add-from-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 38px;
+    min-height: 38px;
+
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 4px;
+
+    border: 1px solid #dedee2;
+    border-radius: 8px;
+    background: transparent;
+
+    color: #555;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+#calc-modal .mobo-cum-add-from-result:hover:not(:disabled),
+#calc-modal .mobo-cum-add-from-result:active:not(:disabled) {
+    background: #292929;
+    border-color: #292929;
+    color: #fff;
+}
+
+#calc-modal .mobo-cum-add-from-result:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+
+/* 빨간 차감 버튼 영역 */
+#calc-modal #calc-result-box .mobo-cum-deduct-actions {
+    display: block;
+    min-width: 0;
+    margin-top: 12px;
+}
+
+/* 레진 / 봄툰에서는 빨간 버튼만 표시 */
+#calc-modal #mobo-cum-add-other {
+    display: none;
+}
+
+#calc-modal #calc-result-box .mobo-cum-deduct-actions #calc-deduct-btn {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 40px;
+    min-height: 40px;
+
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 6px;
+
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* 리디 / 미블: 빨간 버튼 + 누적 담기 */
+#calc-modal #calc-result-box .mobo-cum-deduct-actions.mobo-cum-paired {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 88px;
+    align-items: stretch;
+    gap: 7px;
+}
+
+#calc-modal #calc-result-box .mobo-cum-deduct-actions.mobo-cum-paired #calc-deduct-btn {
+    font-size: 12px;
+}
+
+#calc-modal #calc-result-box .mobo-cum-deduct-actions.mobo-cum-paired #mobo-cum-add-other {
+    display: flex;
+    height: 40px;
+    min-height: 40px;
+}
+
+
+/* 작은 화면: 너비를 한 번 더 확보 */
+@media (max-width: 360px) {
+
+    #calc-modal #calc-result-box .mobo-cum-wallet-row,
+    #calc-modal #calc-result-box .mobo-cum-deduct-actions.mobo-cum-paired {
+        grid-template-columns: minmax(0, 1fr) 84px;
+        gap: 6px;
+    }
+
+    #calc-modal #calc-result-box .mobo-cum-deduct-actions.mobo-cum-paired #calc-deduct-btn {
+        font-size: 11px;
+    }
+}
+
+
+/* 다크 모드 */
+body.dark-mode #calc-modal .mobo-cum-add-from-result {
+    border-color: #555;
+    color: #ddd;
+}
+
+body.dark-mode #calc-modal .mobo-cum-add-from-result:hover:not(:disabled),
+body.dark-mode #calc-modal .mobo-cum-add-from-result:active:not(:disabled) {
+    background: #000;
+    border-color: #000;
+    color: #fff;
+}
+
+/* =========================================
+   누적 계산 - 실제 지갑 차감 버튼
+========================================= */
+
+#calc-modal #mobo-cum-checkout {
+    display: block;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 42px;
+
+    box-sizing: border-box;
+    margin: 9px 0 0;
+    padding: 10px 8px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #e74c3c;
+    color: #fff;
+
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+#calc-modal #mobo-cum-checkout:hover:not(:disabled) {
+    background: #c0392b;
+}
+
+#calc-modal #mobo-cum-checkout:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+body.dark-mode #calc-modal #mobo-cum-checkout {
+    background: #d63031;
+    color: #fff;
+}
+
+body.dark-mode #calc-modal #mobo-cum-checkout:hover:not(:disabled) {
+    background: #b92427;
+}
+
+/* =========================================
+   누적 계산 - 작품 카드 한 줄 정렬
+========================================= */
+
+/* 작품 정보 왼쪽 / 버튼 오른쪽 */
+#calc-modal .mobo-cum-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+
+    min-width: 0;
+    padding: 10px 0;
+}
+
+/* 작품명과 금액 영역 */
+#calc-modal .mobo-cum-card-info {
+    min-width: 0;
+}
+
+/* 긴 작품명 줄바꿈 방지 */
+#calc-modal .mobo-cum-card-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 긴 금액 설명도 한 줄 유지 */
+#calc-modal .mobo-cum-card-desc {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+}
+
+/* 버튼 세 개 가로 정렬 */
+#calc-modal .mobo-cum-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 4px;
+    margin: 0;
+    min-width: 0;
+}
+
+/* 작은 버튼으로 통일 */
+#calc-modal .mobo-cum-mini {
+    flex-shrink: 0;
+    min-height: 30px;
+    padding: 5px 7px;
+
+    font-size: 11px;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* 아주 작은 스마트폰 대응 */
+@media (max-width: 360px) {
+    #calc-modal .mobo-cum-card {
+        gap: 5px;
+    }
+
+    #calc-modal .mobo-cum-actions {
+        gap: 3px;
+    }
+
+    #calc-modal .mobo-cum-mini {
+        padding: 5px;
+        font-size: 10px;
+    }
+}
+
+/* =========================================
+   누적 계산 - 구매 비용 / 코인백 가로 정렬
+========================================= */
+
+#calc-modal .mobo-cum-summary-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 10px;
+    margin: 8px 0 12px;
+}
+
+#calc-modal .mobo-cum-summary-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+#calc-modal .mobo-cum-summary-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: #888;
+    white-space: nowrap;
+}
+
+#calc-modal .mobo-cum-summary-value {
+    display: block;
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #333;
+    overflow-wrap: anywhere;
+}
+
+#calc-modal .mobo-cum-summary-value.is-cashback {
+    color: #3a7c59;
+}
+
+/* 다크 모드 */
+body.dark-mode #calc-modal .mobo-cum-summary-label {
+    color: #aaa;
+}
+
+body.dark-mode #calc-modal .mobo-cum-summary-value {
+    color: #fff;
+}
+
+body.dark-mode #calc-modal .mobo-cum-summary-value.is-cashback {
+    color: #81c7a0;
+}
+
+/* =========================================
+   누적 계산 - 작품명 입력 팝업
+========================================= */
+
+#mobo-cum-name-dialog {
+    box-sizing: border-box;
+    padding: 16px;
+}
+
+#mobo-cum-name-dialog .mobo-cum-name-content {
+    width: min(320px, 100%);
+    max-width: 320px;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 22px 20px;
+    border-radius: 14px;
+}
+
+#mobo-cum-name-heading {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+}
+
+#mobo-cum-name-dialog .mobo-cum-name-desc {
+    margin: 0 0 16px;
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+}
+
+#mobo-cum-name-input {
+    width: 100%;
+    height: 40px;
+    min-width: 0;
+    box-sizing: border-box;
+
+    padding: 0 12px;
+    border: 1px solid #dedee2;
+    border-radius: 8px;
+
+    background: #fff;
+    color: #333;
+    font-size: 13px;
+    outline: none;
+}
+
+#mobo-cum-name-input:focus {
+    border-color: #777;
+}
+
+#mobo-cum-name-dialog .mobo-cum-name-guide {
+    margin: 8px 0 16px;
+    color: #999;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+#mobo-cum-name-dialog .mobo-cum-name-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+#mobo-cum-name-dialog .mobo-cum-name-actions button {
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 8px;
+
+    border-radius: 8px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+#mobo-cum-name-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 다크 모드 */
+
+body.dark-mode #mobo-cum-name-input {
+    background: #29292b;
+    border-color: #555;
+    color: #fff;
+}
+
+body.dark-mode #mobo-cum-name-input:focus {
+    border-color: #aaa;
+}
+
+body.dark-mode #mobo-cum-name-dialog .mobo-cum-name-desc,
+body.dark-mode #mobo-cum-name-dialog .mobo-cum-name-guide {
+    color: #aaa;
+}
+
+/* =========================================
+   누적 계산 - 최종 컴팩트 디자인
+========================================= */
+
+/* 상단 헤더 */
+#calc-modal .mobo-cum-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+
+    width: 100%;
+    min-width: 0;
+    margin: 0 0 0;
+}
+
+/* 중앙 제목 */
+#calc-modal .mobo-cum-head h3 {
+    margin: 0;
+    justify-self: center;
+
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* 왼쪽 계산기로 버튼 */
+#calc-modal .mobo-cum-back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    justify-self: start;
+    gap: 4px;
+
+    width: auto;
+    min-width: 0;
+    height: 34px;
+
+    margin: 0;
+
+    border: none;
+    background: transparent;
+    color: #777;
+
+    font-size: 11px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* 오른쪽 닫기 */
+#calc-modal .mobo-cum-close-button {
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    justify-self: end;
+
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    margin: 0;
+
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #777;
+    cursor: pointer;
+}
+
+#calc-modal .mobo-cum-head svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* 하단 버튼 두 개 나란히 */
+#calc-modal #mobo-cum-bottom-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+
+    width: 100%;
+    min-width: 0;
+    margin-top: 14px;
+}
+
+/* 버튼 공통 크기 */
+#calc-modal #mobo-cum-bottom-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 42px;
+    min-height: 42px;
+
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 7px;
+
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* 버튼 아이콘 */
+#calc-modal #mobo-cum-bottom-actions svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+/* 왼쪽 목록 비우기 */
+#calc-modal #mobo-cum-bottom-actions #mobo-cum-clear {
+    border: 1px solid #dedee2;
+    background: transparent;
+    color: #666;
+    box-shadow: none;
+    text-decoration: none;
+}
+
+#calc-modal #mobo-cum-bottom-actions #mobo-cum-clear:hover:not(:disabled) {
+    background: #f1f1f3;
+    color: #333;
+}
+
+/* 오른쪽 지갑 차감 */
+#calc-modal #mobo-cum-bottom-actions #mobo-cum-checkout {
+    border: 1px solid #e74c3c;
+    background: #e74c3c;
+    color: #fff;
+}
+
+#calc-modal #mobo-cum-bottom-actions #mobo-cum-checkout:hover:not(:disabled) {
+    background: #c0392b;
+    border-color: #c0392b;
+}
+
+/* 비활성화 */
+#calc-modal #mobo-cum-bottom-actions button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* 다크 모드 */
+body.dark-mode #calc-modal #mobo-cum-bottom-actions #mobo-cum-clear {
+    border-color: #555;
+    background: transparent;
+    color: #ddd;
+}
+
+body.dark-mode #calc-modal #mobo-cum-bottom-actions #mobo-cum-checkout {
+    background: #d63031;
+    border-color: #d63031;
+    color: #fff;
+}
+
+body.dark-mode #calc-modal .mobo-cum-back-button,
+body.dark-mode #calc-modal .mobo-cum-close-button {
+    color: #ccc;
+}
+
+/* 작은 화면에서도 한 줄 유지 */
+@media (max-width: 360px) {
+    #calc-modal #mobo-cum-bottom-actions {
+        gap: 6px;
+    }
+
+    #calc-modal #mobo-cum-bottom-actions button {
+        gap: 4px;
+        padding: 0 5px;
+        font-size: 11px;
+    }
+}
+
+/* 누적 계산: 각 플랫폼의 마지막 작품 아래 여백 제거 */
+#calc-modal .mobo-cum-group>.mobo-cum-card:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
 
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
 a[x-apple-data-detectors] {
