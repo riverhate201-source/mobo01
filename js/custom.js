@@ -522,8 +522,8 @@ function checkMoboReturnVisit() {
 
     banner.style.display = 'flex';
 
-    // 20일 이상 복귀했을 때 선택 안내 모달 표시
-    if (absentDays >= 20) {
+    // 복귀 안내가 아직 남아 있다면 새로고침 후에도 우선 표시
+    if (pendingDays >= 20) {
         openMoboReturnModal();
     }
 }
@@ -666,18 +666,17 @@ function dismissMoboReturnNotice() {
 }
 
 // 30일 이상 복귀자: 과거 미정산 건너뛰기
+// 장기 미접속 복귀: 과거 정산 건너뛰기
 function skipMoboPastDeductions() {
-
     const pendingDays = Number(
         localStorage.getItem(MOBO_RETURN_PENDING_KEY)
     );
 
-    // 20일 미만 이용자는 이 버튼을 사용할 수 없음
     if (!Number.isSafeInteger(pendingDays) || pendingDays < 20) {
-        return;
+        return false;
     }
 
-    // 20~29일에는 건너뛰기 전 추가 확인
+    // 20~29일은 기존 확인창 유지
     if (
         pendingDays < 30 &&
         !confirm(
@@ -685,36 +684,185 @@ function skipMoboPastDeductions() {
             '건너뛴 과거 내역은 다시 표시되지 않습니다.'
         )
     ) {
-        return;
+        return false;
     }
 
-    // 모보의 기존 웹툰 날짜 기준 사용
-    const todayStr = formatDate(getWebtoonDate());
-    const lastCheckDate = localStorage.getItem('lastCheckDate');
+    // 변경 가능성이 있는 저장 항목
+    const keys = [
+        'lastCheckDate',
+        MOBO_RETURN_PENDING_KEY,
+        'currentWeekStr',
+        'weeklySpent',
+        'weeklySpentWon',
+        STORAGE_KEY
+    ];
 
-    // 과거 정산 기준일만 오늘로 이동
-    // 오늘 이미 미리 정산한 기록이 있다면 유지
-    if (!lastCheckDate || lastCheckDate < todayStr) {
-        localStorage.setItem('lastCheckDate', todayStr);
+    const beforeStorage = new Map();
+
+    // 기존 밀린 정산 목록 및 모드 보관
+    const beforePending = pendingDeductions;
+    const beforeDaysStr = pendingDaysStr;
+    const beforeToday = isTodayDeduction;
+
+    // 주간 갱신 도중 변경될 수 있는 작품 주기 보관
+    const beforeCycles = [];
+
+    const returnModal = document.getElementById(
+        'mobo-return-modal'
+    );
+
+    const returnBanner = document.getElementById(
+        'mobo-return-banner'
+    );
+
+    const modalDisplay = returnModal?.style.display;
+    const bannerDisplay = returnBanner?.style.display;
+
+    try {
+        // 실제 저장값을 변경하기 전에 원본 보관
+        keys.forEach(key => {
+            beforeStorage.set(
+                key,
+                localStorage.getItem(key)
+            );
+        });
+
+        // 작품 연재 주차 변경에 대비
+        Object.values(state).forEach(dayMap => {
+            Object.values(dayMap || {}).forEach(list => {
+                if (!Array.isArray(list)) return;
+
+                list.forEach(work => {
+                    beforeCycles.push({
+                        work,
+                        value: work.cycle,
+                        existed: Object.prototype.hasOwnProperty.call(
+                            work,
+                            'cycle'
+                        )
+                    });
+                });
+            });
+        });
+
+        const todayStr = formatDate(getWebtoonDate());
+        const lastCheckDate = beforeStorage.get('lastCheckDate');
+
+        // 미래 정산 기준일은 그대로 유지
+        if (!lastCheckDate || lastCheckDate < todayStr) {
+            localStorage.setItem(
+                'lastCheckDate',
+                todayStr
+            );
+        }
+
+        // 과거 정산 목록 초기화
+        pendingDeductions = {
+            lezhin: [],
+            bomtoon: [],
+            ridi: [],
+            mrblue: []
+        };
+
+        pendingDaysStr = '';
+        isTodayDeduction = false;
+
+        // 후속 정산 검사가 실행되도록 복귀 대기 상태 해제
+        // 단, 아직 화면의 복귀 안내는 닫지 않음
+        localStorage.removeItem(MOBO_RETURN_PENDING_KEY);
+
+        // 기존 주간 통계 및 연재 주차 갱신
+        askForDeduction();
+        updateWeeklyStatUI();
+
+        // 통합 데이터까지 저장됐는지 확인
+        if (saveData(true) !== true) {
+            throw new Error('복귀 건너뛰기 통합 저장 실패');
+        }
+
+        // 모든 처리가 성공한 뒤에만 복귀 안내 닫기
+        dismissMoboReturnNotice();
+
+        return true;
+
+    } catch (error) {
+        console.error(
+            '복귀 건너뛰기 중 오류:',
+            error
+        );
+
+        // 정산 목록과 모드 복구
+        pendingDeductions = beforePending;
+        pendingDaysStr = beforeDaysStr;
+        isTodayDeduction = beforeToday;
+
+        // 갱신 중 변경된 작품 주기 복구
+        beforeCycles.forEach(({ work, value, existed }) => {
+            if (existed) {
+                work.cycle = value;
+            } else {
+                delete work.cycle;
+            }
+        });
+
+        let restored = true;
+
+        // 변경된 저장 항목 복구
+        for (const [key, oldValue] of beforeStorage) {
+            try {
+                if (localStorage.getItem(key) === oldValue) {
+                    continue;
+                }
+
+                if (oldValue === null) {
+                    localStorage.removeItem(key);
+                } else {
+                    localStorage.setItem(key, oldValue);
+                }
+
+            } catch (rollbackError) {
+                restored = false;
+
+                console.error(
+                    '복귀 건너뛰기 복구 실패:',
+                    key,
+                    rollbackError
+                );
+            }
+        }
+
+        // 복귀 안내 화면 복구
+        if (returnModal) {
+            returnModal.style.display = modalDisplay;
+        }
+
+        if (returnBanner) {
+            returnBanner.style.display = bannerDisplay;
+        }
+
+        try {
+            updateWeeklyStatUI();
+        } catch (uiError) {
+            console.error(
+                '통계 화면 복구 실패:',
+                uiError
+            );
+        }
+
+        if (restored) {
+            alert(
+                '복귀 정리를 저장하지 못했습니다.\n' +
+                '이전 상태로 복구했습니다.'
+            );
+        } else {
+            alert(
+                '저장과 일부 복구에 실패했습니다.\n' +
+                '기존 백업을 확인해 주세요.'
+            );
+        }
+
+        return false;
     }
-
-    // 메모리에 남아 있을 수 있는 과거 정산 목록 초기화
-    pendingDeductions = {
-        lezhin: [],
-        bomtoon: [],
-        ridi: [],
-        mrblue: []
-    };
-
-    pendingDaysStr = '';
-    isTodayDeduction = false;
-
-    // 복귀 안내 완료 처리
-    dismissMoboReturnNotice();
-
-    // 복귀 중 보류했던 주간 통계와 정산 기준 갱신
-    askForDeduction();
-    updateWeeklyStatUI();
 }
 
 
@@ -722,6 +870,21 @@ let attendWarningShownThisPage = false;
 
 function checkAndShowAttendPopup() {
     if (attendWarningShownThisPage) return;
+
+    // 20일 이상 복귀 안내가 아직 처리되지 않았다면 출석 보류
+    const pendingReturnDays = Number(
+        localStorage.getItem(MOBO_RETURN_PENDING_KEY)
+    );
+
+    if (pendingReturnDays >= 20) return;
+
+    // 밀린 정산 기준일이 오늘보다 이전이면 출석 보류
+    const lastCheckDate = localStorage.getItem('lastCheckDate');
+    const todayStr = formatDate(getWebtoonDate());
+
+    if (lastCheckDate && lastCheckDate < todayStr) {
+        return;
+    }
 
     const deductionModal = document.getElementById('deduction-modal');
     const returnModal = document.getElementById('mobo-return-modal');
@@ -1188,10 +1351,11 @@ function quickDeductFromModal() {
     submitBtn.disabled = true;
 
     try {
-        // 기존 모보의 차감 시스템 재사용
-        executeDeduction(plt, title, amount);
+        // 차감이 성공했을 때만 계산기 닫기
+        const deducted = executeDeduction(plt, title, amount);
 
-        // 처리 완료 후 모달 닫기
+        if (deducted !== true) return;
+
         closeCalcModal();
 
     } finally {
@@ -1374,73 +1538,165 @@ function calculateCoins() {
 
 // 🌟 [통합 결제 시스템] 지갑 차감 + 가계부 작성 + 통계 업데이트를 한 번에!
 function executeDeduction(plt, title, amount) {
-    if (amount <= 0) return;
+    if (amount <= 0) return false;
 
-    let remainingAmount = amount; // 🌟 깎아야 할 '남은 결제 금액' (처음엔 총 금액)
+    // 차감 과정에서 변경될 수 있는 저장 데이터 보관
+    const protectedKeys = [
+        plt.charAt(0) + 'Wallet',
+        plt + 'Expire',
+        'monthlyHistory',
+        'weeklySpent',
+        'weeklySpentWon',
+        'lezhinBonusExpire',
+        STORAGE_KEY
+    ];
 
-    // 1. 소멸 예정 코인 먼저 확인 및 최우선 차감!
-    let expireData = JSON.parse(localStorage.getItem(plt + 'Expire'));
-    if (expireData && expireData.amount) {
-        let expAmt = parseInt(expireData.amount) || 0;
+    let before;
 
-        if (expAmt > 0) {
-            if (expAmt >= remainingAmount) {
-                // 🟢 소멸 코인이 더 많거나 같을 때: 소멸 코인으로 전액 방어!
-                expAmt -= remainingAmount;
-                remainingAmount = 0; // 본 지갑에서 뺄 돈은 0원이 됨!
-            } else {
-                // 🔴 소멸 코인이 부족할 때: 소멸 코인 싹 다 긁어 쓰고, 남은 금액 갱신
-                remainingAmount -= expAmt;
-                expAmt = 0;
-            }
+    try {
+        before = new Map(
+            protectedKeys.map(key => [
+                key,
+                localStorage.getItem(key)
+            ])
+        );
+    } catch (error) {
+        console.error('차감 전 데이터 확인 실패:', error);
+        alert('저장소를 확인할 수 없어 차감을 중단했습니다.');
+        return false;
+    }
 
-            // 소멸 코인 잔액 업데이트 (다 썼으면 영구 삭제)
-            if (expAmt <= 0) {
-                localStorage.removeItem(plt + 'Expire');
-            } else {
-                expireData.amount = expAmt;
-                localStorage.setItem(plt + 'Expire', JSON.stringify(expireData));
+    try {
+        let remainingAmount = amount; // 기존 차감 계산 유지
+
+        // 1. 소멸 예정 코인 먼저 확인 및 최우선 차감!
+        let expireData = JSON.parse(localStorage.getItem(plt + 'Expire'));
+        if (expireData && expireData.amount) {
+            let expAmt = parseInt(expireData.amount) || 0;
+
+            if (expAmt > 0) {
+                if (expAmt >= remainingAmount) {
+                    // 🟢 소멸 코인이 더 많거나 같을 때: 소멸 코인으로 전액 방어!
+                    expAmt -= remainingAmount;
+                    remainingAmount = 0; // 본 지갑에서 뺄 돈은 0원이 됨!
+                } else {
+                    // 🔴 소멸 코인이 부족할 때: 소멸 코인 싹 다 긁어 쓰고, 남은 금액 갱신
+                    remainingAmount -= expAmt;
+                    expAmt = 0;
+                }
+
+                // 소멸 코인 잔액 업데이트 (다 썼으면 영구 삭제)
+                if (expAmt <= 0) {
+                    localStorage.removeItem(plt + 'Expire');
+                } else {
+                    expireData.amount = expAmt;
+                    localStorage.setItem(plt + 'Expire', JSON.stringify(expireData));
+                }
             }
         }
+
+        // 2. 소멸 코인으로 막고 '남은 금액'만 본 지갑에서 깎기!
+        if (remainingAmount > 0) {
+            const prefix = plt.charAt(0); // l, b, r, m
+            let currentWallet = parseInt(localStorage.getItem(prefix + 'Wallet') || 0);
+            localStorage.setItem(prefix + 'Wallet', currentWallet - remainingAmount);
+        }
+
+        // 3. 이번 달 월말정산에 내역 적기 (기록은 본 지갑, 소멸 코인 합친 총액(amount)으로 기록!)
+        const todayKST = getKSTDate();
+        const monthKey = `${todayKST.getFullYear()}-${String(todayKST.getMonth() + 1).padStart(2, '0')}`;
+        let monthlyHistory = JSON.parse(localStorage.getItem('monthlyHistory')) || {};
+        if (!monthlyHistory[monthKey]) monthlyHistory[monthKey] = { lezhin: {}, bomtoon: {}, ridi: {}, mrblue: {} };
+        if (!monthlyHistory[monthKey][plt][title]) monthlyHistory[monthKey][plt][title] = 0;
+
+        monthlyHistory[monthKey][plt][title] += amount;
+        localStorage.setItem('monthlyHistory', JSON.stringify(monthlyHistory));
+
+        // 4. 주간 통계(홈 화면)에 누적하기
+        if (plt === 'ridi' || plt === 'mrblue') {
+            addWeeklySpent(0, amount); // 원/캐시는 뒤쪽으로
+        } else {
+            addWeeklySpent(amount, 0); // 코인은 앞쪽으로
+        }
+
+        // 5. 결제한 플랫폼이 레진이라면, 폭탄 타이머를 해체(삭제)합니다!
+        if (plt === 'lezhin') {
+            localStorage.removeItem('lezhinBonusExpire');
+        }
+
+        // 통합 저장까지 완료되어야 최종 성공
+        if (saveData() !== true) {
+            throw new Error('통합 데이터 저장 실패');
+        }
+
+    } catch (error) {
+        console.error(
+            '차감 중 오류: 저장 데이터 복구 시도',
+            error
+        );
+
+        let restored = true;
+
+        // 변경된 항목만 이전 값으로 복원
+        for (const [key, value] of before) {
+            try {
+                if (localStorage.getItem(key) === value) {
+                    continue;
+                }
+
+                if (value === null) {
+                    localStorage.removeItem(key);
+                } else {
+                    localStorage.setItem(key, value);
+                }
+
+            } catch (rollbackError) {
+                restored = false;
+
+                console.error(
+                    '차감 복구 실패:',
+                    key,
+                    rollbackError
+                );
+            }
+        }
+
+        // 복구된 값을 화면에도 반영
+        try {
+            updateWeeklyStatUI();
+            refreshBalance();
+        } catch (uiError) {
+            console.error(
+                '복구 후 화면 갱신 실패:',
+                uiError
+            );
+        }
+
+        if (restored) {
+            alert(
+                '저장에 실패해 차감을 취소했습니다.\n' +
+                '지갑과 정산 기록을 이전 값으로 복구했습니다.'
+            );
+        } else {
+            alert(
+                '저장 실패 후 일부 데이터 복구에도 실패했습니다.\n' +
+                '앱을 계속 사용하지 말고 기존 백업을 확인해 주세요.'
+            );
+        }
+
+        return false;
     }
 
-    // 2. 소멸 코인으로 막고 '남은 금액'만 본 지갑에서 깎기!
-    if (remainingAmount > 0) {
-        const prefix = plt.charAt(0); // l, b, r, m
-        let currentWallet = parseInt(localStorage.getItem(prefix + 'Wallet') || 0);
-        localStorage.setItem(prefix + 'Wallet', currentWallet - remainingAmount);
-    }
-
-    // 3. 이번 달 월말정산에 내역 적기 (기록은 본 지갑, 소멸 코인 합친 총액(amount)으로 기록!)
-    const todayKST = getKSTDate();
-    const monthKey = `${todayKST.getFullYear()}-${String(todayKST.getMonth() + 1).padStart(2, '0')}`;
-    let monthlyHistory = JSON.parse(localStorage.getItem('monthlyHistory')) || {};
-    if (!monthlyHistory[monthKey]) monthlyHistory[monthKey] = { lezhin: {}, bomtoon: {}, ridi: {}, mrblue: {} };
-    if (!monthlyHistory[monthKey][plt][title]) monthlyHistory[monthKey][plt][title] = 0;
-
-    monthlyHistory[monthKey][plt][title] += amount;
-    localStorage.setItem('monthlyHistory', JSON.stringify(monthlyHistory));
-
-    // 4. 주간 통계(홈 화면)에 누적하기
-    if (plt === 'ridi' || plt === 'mrblue') {
-        addWeeklySpent(0, amount); // 원/캐시는 뒤쪽으로
-    } else {
-        addWeeklySpent(amount, 0); // 코인은 앞쪽으로
-    }
-
-    // 5. 결제한 플랫폼이 레진이라면, 폭탄 타이머를 해체(삭제)합니다!
-    if (plt === 'lezhin') {
-        localStorage.removeItem('lezhinBonusExpire');
-    }
-
-    // 마무리 저장 및 갱신
-    saveData();
+    // 모든 저장이 성공했을 때만 실행
     refreshBalance();
 
-    let unitStr = '코인';
-    if (plt === 'ridi') unitStr = '캐시';
-    else if (plt === 'mrblue') unitStr = '머니';
-    alert(`성공! [${title}] 작품에 ${formatNum(amount)} 만큼 차감되고 월말정산에 기록되었습니다!`);
+    alert(
+        `성공! [${title}] 작품에 ` +
+        `${formatNum(amount)} 만큼 차감되고 ` +
+        `월말정산에 기록되었습니다!`
+    );
+
+    return true;
 }
 
 // 🌟 [신규] 계산기에서 바로 차감 버튼 눌렀을 때 작동하는 함수
@@ -1477,7 +1733,11 @@ function deductFromCalculator() {
 
     if (!workTitle) return alert("작품 이름이 없어 차감이 취소되었습니다.");
 
-    executeDeduction(exactPlt, workTitle, currentCalcCoin);
+    // 저장 실패 시 계산기를 유지하여 다시 확인할 수 있도록 함
+    if (executeDeduction(exactPlt, workTitle, currentCalcCoin) !== true) {
+        return;
+    }
+
     closeCalcModal();
 }
 
@@ -2231,149 +2491,450 @@ function autoUpdatePastBiweeklyDates() {
     }
 }
 
+// 밀린 정산 중복 실행 방지
+let moboDeductionSaving = false;
+
 function processDeduction() {
-    let tL = 0, tB = 0, tR = 0, tM = 0;
-    let checkedCount = 0;
-    let totalPendingCount = 0; // 🌟 [핵심] 모달창에 뜬 전체 작품 개수 확인용!
+    if (moboDeductionSaving) return false;
 
-    // 선택한 작품이 없으면 아무 기록도 변경하지 않음
-    const hasSelectedWork = platformOrder.some(plt =>
-        (pendingDeductions[plt] || []).some((item, i) =>
-            document.getElementById(`deduct-chk-${plt}-${i}`)?.checked
-        )
-    );
+    const modal = document.getElementById('deduction-modal');
 
-    if (!hasSelectedWork) {
-        alert(
-            '정산할 작품을 선택해 주세요.\n' +
-            '전체를 건너뛰려면 「모두 건너뛰기」를 눌러 주세요.'
-        );
-        return;
+    // 정산창이 닫힌 상태에서는 중복 처리하지 않음
+    if (!modal || modal.style.display !== 'flex') {
+        return false;
     }
-    const todayKST = getKSTDate();
-    const webtoonDate = getWebtoonDate();
-    const nowStr = formatDate(webtoonDate);
 
-    const monthKey = `${todayKST.getFullYear()}-${String(todayKST.getMonth() + 1).padStart(2, '0')}`;
-    let monthlyHistory = JSON.parse(localStorage.getItem('monthlyHistory')) || {};
-
-    if (!monthlyHistory[monthKey]) {
-        monthlyHistory[monthKey] = { lezhin: {}, bomtoon: {}, ridi: {}, mrblue: {} };
-    }
+    const selected = [];
+    let totalPendingCount = 0;
 
     platformOrder.forEach(plt => {
-        totalPendingCount += pendingDeductions[plt].length; // 🌟 대기 중인 전체 작품 갯수 합산!
+        const items = pendingDeductions[plt] || [];
 
-        pendingDeductions[plt].forEach((item, i) => {
-            const chk = document.getElementById(`deduct-chk-${plt}-${i}`);
+        totalPendingCount += items.length;
 
-            if (chk && chk.checked) {
-                checkedCount++;
-                const costVal = parseInt(item.work.coin) || 0;
+        items.forEach((item, i) => {
+            const checkbox = document.getElementById(
+                `deduct-chk-${plt}-${i}`
+            );
 
-                if (plt === 'lezhin') tL += costVal;
-                else if (plt === 'bomtoon') tB += costVal;
-                else if (plt === 'ridi') tR += costVal;
-                else if (plt === 'mrblue') tM += costVal;
-
-                if (costVal > 0) {
-                    if (!monthlyHistory[monthKey][plt][item.work.title]) {
-                        monthlyHistory[monthKey][plt][item.work.title] = 0;
-                    }
-                    monthlyHistory[monthKey][plt][item.work.title] += costVal;
-                }
-
-                if (item.work.id) {
-                    Object.keys(state[plt]).forEach(d => {
-                        state[plt][d].forEach(w => {
-                            if (w.id === item.work.id) w.lastDeductDate = nowStr;
-                        });
-                    });
-                } else {
-                    item.work.lastDeductDate = nowStr;
-                }
+            if (checkbox?.checked) {
+                selected.push({ plt, item });
             }
         });
     });
 
-    if (checkedCount > 0) {
-        if (tL > 0 || tB > 0 || tR > 0 || tM > 0) {
-            const deductFromWallet = (plt, totalAmount, prefix) => {
-                if (totalAmount <= 0) return;
-                let remaining = totalAmount;
+    // 선택하지 않았다면 기존 안내 유지
+    if (!selected.length) {
+        alert(
+            '정산할 작품을 선택해 주세요.\n' +
+            '전체를 건너뛰려면 「모두 건너뛰기」를 눌러 주세요.'
+        );
+        return false;
+    }
 
-                let expireData = JSON.parse(localStorage.getItem(plt + 'Expire'));
-                if (expireData && expireData.amount) {
-                    let expAmt = parseInt(expireData.amount) || 0;
-                    if (expAmt > 0) {
-                        if (expAmt >= remaining) {
-                            expAmt -= remaining;
-                            remaining = 0;
-                        } else {
-                            remaining -= expAmt;
-                            expAmt = 0;
-                        }
+    // 변경될 수 있는 저장 항목 보호
+    const protectedKeys = [
+        STORAGE_KEY,
+        'lWallet',
+        'bWallet',
+        'rWallet',
+        'mWallet',
+        'lezhinExpire',
+        'bomtoonExpire',
+        'ridiExpire',
+        'mrblueExpire',
+        'lezhinBonusExpire',
+        'monthlyHistory',
+        'weeklySpent',
+        'weeklySpentWon',
+        'lastCheckDate',
+        'lastPartialDeductDate'
+    ];
 
-                        if (expAmt <= 0) localStorage.removeItem(plt + 'Expire');
-                        else {
-                            expireData.amount = expAmt;
-                            localStorage.setItem(plt + 'Expire', JSON.stringify(expireData));
+    let beforeStorage;
+
+    // 기존 작품 객체와 배열 참조까지 보존
+    const beforeWorks = new Map();
+    const beforeLists = [];
+    const beforeTodayMode = isTodayDeduction;
+
+    try {
+        beforeStorage = new Map(
+            protectedKeys.map(key => [
+                key,
+                localStorage.getItem(key)
+            ])
+        );
+
+        Object.entries(state).forEach(([plt, dayMap]) => {
+            Object.entries(dayMap).forEach(([day, list]) => {
+                if (!Array.isArray(list)) return;
+
+                beforeLists.push({
+                    plt,
+                    day,
+                    list,
+                    items: list.slice()
+                });
+
+                list.forEach(work => {
+                    if (!beforeWorks.has(work)) {
+                        beforeWorks.set(work, { ...work });
+                    }
+                });
+            });
+        });
+
+    } catch (error) {
+        console.error('정산 전 상태 확인 실패:', error);
+
+        alert(
+            '정산 데이터를 확인할 수 없어 처리를 중단했습니다.'
+        );
+
+        return false;
+    }
+
+    moboDeductionSaving = true;
+
+    const totals = {
+        lezhin: 0,
+        bomtoon: 0,
+        ridi: 0,
+        mrblue: 0
+    };
+
+    try {
+        const todayKST = getKSTDate();
+        const nowStr = formatDate(getWebtoonDate());
+
+        const monthKey =
+            `${todayKST.getFullYear()}-${String(
+                todayKST.getMonth() + 1
+            ).padStart(2, '0')}`;
+
+        const monthlyHistory = JSON.parse(
+            localStorage.getItem('monthlyHistory')
+        ) || {};
+
+        if (!monthlyHistory[monthKey]) {
+            monthlyHistory[monthKey] = {
+                lezhin: {},
+                bomtoon: {},
+                ridi: {},
+                mrblue: {}
+            };
+        }
+
+        // 선택한 작품의 정산 금액과 날짜 계산
+        selected.forEach(({ plt, item }) => {
+            const cost = parseInt(item.work.coin, 10) || 0;
+
+            totals[plt] += cost;
+
+            if (cost > 0) {
+                if (!monthlyHistory[monthKey][plt]) {
+                    monthlyHistory[monthKey][plt] = {};
+                }
+
+                const title = item.work.title;
+
+                monthlyHistory[monthKey][plt][title] =
+                    (monthlyHistory[monthKey][plt][title] || 0)
+                    + cost;
+            }
+
+            // 같은 작품 ID는 기존처럼 정산일 동기화
+            if (item.work.id) {
+                Object.values(state[plt]).forEach(list => {
+                    list.forEach(work => {
+                        if (work.id === item.work.id) {
+                            work.lastDeductDate = nowStr;
                         }
+                    });
+                });
+
+            } else {
+                item.work.lastDeductDate = nowStr;
+            }
+        });
+
+        const totalCost = Object.values(totals).reduce(
+            (sum, amount) => sum + amount,
+            0
+        );
+
+        if (totalCost > 0) {
+
+            // 소멸 예정 재화를 먼저 사용한 뒤 일반 지갑 차감
+            const deductWallet = (plt, amount) => {
+                if (amount <= 0) return;
+
+                const expireKey = plt + 'Expire';
+
+                const expire = JSON.parse(
+                    localStorage.getItem(expireKey)
+                );
+
+                let remaining = amount;
+
+                if (
+                    expire &&
+                    (parseInt(expire.amount, 10) || 0) > 0
+                ) {
+                    const available = parseInt(
+                        expire.amount,
+                        10
+                    );
+
+                    const used = Math.min(
+                        available,
+                        remaining
+                    );
+
+                    expire.amount = available - used;
+                    remaining -= used;
+
+                    if (expire.amount <= 0) {
+                        localStorage.removeItem(expireKey);
+                    } else {
+                        localStorage.setItem(
+                            expireKey,
+                            JSON.stringify(expire)
+                        );
                     }
                 }
 
+                // 기존 마이너스 잔액 허용 유지
                 if (remaining > 0) {
-                    let currentWallet = parseInt(localStorage.getItem(prefix + 'Wallet') || 0);
-                    localStorage.setItem(prefix + 'Wallet', currentWallet - remaining);
+                    const walletKey =
+                        plt.charAt(0) + 'Wallet';
+
+                    const wallet = parseInt(
+                        localStorage.getItem(walletKey) || '0',
+                        10
+                    );
+
+                    localStorage.setItem(
+                        walletKey,
+                        String(wallet - remaining)
+                    );
                 }
             };
 
-            deductFromWallet('lezhin', tL, 'l');
-            deductFromWallet('bomtoon', tB, 'b');
-            deductFromWallet('ridi', tR, 'r');
-            deductFromWallet('mrblue', tM, 'm');
+            Object.entries(totals).forEach(
+                ([plt, amount]) => {
+                    deductWallet(plt, amount);
+                }
+            );
 
-
-            if (tL > 0) {
-                localStorage.removeItem('lezhinBonusExpire');
+            if (totals.lezhin > 0) {
+                localStorage.removeItem(
+                    'lezhinBonusExpire'
+                );
             }
 
-            const addedWon = tR + tM;
-            addWeeklySpent(tL + tB, addedWon);
-            localStorage.setItem('monthlyHistory', JSON.stringify(monthlyHistory));
+            // 기존 주간 통계 반영
+            addWeeklySpent(
+                totals.lezhin + totals.bomtoon,
+                totals.ridi + totals.mrblue
+            );
+
+            localStorage.setItem(
+                'monthlyHistory',
+                JSON.stringify(monthlyHistory)
+            );
         }
 
-        saveData();
+        // 오늘 작품 일부 정산 기능 유지
+        if (isTodayDeduction) {
+            if (selected.length < totalPendingCount) {
+                isTodayDeduction = false;
 
-        let msg = "성공적으로 정산되었습니다!\n";
-        if (tL > 0) msg += `- 레진 정산: ${tL} C\n`;
-        if (tB > 0) msg += `- 봄툰 정산: ${tB} C\n`;
-        if (tR > 0) msg += `- 리디 정산: ${tR} 캐시\n`;
-        if (tM > 0) msg += `- 미블 정산: ${tM} 머니\n`;
+                localStorage.setItem(
+                    'lastPartialDeductDate',
+                    nowStr
+                );
 
-        if (tL === 0 && tB === 0 && tR === 0 && tM === 0) {
-            msg += "(무료 감상 등 0원 정산 완료!)";
+            } else {
+                localStorage.removeItem(
+                    'lastPartialDeductDate'
+                );
+            }
         }
 
-        alert(msg);
-    } else {
-        alert("선택된 작품이 없어 정산되지 않았습니다.");
-    }
+        // 정산 완료 기준일 저장
+        const finishDate = getWebtoonDate();
 
-    // 오늘 작품 미리 정산은 기존 일부 정산 기능 유지
-    // 밀린 과거 정산은 선택하지 않은 작품을 건너뛰고 종료
-    if (isTodayDeduction) {
-        if (checkedCount < totalPendingCount) {
-            isTodayDeduction = false;
-            localStorage.setItem('lastPartialDeductDate', nowStr);
+        if (isTodayDeduction) {
+            finishDate.setDate(
+                finishDate.getDate() + 1
+            );
+        }
+
+        localStorage.setItem(
+            'lastCheckDate',
+            formatDate(finishDate)
+        );
+
+        // 기존 격주 연재 갱신 유지
+        autoUpdatePastBiweeklyDates();
+
+        // 작품·지갑·정산 기준을 모두 반영한 최종 저장
+        if (saveData(true) !== true) {
+            throw new Error(
+                '밀린 정산 통합 저장 실패'
+            );
+        }
+
+    } catch (error) {
+        console.error(
+            '밀린 정산 취소: 저장 실패',
+            error
+        );
+
+        // 변경된 작품 정보를 원래 객체에 복구
+        beforeWorks.forEach((old, work) => {
+            Object.keys(work).forEach(key => {
+                if (
+                    !Object.prototype.hasOwnProperty.call(
+                        old,
+                        key
+                    )
+                ) {
+                    delete work[key];
+                }
+            });
+
+            Object.assign(work, old);
+        });
+
+        // 자동 갱신 중 이동한 작품 배열도 복구
+        beforeLists.forEach(({
+            plt,
+            day,
+            list,
+            items
+        }) => {
+            list.splice(
+                0,
+                list.length,
+                ...items
+            );
+
+            state[plt][day] = list;
+        });
+
+        isTodayDeduction = beforeTodayMode;
+
+        let rollbackFailed = false;
+
+        // 지갑·정산 기록·저장 기준 복구
+        for (const [key, value] of beforeStorage) {
+            try {
+                if (
+                    localStorage.getItem(key) === value
+                ) {
+                    continue;
+                }
+
+                if (value === null) {
+                    localStorage.removeItem(key);
+                } else {
+                    localStorage.setItem(key, value);
+                }
+
+            } catch (rollbackError) {
+                rollbackFailed = true;
+
+                console.error(
+                    '정산 복구 실패:',
+                    key,
+                    rollbackError
+                );
+            }
+        }
+
+        try {
+            updateWeeklyStatUI();
+            refreshBalance();
+        } catch (uiError) {
+            console.error(
+                '정산 복구 화면 갱신 실패:',
+                uiError
+            );
+        }
+
+        if (rollbackFailed) {
+            alert(
+                '정산 저장과 일부 복구에 실패했습니다.\n' +
+                '앱을 계속 사용하지 말고 백업을 확인해 주세요.'
+            );
         } else {
-            localStorage.removeItem('lastPartialDeductDate');
+            alert(
+                '저장에 실패하여 정산을 취소했습니다.\n' +
+                '지갑·작품 정산일·기록을 복구했습니다.'
+            );
         }
+
+        // 실패 시 정산창 유지
+        return false;
+
+    } finally {
+        moboDeductionSaving = false;
     }
 
-    finishDeduction();
-}
+    // 최종 저장 성공 후에만 정산창 닫기
+    modal.style.display = 'none';
+    isTodayDeduction = false;
 
+    try {
+        updateWeeklyStatUI();
+        refreshBalance();
+        renderAll();
+
+        // 출석은 정산 종료 후
+        setTimeout(
+            checkAndShowAttendPopup,
+            0
+        );
+
+    } catch (uiError) {
+        console.error(
+            '정산 저장 후 화면 갱신 오류:',
+            uiError
+        );
+    }
+
+    let message = '성공적으로 정산되었습니다!\n';
+
+    if (totals.lezhin > 0) {
+        message += `- 레진 정산: ${totals.lezhin} C\n`;
+    }
+
+    if (totals.bomtoon > 0) {
+        message += `- 봄툰 정산: ${totals.bomtoon} C\n`;
+    }
+
+    if (totals.ridi > 0) {
+        message += `- 리디 정산: ${totals.ridi} 캐시\n`;
+    }
+
+    if (totals.mrblue > 0) {
+        message += `- 미블 정산: ${totals.mrblue} 머니\n`;
+    }
+
+    if (
+        Object.values(totals).every(
+            amount => amount === 0
+        )
+    ) {
+        message += '(무료 감상 등 0원 정산 완료!)';
+    }
+
+    alert(message);
+    return true;
+}
 
 // 🚨 [복구] '모두 건너뛰기' 버튼을 눌렀을 때 작동하는 함수
 function skipDeduction() {
@@ -2392,23 +2953,114 @@ function closeDeductionModal() {
 }
 
 function finishDeduction() {
-    document.getElementById('deduction-modal').style.display = 'none';
-    let dateToSave = getWebtoonDate();
-    if (isTodayDeduction) dateToSave.setDate(dateToSave.getDate() + 1);
-    localStorage.setItem('lastCheckDate', formatDate(dateToSave));
+    const modal = document.getElementById('deduction-modal');
+
+    // 이미 닫힌 정산창은 다시 처리하지 않음
+    if (!modal || modal.style.display !== 'flex') {
+        return false;
+    }
+
+    const dateToSave = getWebtoonDate();
+
+    if (isTodayDeduction) {
+        dateToSave.setDate(dateToSave.getDate() + 1);
+    }
+
+    let originalDate;
+    let originalMainData;
+    let snapshotReady = false;
+
+    try {
+        // 변경 전 정산 기준과 통합 저장 데이터를 보관
+        originalDate = localStorage.getItem('lastCheckDate');
+        originalMainData = localStorage.getItem(STORAGE_KEY);
+        snapshotReady = true;
+
+        // 정산 기준일 변경
+        localStorage.setItem(
+            'lastCheckDate',
+            formatDate(dateToSave)
+        );
+
+        // 통합 저장까지 성공해야 정산 완료
+        if (saveData(true) !== true) {
+            throw new Error('정산 기준일 통합 저장 실패');
+        }
+
+    } catch (error) {
+        console.error('정산 완료 저장 실패:', error);
+
+        let rollbackFailed = !snapshotReady;
+
+        // 변경 전 날짜와 통합 저장 데이터 복구
+        if (snapshotReady) {
+            for (const [key, value] of [
+                ['lastCheckDate', originalDate],
+                [STORAGE_KEY, originalMainData]
+            ]) {
+                try {
+                    if (localStorage.getItem(key) === value) {
+                        continue;
+                    }
+
+                    if (value === null) {
+                        localStorage.removeItem(key);
+                    } else {
+                        localStorage.setItem(key, value);
+                    }
+
+                } catch (restoreError) {
+                    rollbackFailed = true;
+
+                    console.error(
+                        '정산 기준 복구 실패:',
+                        key,
+                        restoreError
+                    );
+                }
+            }
+        }
+
+        if (rollbackFailed) {
+            alert(
+                '정산 저장과 일부 복구에 실패했습니다.\n' +
+                '기존 백업을 확인해 주세요.'
+            );
+        } else {
+            alert(
+                '정산 저장에 실패했습니다.\n' +
+                '정산창을 유지하고 이전 기준일로 복구했습니다.'
+            );
+        }
+
+        // 실패하면 창과 정산 모드를 그대로 유지
+        return false;
+    }
+
+    // 저장 성공 후에만 정산창 닫기
+    modal.style.display = 'none';
     isTodayDeduction = false;
 
-    // 정산 완료 후 격주 날짜 갱신
-    autoUpdatePastBiweeklyDates();
+    // 정산 저장 성공 후 격주 연재 갱신
+    try {
+        autoUpdatePastBiweeklyDates();
+    } catch (error) {
+        console.error('정산 후 연재일 갱신 오류:', error);
+    }
 
-    // 마지막 정산일 변경까지 통합 백업 데이터에 반영
-    saveData(true);
+    // 화면 갱신
+    try {
+        updateWeeklyStatUI();
+        refreshBalance();
+        renderAll();
+    } catch (error) {
+        console.error('정산 완료 후 화면 갱신 오류:', error);
+    }
 
-    updateWeeklyStatUI();
-    refreshBalance();
-    renderAll(); // 🌟 화면 새로고침
-
+    // 모든 처리가 끝난 다음 출석 확인
     setTimeout(checkAndShowAttendPopup, 0);
+
+    return true;
 }
 
 
@@ -4799,9 +5451,49 @@ async function saveWorkFinal(buyCount = null) {
         return false;
     }
 
-    // 사진 업로드와 작품 저장이 끝난 후 실제 지갑 차감
+    // 작품 저장 후 실제 지갑 차감
     if (deductionAmount > 0) {
-        executeDeduction(currentPlatform, title, deductionAmount);
+        let deductionSucceeded = false;
+
+        try {
+            deductionSucceeded =
+                executeDeduction(
+                    currentPlatform,
+                    title,
+                    deductionAmount
+                ) === true;
+
+        } catch (error) {
+            console.error('작품 등록 후 차감 오류:', error);
+        }
+
+        // 차감에 실패했다면 작품 추가·수정도 취소
+        if (!deductionSucceeded) {
+
+            // 기존 작품 목록 복구
+            state[currentPlatform] = previousPlatformState;
+
+            // 먼저 저장됐던 작품 변경도 되돌리기
+            let restored = false;
+
+            try {
+                restored = saveData(true) === true;
+            } catch (error) {
+                console.error('작품 데이터 복구 저장 실패:', error);
+            }
+
+            if (!restored) {
+                alert(
+                    '차감 실패 후 작품 데이터 복구 저장에도 실패했습니다.\n' +
+                    '앱을 계속 사용하지 말고 기존 백업을 확인해 주세요.'
+                );
+
+                return false;
+            }
+
+            renderAll();
+            return false;
+        }
     }
 
     autoUpdatePastBiweeklyDates();
