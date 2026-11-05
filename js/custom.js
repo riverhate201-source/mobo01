@@ -1122,6 +1122,10 @@ function closeCalcModal() {
 function setCalcMode(mode) {
     const isQuick = mode === 'quick';
 
+    // 일반 계산기와 빠른 차감은 기존 레이아웃 사용
+    document.getElementById('calc-modal')
+        ?.classList.remove('mobo-cum-contained');
+
     // 일반 계산기 / 빠른 차감에서는 닫기 버튼 표시
     const closeButton = document.getElementById('calc-main-close');
 
@@ -1172,13 +1176,35 @@ const MOBO_CUM_PLATFORMS = {
     lezhin: ['레진', 'C'],
     bomtoon: ['봄툰', 'C'],
     ridi: ['리디', '캐시'],
-    mrblue: ['미스터블루', '머니']
+    mrblue: ['미블', '머니']
 };
 
 let moboCumEditingId = null;
 let moboCumEditingOriginal = null;
 let moboCumSaving = false;
 
+// 코인백·캐시백·머니백 비율 입력 제한 (0~100%)
+function moboLimitCoinbackPercent(input, allowDecimal = false) {
+    const value = input.value;
+
+    // 일반 계산기: 정수만 허용
+    // 누적 계산기: 소수점 둘째 자리까지 허용
+    const validFormat = allowDecimal
+        ? /^\d{0,3}(\.\d{0,2})?$/.test(value)
+        : /^\d{0,3}$/.test(value);
+
+    const validRange =
+        value === '' ||
+        (value !== '.' && Number(value) <= 100);
+
+    if (validFormat && validRange) {
+        // 정상 입력일 때만 마지막 유효 값 저장
+        input.dataset.lastValidPercent = value;
+    } else {
+        // 문자·음수·100 초과 입력은 이전 정상 값으로 복원
+        input.value = input.dataset.lastValidPercent ?? '';
+    }
+}
 
 // 계산값 검증 및 계산
 function moboCumCalculate(values) {
@@ -1714,7 +1740,7 @@ document.addEventListener('input', event => {
             '#calc-coinback-percent'
         )
     ) {
-        moboCumInvalidateClassic();
+        moboCalcClearResult();
     }
 });
 
@@ -1724,7 +1750,7 @@ document.addEventListener('change', event => {
             '#calc-platform, #calc-coinback-toggle'
         )
     ) {
-        moboCumInvalidateClassic();
+        moboCalcClearResult();
     }
 });
 
@@ -1743,6 +1769,8 @@ function moboCumNode(tag, className, content) {
     return node;
 }
 
+// 플랫폼별 접힘 / 펼침 상태 유지
+const moboCumGroupOpenState = new Map();
 
 // 누적 목록 화면 출력
 function moboCumRender() {
@@ -1753,6 +1781,20 @@ function moboCumRender() {
         document.getElementById('mobo-cum-clear');
 
     const items = moboCumRead();
+
+    // 목록을 다시 그릴 때 플랫폼별 스크롤 위치 기억
+    const previousScroll = new Map(
+        [...container.querySelectorAll('.mobo-cum-work-scroll')]
+            .map(list => [
+                list.dataset.platform,
+                list.scrollTop
+            ])
+    );
+
+    // 플랫폼 목록 전체의 현재 스크롤 위치 기억
+    const previousOuterScroll = container.scrollTop;
+
+    container.replaceChildren();
 
     container.replaceChildren();
 
@@ -1792,8 +1834,7 @@ function moboCumRender() {
             moboCumNode(
                 'p',
                 'mobo-cum-empty',
-                '아직 담은 작품이 없어요. ' +
-                '아래 버튼으로 첫 작품을 계산해 보세요!'
+                '아직 담은 작품이 없어요. '
             )
         );
 
@@ -1811,6 +1852,12 @@ function moboCumRender() {
 
         if (!groupItems.length) continue;
 
+        // 플랫폼별 혜택 명칭
+        const benefitLabel =
+            platform === 'ridi' ? '캐시백' :
+                platform === 'mrblue' ? '머니백' :
+                    '코인백';
+
         // '빼기'로 제외한 작품은 합산하지 않음
         const chosen = groupItems.filter(
             item => item.included
@@ -1826,13 +1873,145 @@ function moboCumRender() {
             'mobo-cum-group'
         );
 
-        section.appendChild(
-            moboCumNode(
-                'h4',
-                'mobo-cum-group-title',
-                `${label} · ${chosen.length}/${groupItems.length}개 포함`
-            )
+        // 첫 번째 플랫폼은 펼침, 나머지는 접힘
+        // 사용자가 변경한 상태는 다시 그려도 유지
+        const expanded = moboCumGroupOpenState.has(platform)
+            ? moboCumGroupOpenState.get(platform)
+            : container.children.length === 0;
+
+        moboCumGroupOpenState.set(platform, expanded);
+
+        // 플랫폼 제목과 접기/펼치기 화살표
+        const header = moboCumNode(
+            'div',
+            'mobo-cum-group-head'
         );
+
+        const heading = moboCumNode(
+            'h4',
+            'mobo-cum-group-title',
+            `${label} · ${chosen.length}/${groupItems.length}개 포함`
+        );
+
+        const foldButton = moboCumNode(
+            'button',
+            'mobo-cum-fold-button'
+        );
+
+        foldButton.type = 'button';
+
+        foldButton.setAttribute(
+            'aria-expanded',
+            String(expanded)
+        );
+
+        foldButton.setAttribute(
+            'aria-controls',
+            `mobo-cum-list-${platform}`
+        );
+
+        foldButton.setAttribute(
+            'aria-label',
+            `${label} 목록 ${expanded ? '접기' : '펼치기'}`
+        );
+
+        // Lucide 화살표
+        const foldIcon = moboCumNode('i');
+
+        foldIcon.setAttribute(
+            'data-lucide',
+            'chevron-down'
+        );
+
+        foldIcon.setAttribute('aria-hidden', 'true');
+
+        foldButton.appendChild(foldIcon);
+
+        header.append(heading, foldButton);
+        section.appendChild(header);
+
+        // 플랫폼별 작품 목록 영역
+        const workList = moboCumNode(
+            'div',
+            'mobo-cum-work-list'
+        );
+
+        workList.id = `mobo-cum-list-${platform}`;
+
+        // 펼침 상태에 따라 애니메이션 클래스 적용
+        workList.classList.toggle('is-open', expanded);
+
+        // 이미 펼쳐진 목록은 바로 스크롤 가능
+        workList.classList.toggle('is-scroll-ready', expanded);
+
+        // 실제 작품과 스크롤이 들어갈 내부 영역
+        const workScroll = moboCumNode(
+            'div',
+            'mobo-cum-work-scroll'
+        );
+
+        workScroll.dataset.platform = platform;
+        workScroll.inert = !expanded;
+
+        workList.setAttribute(
+            'aria-hidden',
+            String(!expanded)
+        );
+
+        workList.appendChild(workScroll);
+
+        // 화살표 클릭 시 부드럽게 접기 / 펼치기
+        // 펼침 애니메이션이 끝난 뒤 스크롤 활성화
+        workList.addEventListener('transitionend', event => {
+            if (
+                event.target !== workList ||
+                event.propertyName !== 'grid-template-rows'
+            ) {
+                return;
+            }
+
+            if (workList.classList.contains('is-open')) {
+                workList.classList.add('is-scroll-ready');
+            }
+        });
+
+        // 접기 / 펼치기
+        foldButton.onclick = () => {
+            const next = !moboCumGroupOpenState.get(platform);
+
+            moboCumGroupOpenState.set(platform, next);
+
+            // 움직이는 동안 스크롤바 숨기기
+            workList.classList.remove('is-scroll-ready');
+
+            // 접기 / 펼치기 애니메이션
+            workList.classList.toggle('is-open', next);
+
+            // 모션 최소화 설정에서는 즉시 활성화
+            if (
+                next &&
+                window.matchMedia('(prefers-reduced-motion: reduce)').matches
+            ) {
+                workList.classList.add('is-scroll-ready');
+            }
+
+            workScroll.inert = !next;
+
+            workList.setAttribute(
+                'aria-hidden',
+                String(!next)
+            );
+
+            foldButton.setAttribute(
+                'aria-expanded',
+                String(next)
+            );
+
+            foldButton.setAttribute(
+                'aria-label',
+                `${label} 목록 ${next ? '접기' : '펼치기'}`
+            );
+        };
 
         // 총 구매 비용 / 예상 코인백 가로 배치
         const summary = moboCumNode(
@@ -1867,7 +2046,7 @@ function moboCumRender() {
             moboCumNode(
                 'span',
                 'mobo-cum-summary-label',
-                '예상 코인백'
+                `예상 ${benefitLabel}`
             ),
             moboCumNode(
                 'strong',
@@ -1896,7 +2075,7 @@ function moboCumRender() {
                 'div',
                 'mobo-cum-card-desc',
                 `${item.amount.toLocaleString()} ${unit}` +
-                ` · 코인백 +${item.cashback.toLocaleString()} ${unit}` +
+                ` · ${benefitLabel} +${item.cashback.toLocaleString()} ${unit}` +
                 (item.included ? '' : ' · 합계에서 제외')
             );
 
@@ -1945,11 +2124,27 @@ function moboCumRender() {
             // 왼쪽 작품 정보 / 오른쪽 버튼 3개
             card.append(info, actions);
 
-            section.appendChild(card);
+            // 실제 스크롤 영역에 작품 추가
+            workScroll.appendChild(card);
         });
 
+        // 합계 아래에 작품 목록 추가
+        section.appendChild(workList);
+
         container.appendChild(section);
+
+        // 화면 갱신 전 스크롤 위치 복원
+        workList.scrollTop =
+            previousScroll.get(platform) || 0;
     }
+
+    // 새로 생성된 화살표를 Lucide 아이콘으로 변환
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+
+    // 목록을 다시 그린 뒤 기존 스크롤 위치 복원
+    container.scrollTop = previousOuterScroll;
 }
 
 
@@ -1963,6 +2158,105 @@ function moboCumScrollTop() {
         content.scrollTop = 0;
     }
 }
+
+// =========================================
+// 누적 계산 - PC 모달 전체 마우스 휠 스크롤
+// =========================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('calc-modal');
+
+    if (!modal) return;
+
+    const modalContent = modal.querySelector('.modal-content');
+
+    modal.addEventListener('wheel', (event) => {
+
+        // 누적 계산 화면에서만 작동
+        if (!modal.classList.contains('mobo-cum-contained')) {
+            return;
+        }
+
+        // 모달 바깥 배경에서는 작동하지 않음
+        if (!modalContent.contains(event.target)) {
+            return;
+        }
+
+        // 작품 수정 화면에서는 기존 스크롤 유지
+        const listScreen = document.getElementById(
+            'mobo-cum-list-screen'
+        );
+
+        if (
+            !listScreen ||
+            getComputedStyle(listScreen).display === 'none'
+        ) {
+            return;
+        }
+
+        // 전체 플랫폼 목록
+        const platformList = document.getElementById(
+            'mobo-cum-items'
+        );
+
+        if (!platformList) return;
+
+        // 플랫폼 목록 안에서는 브라우저의 자연스러운 스크롤 사용
+        // 각 플랫폼 내부의 작품 목록 스크롤도 그대로 유지
+        if (platformList.contains(event.target)) {
+            return;
+        }
+
+        const direction = Math.sign(event.deltaY);
+
+        if (!direction) return;
+
+        // 마우스가 플랫폼 내부 작품 목록 위에 있는지 확인
+        const workScroll = event.target instanceof Element
+            ? event.target.closest('.mobo-cum-work-scroll')
+            : null;
+
+        if (
+            workScroll &&
+            platformList.contains(workScroll)
+        ) {
+            const canScrollInside = direction > 0
+                ? workScroll.scrollTop + workScroll.clientHeight
+                < workScroll.scrollHeight - 1
+                : workScroll.scrollTop > 1;
+
+            // 작품 목록을 더 스크롤할 수 있으면 기존 동작 유지
+            if (canScrollInside) {
+                return;
+            }
+        }
+
+        // 전체 플랫폼 목록에 스크롤할 내용이 없으면 종료
+        if (
+            platformList.scrollHeight <=
+            platformList.clientHeight + 1
+        ) {
+            return;
+        }
+
+        // 모달 내부 휠을 플랫폼 목록 스크롤로 전달
+        event.preventDefault();
+
+        // 마우스 휠 / 터치패드 단위 차이 반영
+        const multiplier =
+            event.deltaMode === 1 ? 16 :
+                event.deltaMode === 2 ? platformList.clientHeight :
+                    1;
+
+        // 모달의 제목이나 하단 버튼 위에서는
+        // 플랫폼 목록을 부드럽게 스크롤
+        platformList.scrollBy({
+            top: event.deltaY * multiplier,
+            behavior: 'smooth'
+        });
+
+    }, { passive: false });
+});
 
 
 // 일반 계산기 화면으로 돌아가기
@@ -1992,6 +2286,10 @@ function moboCumBack() {
 function moboCumOpen() {
     // 누적 계산도 정주행 계산기의 하위 기능
     setCalcMode('calc');
+
+    // 누적 계산에서만 높이 제한 + 내부 스크롤 적용
+    document.getElementById('calc-modal')
+        ?.classList.add('mobo-cum-contained');
 
     // 상단 탭 메뉴 유지
     document.getElementById(
@@ -2031,7 +2329,7 @@ function moboCumShowList() {
 
     document.getElementById(
         'mobo-cum-list-screen'
-    ).style.display = 'block';
+    ).style.display = 'flex';
 
     document.getElementById(
         'mobo-cum-editor-screen'
@@ -2172,6 +2470,11 @@ function moboCumDraft() {
             ).value
             : '0'
     };
+
+    // 새로 입력하거나 수정하는 비율은 최대 100%
+    if (Number(values.percent) > 100) {
+        return null;
+    }
 
     const calculation = moboCumCalculate(values);
 
@@ -2804,6 +3107,35 @@ window.addEventListener('storage', event => {
     }
 });
 
+// 빠른 차감 및 구매 화수 입력 제한
+function moboLimitPositiveInteger(input) {
+    const value = input.value;
+
+    const valid =
+        /^\d{0,16}$/.test(value) &&
+        (
+            value === '' ||
+            Number.isSafeInteger(Number(value))
+        );
+
+    if (valid) {
+        input.dataset.lastValidPositiveInteger = value;
+        return;
+    }
+
+    const previous =
+        input.dataset.lastValidPositiveInteger ?? '';
+
+    input.value =
+        /^\d{0,16}$/.test(previous) &&
+            (
+                previous === '' ||
+                Number.isSafeInteger(Number(previous))
+            )
+            ? previous
+            : '';
+}
+
 // 빠른 차감 중복 실행 방지
 let quickDeductionInProgress = false;
 
@@ -2899,7 +3231,11 @@ function updateQuickDeductionPreview() {
     notice.textContent = '';
 
     // 올바른 금액을 입력했을 때만 계산
-    if (!rawAmount || !Number.isSafeInteger(amount) || amount <= 0) {
+    if (
+        !/^\d+$/.test(rawAmount) ||
+        !Number.isSafeInteger(amount) ||
+        amount <= 0
+    ) {
         return;
     }
 
@@ -2991,7 +3327,11 @@ function quickDeductFromModal() {
     }
 
     // 차감 금액 검증
-    if (!rawAmount || !Number.isSafeInteger(amount) || amount <= 0) {
+    if (
+        !/^\d+$/.test(rawAmount) ||
+        !Number.isSafeInteger(amount) ||
+        amount <= 0
+    ) {
         alert('사용 금액은 1 이상의 정수로 입력해 주세요.');
         return;
     }
@@ -3144,59 +3484,169 @@ function updateCalcBalanceNotice() {
     notice.style.display = 'block';
 }
 
+// 정주행 계산기: 0~100,000 범위의 정수만 입력
+function moboLimitCalcInteger(input) {
+    const value = input.value;
+
+    const isValid =
+        /^\d{0,6}$/.test(value) &&
+        (value === '' || Number(value) <= 100000);
+
+    if (isValid) {
+        input.dataset.lastValidCalc = value;
+    } else {
+        input.value = input.dataset.lastValidCalc ?? '';
+    }
+}
+
+
+// 이전 계산 결과 및 차감 금액 초기화
+function moboCalcClearResult() {
+    moboCumInvalidateClassic();
+
+    currentCalcCoin = 0;
+
+    const resultBox =
+        document.getElementById('calc-result-box');
+
+    if (resultBox) {
+        resultBox.style.display = 'none';
+    }
+
+    const notice =
+        document.getElementById('calc-balance-notice');
+
+    if (notice) {
+        notice.style.display = 'none';
+        notice.textContent = '';
+    }
+}
 
 // 수정: 계산기 로직 (JS에 숨어있던 인라인 색상 주입 로직 완전 제거!)
 function calculateCoins() {
-    moboCumInvalidateClassic();
-    const total = parseInt(document.getElementById('calc-total').value) || 0;
-    const current = parseInt(document.getElementById('calc-current').value) || 0;
-    const price = parseInt(document.getElementById('calc-price').value) || 0;
-    const plt = document.getElementById('calc-platform') ? document.getElementById('calc-platform').value : 'coin';
+    // 이전 결과와 차감 금액 초기화
+    moboCalcClearResult();
 
-    if (total === 0 || total <= current) {
-        alert("총 화수가 현재 진도보다 커야 계산할 수 있어요!");
+    const get = id => document.getElementById(id);
+
+    const totalRaw = get('calc-total').value.trim();
+    const currentRaw = get('calc-current').value.trim();
+    const priceRaw = get('calc-price').value.trim();
+
+    const plt = get('calc-platform').value;
+
+    const isCoinback =
+        get('calc-coinback-toggle').checked;
+
+    const percentRaw = isCoinback
+        ? get('calc-coinback-percent').value.trim()
+        : '0';
+
+    // 정수 이외의 입력은 계산하지 않음
+    if (
+        !/^\d+$/.test(totalRaw) ||
+        !/^\d*$/.test(currentRaw) ||
+        !/^\d+$/.test(priceRaw)
+    ) {
+        alert(
+            '화수와 가격은 0 이상의 정수로 입력해 주세요.'
+        );
         return;
     }
 
-    const remainEp = total - current;
-    const needCoin = remainEp * price;
+    // 코인백은 최대 100%
+    if (
+        isCoinback &&
+        (
+            !/^\d{1,3}$/.test(percentRaw) ||
+            Number(percentRaw) > 100
+        )
+    ) {
+        alert(
+            '돌려받는 비율은 0~100%로 입력해 주세요.'
+        );
+        return;
+    }
+
+    // 기존 누적 계산의 검증 함수를 재사용
+    const calc = moboCumCalculate({
+        total: totalRaw,
+        current: currentRaw === '' ? '0' : currentRaw,
+        price: priceRaw,
+        percent: percentRaw
+    });
+
+    if (!calc) {
+        alert(
+            '입력값을 확인해 주세요.\n\n' +
+            '총 화수: 1~100,000화\n' +
+            '현재 진도: 총 화수보다 작게\n' +
+            '1화당 가격: 0~100,000'
+        );
+        return;
+    }
+
+    // 0으로 나누는 상황 방지
+    if (isCoinback && calc.price === 0) {
+        alert(
+            '코인백을 계산하려면 ' +
+            '1화당 가격이 1 이상이어야 해요.'
+        );
+        return;
+    }
+
+    if (!['coin', 'cash', 'won'].includes(plt)) {
+        alert('계산 플랫폼을 다시 선택해 주세요.');
+        return;
+    }
+
+    const remainEp = calc.total - calc.current;
+    const needCoin = calc.amount;
+
     currentCalcCoin = needCoin;
 
-    // 🌟 플랫폼별 단위 세팅 (복잡했던 색상 로직은 싹 지웠습니다!)
+    // 플랫폼별 단위
     let unit = 'C';
-    if (plt === 'cash') { unit = '캐시'; }
-    else if (plt === 'won') { unit = '머니'; }
 
-    // 🌟 결과 적용 (쉼표 포맷팅 + 맞춤 단위 글씨)
-    document.getElementById('calc-remain-ep').textContent = formatNum(remainEp);
-    const needCoinEl = document.getElementById('calc-need-coin');
-    needCoinEl.textContent = formatNum(needCoin) + ' ' + unit;
-    // 🚨 숨어있던 인라인 스타일 (needCoinEl.style.color = color;) 박멸!
+    if (plt === 'cash') {
+        unit = '캐시';
+    } else if (plt === 'won') {
+        unit = '머니';
+    }
 
-    // 🌟 코인백 로직 계산
-    const isCoinback = document.getElementById('calc-coinback-toggle').checked;
-    const coinbackResultArea = document.getElementById('calc-coinback-result');
+    // 계산 결과 표시
+    get('calc-remain-ep').textContent =
+        formatNum(remainEp);
+
+    get('calc-need-coin').textContent =
+        formatNum(needCoin) + ' ' + unit;
+
+    const coinbackResultArea =
+        get('calc-coinback-result');
 
     if (isCoinback) {
-        const percent = parseInt(document.getElementById('calc-coinback-percent').value) || 0;
-        // 돌려받는 코인 계산 (소수점 버림)
-        const backCoin = Math.floor(needCoin * (percent / 100));
-        // 돌려받은 코인으로 더 볼 수 있는 화수 계산
-        const extraEp = Math.floor(backCoin / price);
+        const backCoin = calc.cashback;
 
-        document.getElementById('calc-back-coin').textContent = formatNum(backCoin) + ' ' + unit;
-        document.getElementById('calc-extra-ep').textContent = formatNum(extraEp);
-        // 🚨 숨어있던 인라인 스타일 (calc-extra-ep.style.color = color;) 박멸!
+        const extraEp =
+            Math.floor(backCoin / calc.price);
+
+        get('calc-back-coin').textContent =
+            formatNum(backCoin) + ' ' + unit;
+
+        get('calc-extra-ep').textContent =
+            formatNum(extraEp);
 
         coinbackResultArea.style.display = 'block';
     } else {
         coinbackResultArea.style.display = 'none';
     }
 
-    document.getElementById('calc-result-box').style.display = 'block';
+    get('calc-result-box').style.display = 'block';
+
+    // 기존 지갑 선택 기능 유지
     prepareCalcWalletChoice(plt);
 
-    // 화면에 계산된 결과만 누적 저장 대상으로 인정
+    // 정상 계산 결과만 누적 담기 허용
     moboCumCaptureClassicResult();
 }
 
@@ -5049,6 +5499,195 @@ function updatePlatformOrder() {
     });
 }
 
+// =========================================
+// 연재일 미설정 작품 안내
+// 일괄 등록 시 날짜가 없는 작품만 감지
+// =========================================
+
+
+// 날짜를 설정하지 않은 작품인지 판정
+function moboIsPendingSchedule(work) {
+    const cycle = String(work?.cycle ?? '').trim();
+
+    return (
+        cycle === '10일 연재' ||
+        cycle === '격주 연재'
+    );
+}
+
+
+// 전체 플랫폼에서 미설정 작품 찾기
+function moboGetPendingSchedules() {
+    const pending = [];
+    const seen = new Set();
+
+    for (const platform of [
+        'lezhin',
+        'bomtoon',
+        'ridi',
+        'mrblue'
+    ]) {
+        const platformWorks = state?.[platform] || {};
+
+        for (const [day, works] of Object.entries(platformWorks)) {
+            if (!Array.isArray(works)) continue;
+
+            works.forEach((work, index) => {
+                if (!moboIsPendingSchedule(work)) return;
+
+                // 같은 작품이 여러 목록에 있어도 중복 표시 방지
+                const key = work.id
+                    ? `${platform}:${work.id}`
+                    : `${platform}:${day}:${index}`;
+
+                if (seen.has(key)) return;
+
+                seen.add(key);
+
+                pending.push({
+                    platform,
+                    day,
+                    index,
+                    title: String(work.title || '제목 없음'),
+                    cycle: String(work.cycle).trim()
+                });
+            });
+        }
+    }
+
+    return pending;
+}
+
+
+// 메인 화면 안내 업데이트
+function moboUpdatePendingScheduleBanner() {
+    const banner = document.getElementById(
+        'mobo-pending-schedule-banner'
+    );
+
+    const title = document.getElementById(
+        'mobo-pending-schedule-count'
+    );
+
+    const detail = document.getElementById(
+        'mobo-pending-schedule-detail'
+    );
+
+    if (!banner || !title || !detail) return;
+
+    const pending = moboGetPendingSchedules();
+
+    // 미설정 작품이 없다면 안내 숨기기
+    banner.style.display =
+        pending.length ? 'block' : 'none';
+
+    if (!pending.length) return;
+
+    const tenDayCount = pending.filter(
+        work => work.cycle === '10일 연재'
+    ).length;
+
+    const biweeklyCount =
+        pending.length - tenDayCount;
+
+    title.textContent =
+        `연재일 설정이 필요한 작품 ${pending.length}개`;
+
+    detail.textContent =
+        `10일 연재 ${tenDayCount}개 · ` +
+        `격주 연재 ${biweeklyCount}개`;
+}
+
+
+// 미설정 작품 목록 열기
+function moboOpenPendingScheduleList() {
+    const modal = document.getElementById(
+        'mobo-pending-schedule-modal'
+    );
+
+    const list = document.getElementById(
+        'mobo-pending-schedule-list'
+    );
+
+    if (!modal || !list) return;
+
+    const pending = moboGetPendingSchedules();
+
+    list.replaceChildren();
+
+    const platformLabels = {
+        lezhin: '레진',
+        bomtoon: '봄툰',
+        ridi: '리디',
+        mrblue: '미블'
+    };
+
+    pending.forEach(item => {
+
+        // 작품별 수정 버튼
+        const button = document.createElement('button');
+
+        button.type = 'button';
+        button.className = 'mobo-pending-schedule-item';
+
+        const info = document.createElement('span');
+        info.className = 'mobo-pending-schedule-info';
+
+        const name = document.createElement('strong');
+        name.textContent = item.title;
+
+        const subtitle = document.createElement('small');
+
+        subtitle.textContent =
+            `${platformLabels[item.platform]} · ` +
+            `${item.cycle} · 날짜 미설정`;
+
+        const edit = document.createElement('span');
+        edit.className = 'mobo-pending-schedule-edit';
+        edit.textContent = '수정';
+
+        info.append(name, subtitle);
+        button.append(info, edit);
+
+        button.addEventListener('click', () => {
+
+            // 목록이 열린 사이 작품이 변경됐는지 확인
+            const work =
+                state[item.platform]?.[item.day]?.[item.index];
+
+            if (!moboIsPendingSchedule(work)) {
+                moboOpenPendingScheduleList();
+                return;
+            }
+
+            // 기존 작품 상세 수정 기능 재사용
+            actionPlt = item.platform;
+            actionOrigDay = item.day;
+            actionIdx = item.index;
+
+            moboClosePendingScheduleList();
+
+            editFromAction();
+        });
+
+        list.appendChild(button);
+    });
+
+    modal.style.display = 'flex';
+}
+
+
+// 미설정 작품 목록 닫기
+function moboClosePendingScheduleList() {
+    const modal = document.getElementById(
+        'mobo-pending-schedule-modal'
+    );
+
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
 function renderAll() {
     ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
         const el = document.getElementById(plt + '-day-display');
@@ -5057,7 +5696,11 @@ function renderAll() {
     document.querySelectorAll('.day-btn').forEach(btn => { if (btn.dataset.day === viewDay) btn.classList.add('active'); else btn.classList.remove('active'); });
 
     ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => renderList(plt));
+
     refreshBalance();
+
+    // 작품 등록·수정·삭제 후 연재일 미설정 안내 갱신
+    moboUpdatePendingScheduleBanner();
 }
 
 let draggedIdx = null; let draggedPlt = null; let draggedDay = null;
@@ -6063,6 +6706,188 @@ function refreshBalance() {
 function openActionModal(plt, origDay, idx) { actionPlt = plt; actionOrigDay = origDay; actionIdx = idx; document.getElementById('action-title').textContent = state[plt][origDay][idx].title; document.getElementById('action-modal').style.display = 'flex'; }
 function closeActionModal() { document.getElementById('action-modal').style.display = 'none'; }
 
+// =========================================
+// 모보 10일 연재 자동완성
+// 입력 중: 회색 추천 표시
+// 입력 종료: 추천 날짜 확정
+// =========================================
+
+
+// 1. 입력한 글자로 시작하는 연재일 추천
+function moboGetTenDaySuggestion(value) {
+    const raw = String(value ?? '').trim();
+
+    if (!raw) return null;
+
+    // 시작일 1~10일
+    for (let start = 1; start <= 11; start++) {
+        const completed =
+            `${start}/${start + 10}/${start + 20}`;
+
+        // 실제 입력한 부분은 그대로 유지
+        if (
+            completed.startsWith(raw) &&
+            completed !== raw
+        ) {
+            return completed;
+        }
+    }
+
+    return null;
+}
+
+
+// 2. 입력 중 회색 추천값 표시
+// 10일 연재 실시간 슬래시 + 회색 자동완성
+function moboUpdateTenDaySuggestion(input, event) {
+    const original = input.value;
+
+    const atEnd =
+        input.selectionStart === original.length &&
+        input.selectionEnd === original.length;
+
+    const deleting =
+        event?.inputType?.startsWith('delete') ?? false;
+
+    // 입력 중에는 슬래시를 실시간 자동 삽입
+    // 삭제 중이나 중간 글자 수정 중에는 강제로 변경하지 않음
+    if (atEnd && !deleting) {
+        let digits = original.replace(/\D/g, '');
+
+        const firstLength =
+            /^(10|11)/.test(digits) ? 2 : 1;
+
+        digits = digits.slice(0, firstLength + 4);
+
+        let formatted = digits.slice(0, firstLength);
+
+        // 1은 10의 시작일 수도 있으므로 잠시 대기
+        // 2~9는 즉시 슬래시 삽입
+        // 10은 두 번째 숫자가 입력되면 슬래시 삽입
+        const addFirstSlash =
+            (firstLength === 2 && digits.length >= 2) ||
+            (
+                firstLength === 1 &&
+                (
+                    digits.length > 1 ||
+                    /^[2-9]$/.test(digits) ||
+                    original.includes('/')
+                )
+            );
+
+        if (addFirstSlash) {
+            formatted += '/';
+        }
+
+        if (digits.length > firstLength) {
+            const middle = digits.slice(
+                firstLength,
+                firstLength + 2
+            );
+
+            formatted += middle;
+
+            if (middle.length === 2) {
+                formatted += '/';
+            }
+
+            formatted += digits.slice(firstLength + 2);
+        }
+
+        if (formatted !== original) {
+            input.value = formatted;
+            input.setSelectionRange(
+                formatted.length,
+                formatted.length
+            );
+        }
+    }
+
+    // 아직 입력하지 않은 부분만 회색으로 추천
+    const ghost =
+        document.getElementById('mobo-ten-day-ghost');
+
+    const typed =
+        document.getElementById('mobo-ten-day-typed');
+
+    const suffix =
+        document.getElementById('mobo-ten-day-suffix');
+
+    if (!ghost || !typed || !suffix) return;
+
+    const suggestion =
+        moboGetTenDaySuggestion(input.value);
+
+    if (
+        !suggestion ||
+        document.activeElement !== input ||
+        input.selectionStart !== input.value.length
+    ) {
+        ghost.style.display = 'none';
+        return;
+    }
+
+    typed.textContent = input.value;
+
+    suffix.textContent =
+        suggestion.slice(input.value.length);
+
+    const style = getComputedStyle(input);
+
+    ghost.style.font = style.font;
+    ghost.style.letterSpacing = style.letterSpacing;
+    ghost.style.lineHeight = style.lineHeight;
+
+    ghost.style.display = 'block';
+}
+
+
+// 3. 입력창을 벗어나면 자동완성 확정
+function moboCompleteTenDayDates(input) {
+    if (!input) return;
+
+    const raw = input.value.trim();
+
+    const suggestion =
+        moboGetTenDaySuggestion(raw);
+
+    if (suggestion) {
+
+        // 3 → 3/13/23
+        // 10 → 10/20/30
+        // 3/13 → 3/13/23
+        input.value = suggestion;
+
+    } else if (/^\d{5,6}$/.test(raw)) {
+
+        // 숫자만 모두 직접 입력한 경우
+        // 31323 → 3/13/23
+        // 102030 → 10/20/30
+
+        const firstLength =
+            /^(10|11)/.test(raw) ? 2 : 1;
+
+        if (raw.length === firstLength + 4) {
+            input.value = [
+                raw.slice(0, firstLength),
+                raw.slice(
+                    firstLength,
+                    firstLength + 2
+                ),
+                raw.slice(firstLength + 2)
+            ].join('/');
+        }
+    }
+
+    // 추천 표시 제거
+    const ghost =
+        document.getElementById('mobo-ten-day-ghost');
+
+    if (ghost) {
+        ghost.style.display = 'none';
+    }
+}
+
 function toggleCycleInputs(changedEl) {
     const chk10 = document.getElementById('chk-10day');
     const dayChecks = document.querySelectorAll('input[name="day-chk"]');
@@ -6119,8 +6944,13 @@ function toggleCycleInputs(changedEl) {
 
     // 2. [입력창 노출 관리]
     // 10일 연재 칸 보이기/숨기기
-    const input10 = document.getElementById('input-10day-dates');
-    if (chk10 && input10) input10.style.display = chk10.checked ? 'block' : 'none';
+    const tenDayWrap =
+        document.getElementById('mobo-ten-day-wrap');
+
+    if (chk10 && tenDayWrap) {
+        tenDayWrap.style.display =
+            chk10.checked ? 'block' : 'none';
+    }
 
     // 주기 드롭다운에 따른 옆칸 보이기/숨기기
     const typeVal = typeSelect.value;
@@ -6219,7 +7049,7 @@ function updateAddDeductModalPreview() {
     const cost = count * price;
 
     const valid =
-        countRaw !== '' &&
+        /^\d+$/.test(countRaw) &&
         Number.isSafeInteger(count) &&
         count > 0 &&
         Number.isSafeInteger(price) &&
@@ -6275,7 +7105,7 @@ async function applyAddDeductAndSave() {
     const price = Number(document.getElementById('input-coin').value);
     const cost = buyCount * price;
 
-    if (!raw ||
+    if (!/^\d+$/.test(raw) ||
         !Number.isSafeInteger(buyCount) ||
         buyCount <= 0 ||
         !Number.isSafeInteger(price) ||
@@ -6732,7 +7562,7 @@ function isScheduledBreakReturnDate(dateStr) {
     if (document.getElementById('chk-10day')?.checked) {
         const raw =
             document.getElementById('input-10day-dates')?.value.trim()
-            || '10/20/30';
+            || '';
 
         const match = raw.match(
             /^\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*$/
@@ -6840,6 +7670,157 @@ function validateBreakReturnDate(fromPicker = false) {
     return true;
 }
 
+// 작품 1화당 가격: 0~100,000 정수만 허용
+function moboLimitWorkPrice(input) {
+    const value = input.value;
+
+    const isValid =
+        /^\d{0,6}$/.test(value) &&
+        (value === '' || Number(value) <= 100000);
+
+    if (isValid) {
+        input.dataset.lastValidWorkPrice = value;
+    } else {
+        const previous =
+            input.dataset.lastValidWorkPrice ?? '';
+
+        input.value =
+            /^\d{0,6}$/.test(previous) &&
+                (previous === '' || Number(previous) <= 100000)
+                ? previous
+                : '';
+    }
+}
+
+// 작품 추가·수정 시 연재 일정 입력값 검증
+function moboValidateScheduleForm() {
+    const tenDayChecked =
+        document.getElementById('chk-10day')?.checked === true;
+
+    // 1. 10일 연재 날짜 검사
+    if (tenDayChecked) {
+        const input =
+            document.getElementById('input-10day-dates');
+
+        const raw = input.value.trim();
+
+        const match = raw.match(
+            /^\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*$/
+        );
+
+        const days = match
+            ? match.slice(1).map(Number)
+            : null;
+
+        if (
+            !days ||
+            days.some(day => day < 1 || day > 31) ||
+            new Set(days).size !== 3 ||
+            days[0] >= days[1] ||
+            days[1] >= days[2]
+        ) {
+            alert(
+                '10일 연재 날짜를 확인해 주세요.\n' +
+                '예: 10/20/30\n' +
+                '1~31 사이의 서로 다른 날짜 3개를 순서대로 입력해 주세요.'
+            );
+
+            input.focus();
+            return false;
+        }
+    }
+
+    // 2. 연재 주기 및 주차 검사
+    const cycleType =
+        document.getElementById('input-cycle-type').value;
+
+    const weekInput =
+        document.getElementById('input-cycle-week');
+
+    const raw = weekInput.value.trim();
+
+    if (!cycleType) return true;
+
+    // 격주 연재는 기준 날짜 필수
+    if (cycleType === '격주 연재') {
+        const match = raw.match(
+            /^(\d{4})-(\d{2})-(\d{2})$/
+        );
+
+        let valid = false;
+
+        if (match) {
+            const year = Number(match[1]);
+            const month = Number(match[2]);
+            const day = Number(match[3]);
+
+            const date = new Date(
+                year,
+                month - 1,
+                day
+            );
+
+            valid = formatDate(date) === raw;
+        }
+
+        if (!valid) {
+            alert(
+                '격주 연재의 기준 날짜를 선택해 주세요.'
+            );
+
+            weekInput.focus();
+            return false;
+        }
+
+        return true;
+    }
+
+    // 매월 특정 주 휴재: 1~5주차만 허용
+    if (
+        cycleType === '매월 특정 주 휴재' ||
+        cycleType === '매월 특정주 휴재'
+    ) {
+        if (!/^[1-5]$/.test(raw)) {
+            alert(
+                '매월 휴재 주차는 1~5 사이로 입력해 주세요.'
+            );
+
+            weekInput.focus();
+            return false;
+        }
+
+        return true;
+    }
+
+    // 3연 1휴, 5연 1휴 등의 주차 검사
+    const cycleMatch =
+        cycleType.match(/^(\d+)연\s+(\d+)휴$/);
+
+    if (cycleMatch) {
+        const maxWeek =
+            Number(cycleMatch[1]) +
+            Number(cycleMatch[2]);
+
+        const week = Number(raw);
+
+        if (
+            !/^\d+$/.test(raw) ||
+            !Number.isSafeInteger(week) ||
+            week < 1 ||
+            week > maxWeek
+        ) {
+            alert(
+                `${cycleType}의 주차는 ` +
+                `1~${maxWeek} 사이의 정수로 입력해 주세요.`
+            );
+
+            weekInput.focus();
+            return false;
+        }
+    }
+
+    return true;
+}
 
 async function saveWorkFinal(buyCount = null) {
     const batchSection = document.getElementById('batch-add-section');
@@ -6886,8 +7867,12 @@ async function saveWorkFinal(buyCount = null) {
                 titles.forEach(title => {
                     const workId = Date.now().toString() + "_" + Math.random().toString(36).substr(2, 5);
                     let defaultCycle = "";
-                    if (day === '10일 연재') defaultCycle = "10일 연재 (10/20/30)";
-                    else if (day === '격주 연재') defaultCycle = "격주 연재";
+
+                    if (day === '10일 연재') {
+                        defaultCycle = "10일 연재";
+                    } else if (day === '격주 연재') {
+                        defaultCycle = "격주 연재";
+                    }
 
                     const workData = {
                         id: workId, title: title, url: "", cycle: defaultCycle,
@@ -6932,6 +7917,9 @@ async function saveWorkFinal(buyCount = null) {
         return;
     }
 
+    // 연재 일정 입력값을 먼저 검증
+    if (!moboValidateScheduleForm()) return false;
+
     // 복귀일이 연재 예정일보다 빠르면 저장하지 않음
     if (!validateBreakReturnDate()) return false;
 
@@ -6972,12 +7960,45 @@ async function saveWorkFinal(buyCount = null) {
     }
 
     if (selectedDays.includes("10일 연재")) {
-        const tenDayDates = document.getElementById('input-10day-dates').value.trim() || '10/20/30';
-        cycleParts.push(`10일 연재 (${tenDayDates})`);
+
+        const input =
+            document.getElementById('input-10day-dates');
+
+        // 저장 직전 자동완성 확정
+        moboCompleteTenDayDates(input);
+
+        const tenDayDates = input.value.trim();
+
+        // 날짜가 있으면 실제 연재일 저장
+        // 날짜가 없으면 임시 상태로 저장
+        if (tenDayDates) {
+            cycleParts.push(
+                `10일 연재 (${tenDayDates})`
+            );
+        } else {
+            cycleParts.push("10일 연재");
+        }
     }
 
     const cycleStr = cycleParts.join(" + ");
-    const coin = parseInt(document.getElementById('input-coin').value) || 0;
+    const coinRaw =
+        document.getElementById('input-coin').value.trim();
+
+    // 문자·음수·소수·지수 표기·범위 초과 차단
+    if (
+        coinRaw !== '' &&
+        (
+            !/^\d+$/.test(coinRaw) ||
+            !Number.isSafeInteger(Number(coinRaw)) ||
+            Number(coinRaw) > 100000
+        )
+    ) {
+        alert('1화당 가격은 0~100,000 사이의 정수로 입력해 주세요.');
+        return false;
+    }
+
+    // 기존 빈칸 = 0 정책 유지
+    const coin = coinRaw === '' ? 0 : Number(coinRaw);
     const progress = document.getElementById('input-progress').value || "1화";
     const time = document.getElementById('input-time').value.trim();
     const targetStatus = document.getElementById('input-status').value;
@@ -7239,6 +8260,39 @@ document.getElementById('image-input').addEventListener('change', function (e) {
 // 1. 모달창을 열 때 사용하는 변수 (어느 플랫폼인지 기억용)
 let currentCoinPlt = '';
 
+
+// 지갑 입력값이 안전한 정수인지 확인
+function moboIsWalletInteger(value, allowNegative = false) {
+    const raw = String(value ?? '');
+
+    const validFormat = allowNegative
+        ? /^-?\d+$/.test(raw)
+        : /^\d+$/.test(raw);
+
+    return validFormat &&
+        Number.isSafeInteger(Number(raw));
+}
+
+
+// 지갑 입력 중 문자·소수·범위 초과값 차단
+function moboLimitWalletInteger(input, allowNegative = false) {
+    const value = input.value;
+
+    // 빈칸과 음수 입력 중인 '-'는 임시 허용
+    const isTemporary =
+        value === '' ||
+        (allowNegative && value === '-');
+
+    if (
+        isTemporary ||
+        moboIsWalletInteger(value, allowNegative)
+    ) {
+        input.dataset.lastValidWallet = value;
+    } else {
+        input.value =
+            input.dataset.lastValidWallet ?? '';
+    }
+}
 // [교체 대상] 기존의 updateCoin 함수를 이 코드로 바꾸세요!
 // 🚨 [교체] updateCoin 함수
 function updateCoin(plt) {
@@ -7272,6 +8326,23 @@ function updateCoin(plt) {
     const expireData = JSON.parse(localStorage.getItem(plt + 'Expire')) || { amount: '', date: '' };
     document.getElementById('expire-coin-val').value = expireData.amount;
     document.getElementById('expire-date-val').value = expireData.date;
+
+    // 이전 입력값을 다른 플랫폼에 잘못 적용하지 않도록 초기화
+    const balanceInput =
+        document.getElementById('coin-input-val');
+
+    const expireInput =
+        document.getElementById('expire-coin-val');
+
+    balanceInput.dataset.lastValidWallet =
+        moboIsWalletInteger(balanceInput.value, true)
+            ? balanceInput.value
+            : '';
+
+    expireInput.dataset.lastValidWallet =
+        moboIsWalletInteger(expireInput.value)
+            ? expireInput.value
+            : '';
     // 창 띄우기
     document.getElementById('coin-update-modal').style.display = 'flex';
 }
@@ -7283,9 +8354,41 @@ function closeCoinModal() {
 
 // 3. 모달창에서 [저장하기] 버튼을 눌렀을 때 실행되는 함수
 function saveCoinUpdate() {
-    const newBal = document.getElementById('coin-input-val').value || 0;
-    const expAmt = document.getElementById('expire-coin-val').value;
-    const expDate = document.getElementById('expire-date-val').value;
+    const balanceRaw =
+        document.getElementById('coin-input-val').value.trim();
+
+    const expireRaw =
+        document.getElementById('expire-coin-val').value.trim();
+
+    const expDate =
+        document.getElementById('expire-date-val').value;
+
+    // 일반 지갑: 음수 허용, 정수만 저장
+    if (
+        balanceRaw !== '' &&
+        !moboIsWalletInteger(balanceRaw, true)
+    ) {
+        alert('지갑 잔액은 정수로 입력해 주세요.');
+        return;
+    }
+
+    // 소멸 예정 재화: 1 이상의 정수만 저장
+    if (
+        expireRaw !== '' &&
+        (
+            !moboIsWalletInteger(expireRaw) ||
+            Number(expireRaw) < 1
+        )
+    ) {
+        alert('소멸 예정 수량은 1 이상의 정수로 입력해 주세요.');
+        return;
+    }
+
+    // 기존 빈 잔액 = 0 정책 유지
+    const newBal =
+        balanceRaw === '' ? '0' : String(Number(balanceRaw));
+
+    const expAmt = expireRaw;
 
     // 둘 중 하나만 입력한 경우 멈추고 경고창 띄우기!
     if ((expAmt && !expDate) || (!expAmt && expDate)) {
@@ -7327,10 +8430,30 @@ function exportDataToFile() {
 
     const d = localStorage.getItem(STORAGE_KEY);
     if (!d) return alert("백업할 데이터가 없습니다!");
+
+    // 누적 계산 목록도 백업 파일에 포함
+    const cumulativeItems = moboCumRead();
+
+    if (cumulativeItems === null) {
+        alert(
+            '누적 계산 목록을 읽을 수 없어 백업을 중단했어요.\n' +
+            '기존 목록은 변경되지 않았습니다.'
+        );
+        return;
+    }
+
+    // 기존 모보 백업 데이터는 그대로 유지
+    const backupData = JSON.parse(d);
+
+    backupData.moboCumulativeCalc = {
+        version: 1,
+        items: cumulativeItems
+    };
+
     const date = getKSTDate();
     const dateString = date.getFullYear() + String(date.getMonth() + 1).padStart(2, '0') + String(date.getDate()).padStart(2, '0');
     const fileName = `mobo_backup_${dateString}.txt`;
-    const blob = new Blob([d], { type: 'text/plain' });
+    const blob = new Blob([JSON.stringify(backupData)], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = fileName; a.click();
@@ -7541,6 +8664,54 @@ function isValidMoboBackup(data) {
     return true;
 }
 
+// 누적 계산 백업 구조 검사
+function isValidMoboCumBackup(data) {
+    if (
+        !data ||
+        typeof data !== 'object' ||
+        Array.isArray(data) ||
+        data.version !== 1 ||
+        !Array.isArray(data.items) ||
+        data.items.length > 200
+    ) {
+        return false;
+    }
+
+    const ids = new Set();
+
+    for (const item of data.items) {
+        const calc = item && moboCumCalculate(item);
+
+        if (
+            !item ||
+            typeof item.id !== 'string' ||
+            !item.id ||
+            item.id.length > 100 ||
+            ids.has(item.id) ||
+
+            typeof item.title !== 'string' ||
+            !item.title.trim() ||
+            item.title.length > 80 ||
+
+            !Object.prototype.hasOwnProperty.call(
+                MOBO_CUM_PLATFORMS,
+                item.platform
+            ) ||
+
+            typeof item.included !== 'boolean' ||
+            !calc ||
+            item.amount !== calc.amount ||
+            item.cashback !== calc.cashback
+        ) {
+            return false;
+        }
+
+        ids.add(item.id);
+    }
+
+    return true;
+}
+
 
 // 🚨 브라우저가 절대 무시할 수 없는 가장 튼튼하고 똑똑한 복구+이사 함수! (철벽 방어 유지, 구글 연동만 제거)
 function handleImport(event) {
@@ -7553,6 +8724,7 @@ function handleImport(event) {
         // 복원에 실패했을 때 되돌릴 기존 저장값
         const protectedKeys = [
             STORAGE_KEY,
+            MOBO_CUM_KEY,
             'currentWeekStr',
             'lastCheckDate',
             'lastPartialDeductDate',
@@ -7580,6 +8752,23 @@ function handleImport(event) {
             // 보완한 데이터도 기존의 엄격한 검증을 통과해야 함
             if (!isValidMoboBackup(parsedData)) {
                 throw new Error('모보 백업 구조가 올바르지 않습니다.');
+            }
+
+            // 구버전 백업에는 누적 계산 정보가 없을 수 있음
+            const hasCumulativeBackup =
+                Object.prototype.hasOwnProperty.call(
+                    parsedData,
+                    'moboCumulativeCalc'
+                );
+
+            // 누적 계산 정보가 있다면 저장 전에 검증
+            if (
+                hasCumulativeBackup &&
+                !isValidMoboCumBackup(parsedData.moboCumulativeCalc)
+            ) {
+                throw new Error(
+                    '누적 계산 백업 구조가 올바르지 않습니다.'
+                );
             }
 
             // 누락 항목이 있었다면 사용자에게 먼저 확인
@@ -7637,6 +8826,14 @@ function handleImport(event) {
                 // 사진 처리가 끝난 뒤에만 최종 저장 시작
                 saveStarted = true;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(parsedData));
+
+                // 새 백업에 누적 계산 목록이 있을 때만 복원
+                if (hasCumulativeBackup) {
+                    localStorage.setItem(
+                        MOBO_CUM_KEY,
+                        JSON.stringify(parsedData.moboCumulativeCalc)
+                    );
+                }
 
                 // 백업에 담긴 주차·정산·복귀 기준도 함께 복원
                 const restoreOptional = (key, value) => {
@@ -8275,8 +9472,12 @@ function moveFromAction() {
 // 🌟 [편의기능] 외부 영역(배경) 클릭 시 모든 창 닫기
 // ==========================================
 window.onclick = function (event) {
-    // 1. 일반 모달창들 (작품추가, 정산, 검색, 계산기 등)
-    if (event.target.classList.contains('modal-overlay')) {
+    // 1. 일반 모달창들
+    // 계산기 모달은 바깥을 클릭해도 닫히지 않도록 보호
+    if (
+        event.target.classList.contains('modal-overlay') &&
+        event.target.id !== 'calc-modal'
+    ) {
 
         // 🌟 [신규 방어막] '전체 요일(서랍)' 모달 배경을 눌렀을 땐 전용 닫기 함수를 실행해서 버튼 색상까지 완벽하게 원상복구!
         if (event.target.id === 'drawer-modal') {
@@ -10527,7 +11728,7 @@ function getBiweeklyBreakStartDate() {
 function getNextTenDayBreakDate(referenceDate, includeToday) {
     const raw =
         document.getElementById('input-10day-dates')?.value.trim()
-        || '10/20/30';
+        || '';
 
     const releaseDays = [
         ...new Set(

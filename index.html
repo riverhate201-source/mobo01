@@ -139,6 +139,53 @@
             </button>
         </div>
 
+        <!-- 연재일 미설정 작품 안내 -->
+        <div id="mobo-pending-schedule-banner" style="display:none;">
+
+            <button type="button" class="mobo-pending-schedule-banner-btn" onclick="moboOpenPendingScheduleList()">
+
+                <i data-lucide="calendar-clock" aria-hidden="true"></i>
+
+                <span class="mobo-pending-schedule-banner-text">
+                    <strong id="mobo-pending-schedule-count"></strong>
+                    <small id="mobo-pending-schedule-detail"></small>
+                </span>
+
+                <i data-lucide="chevron-right" aria-hidden="true"></i>
+            </button>
+        </div>
+
+
+        <!-- 연재일 미설정 작품 목록 -->
+        <div id="mobo-pending-schedule-modal" class="modal-overlay" role="dialog" aria-modal="true"
+            aria-labelledby="mobo-pending-schedule-title" style="display:none; z-index:7000;">
+
+            <div class="modal-content mobo-pending-schedule-content">
+
+                <div class="mobo-pending-schedule-header">
+
+                    <h3 id="mobo-pending-schedule-title">
+                        연재일 설정 필요
+                    </h3>
+
+                    <button type="button" class="mobo-pending-schedule-close" onclick="moboClosePendingScheduleList()"
+                        aria-label="닫기">
+
+                        <i data-lucide="x" aria-hidden="true"></i>
+                    </button>
+                </div>
+
+                <p class="mobo-pending-schedule-description">
+                    일괄 등록한 작품 중 아직 연재일을
+                    설정하지 않은 작품이에요.
+                    날짜를 설정하면 목록에서 자동으로 제외돼요.
+                </p>
+
+                <div id="mobo-pending-schedule-list"></div>
+
+            </div>
+        </div>
+
         <div id="attend-warning-modal" class="modal-overlay" style="display: none; z-index: 9999;">
             <div class="modal-content" style="text-align: center; border: 3px solid #ff4757;">
                 <h2 style="font-size: 22px; font-weight: 800; color: #ff4757; margin-top: 0;">🚨 잠깐만요! 🚨</h2>
@@ -552,8 +599,44 @@
                             <label class="chk-label"><input type="checkbox" name="day-chk" value="10일 연재" id="chk-10day"
                                     onchange="toggleCycleInputs(this)">10일 연재</label>
                         </div>
-                        <input type="text" id="input-10day-dates" placeholder="10일 연재일 입력 (예: 10/20/30)"
-                            style="display: none; width: 100%; padding: 8px; margin-top: 6px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+                        <!-- 10일 연재 자동완성 입력창 -->
+                        <div id="mobo-ten-day-wrap"
+                            style="display:none; position:relative; width:100%; margin-top:6px;">
+
+                            <input type="text" id="input-10day-dates" inputmode="text" autocomplete="off" maxlength="8"
+                                placeholder="예: 3 또는 10/20/30" onfocus="moboUpdateTenDaySuggestion(this)"
+                                oninput="moboUpdateTenDaySuggestion(this, event)" onblur="moboCompleteTenDayDates(this)"
+                                onkeydown="if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); this.blur(); }"
+                                style="
+            display:block;
+            width:100%;
+            padding:8px;
+            margin:0;
+            border:1px solid #ddd;
+            border-radius:6px;
+            box-sizing:border-box;
+            position:relative;
+            z-index:1;
+            background:transparent;
+            text-align:left;
+        ">
+
+                            <!-- 입력 중 회색으로 보이는 추천 부분 -->
+                            <div id="mobo-ten-day-ghost" aria-hidden="true" style="
+            display:none;
+            position:absolute;
+            z-index:2;
+            left:9px;
+            top:50%;
+            transform:translateY(-50%);
+            pointer-events:none;
+            white-space:pre;
+            overflow:hidden;
+            max-width:calc(100% - 18px);
+        "><span id="mobo-ten-day-typed" style="visibility:hidden;"></span><span id="mobo-ten-day-suffix"
+                                    style="color:#9ca3af;"></span></div>
+
+                        </div>
                     </div>
 
                     <select id="input-status" class="modal-select"
@@ -616,7 +699,8 @@
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-top: 8px;">
-                        <input type="number" id="input-coin" placeholder="코인"
+                        <input type="text" id="input-coin" inputmode="numeric" maxlength="6" placeholder="코인"
+                            onfocus="this.dataset.lastValidWorkPrice = this.value" oninput="moboLimitWorkPrice(this)"
                             style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
                         <input type="text" id="input-progress" placeholder="진도 (예: 1화)"
                             style="flex: 2; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
@@ -662,8 +746,9 @@
                     이번에 구매한 화수를 입력해 주세요.
                 </p>
 
-                <input type="number" id="add-deduct-buy-count" inputmode="numeric" min="1" step="1" placeholder="예: 4"
-                    oninput="updateAddDeductModalPreview()"
+                <input type="text" id="add-deduct-buy-count" inputmode="numeric" maxlength="16" placeholder="예: 4"
+                    onfocus="this.dataset.lastValidPositiveInteger = this.value"
+                    oninput="moboLimitPositiveInteger(this); updateAddDeductModalPreview()"
                     style="width:100%; box-sizing:border-box; margin-bottom:10px;">
 
                 <p id="add-deduct-total" style="font-size:13px; text-align:center; margin-bottom:8px;">
@@ -776,18 +861,23 @@
                         <div class="calc-input-pair">
                             <div class="calc-input-field">
                                 <label for="calc-total">작품 총 화수</label>
-                                <input type="number" id="calc-total" placeholder="예: 100">
+                                <input type="text" id="calc-total" inputmode="numeric" maxlength="6"
+                                    placeholder="예: 100" onfocus="this.dataset.lastValidCalc = this.value"
+                                    oninput="moboLimitCalcInteger(this)">
                             </div>
 
                             <div class="calc-input-field">
                                 <label for="calc-current">내가 본 화수</label>
-                                <input type="number" id="calc-current" placeholder="예: 15">
+                                <input type="text" id="calc-current" inputmode="numeric" maxlength="6"
+                                    placeholder="예: 15" onfocus="this.dataset.lastValidCalc = this.value"
+                                    oninput="moboLimitCalcInteger(this)">
                             </div>
                         </div>
 
                         <div style="margin-bottom: 15px;">
                             <label id="calc-price-label" style="font-size: 13px; color: #666;">1화당 코인</label>
-                            <input type="number" id="calc-price" placeholder="예: 3"
+                            <input type="text" id="calc-price" inputmode="numeric" maxlength="6" placeholder="예: 3"
+                                onfocus="this.dataset.lastValidCalc = this.value" oninput="moboLimitCalcInteger(this)"
                                 style="margin-bottom: 5px; margin-top: 2px; width: 100%; box-sizing: border-box; padding: 8px;">
                         </div>
 
@@ -800,7 +890,9 @@
                             </label>
                             <div id="calc-coinback-area" style="display: none; margin-top: 10px;">
                                 <label style="font-size: 12px; color: #666;">몇 퍼센트 돌려받나요? (%)</label>
-                                <input type="number" id="calc-coinback-percent" placeholder="예: 50"
+                                <input type="text" id="calc-coinback-percent" inputmode="numeric" maxlength="3"
+                                    placeholder="예: 50" onfocus="this.dataset.lastValidPercent = this.value"
+                                    oninput="moboLimitCoinbackPercent(this)"
                                     style="margin-top: 5px; margin-bottom: 0; width: 100%; box-sizing: border-box; padding: 8px;">
                             </div>
                         </div>
@@ -910,8 +1002,9 @@
                                 사용 코인
                             </label>
 
-                            <input type="number" id="quick-deduct-amount" inputmode="numeric" min="1" step="1"
-                                placeholder="차감할 금액을 입력하세요"
+                            <input type="text" id="quick-deduct-amount" inputmode="numeric" maxlength="16"
+                                placeholder="차감할 금액을 입력하세요" onfocus="this.dataset.lastValidPositiveInteger = this.value"
+                                oninput="moboLimitPositiveInteger(this)"
                                 style="margin-top: 5px; margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
 
                             <p id="quick-deduct-balance-notice" class="calc-quick-note" role="status" aria-live="polite"
@@ -1054,8 +1147,9 @@
                                 <label for="mobo-cum-percent">
                                     구매 후 돌려받는 비율 (%)
                                 </label>
-                                <input type="number" id="mobo-cum-percent" min="0" max="1000" step="0.01"
-                                    inputmode="decimal" placeholder="예: 100" oninput="moboCumPreview()">
+                                <input type="text" id="mobo-cum-percent" inputmode="decimal" maxlength="6"
+                                    placeholder="예: 100" onfocus="this.dataset.lastValidPercent = this.value"
+                                    oninput="moboLimitCoinbackPercent(this, true); moboCumPreview()">
                             </div>
 
                         </div>
@@ -1123,7 +1217,8 @@
 
                 <div style="margin-bottom: 3px; text-align: left;">
                     <label class="dynamic-label" style="font-size: 13px; font-weight: 500;">현재 잔액</label>
-                    <input type="number" id="coin-input-val"
+                    <input type="text" id="coin-input-val" inputmode="text" maxlength="17"
+                        oninput="moboLimitWalletInteger(this, true)"
                         style="width: 100%; padding: 10px; box-sizing: border-box; margin-top: 4px; border: 1px solid #ccc; border-radius: 8px;">
                 </div>
 
@@ -1133,7 +1228,8 @@
                         소멸 예정
                         코인 (선택)</label>
                     <div style="display: flex; gap: 8px; margin-top: 8px;">
-                        <input type="number" id="expire-coin-val" class="expire-input" placeholder="수량 (예: 15)"
+                        <input type="text" id="expire-coin-val" class="expire-input" inputmode="numeric" maxlength="16"
+                            placeholder="수량 (예: 15)" oninput="moboLimitWalletInteger(this)"
                             style="flex: 1; padding: 8px; border-radius: 6px; box-sizing: border-box;">
 
                         <input type="date" id="expire-date-val" class="expire-input"

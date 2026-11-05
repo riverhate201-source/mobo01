@@ -5527,6 +5527,497 @@ body.dark-mode #calc-modal .mobo-cum-close-button {
     border-bottom: none;
 }
 
+/* =========================================
+   누적 계산 - 플랫폼 접기 / 펼치기
+========================================= */
+
+/* 플랫폼 제목 + 화살표 */
+#calc-modal .mobo-cum-group-head {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+
+    width: 100%;
+    margin: 0 0 8px;
+}
+
+/* 기존 플랫폼 제목 */
+#calc-modal .mobo-cum-group-head .mobo-cum-group-title {
+    margin: 0;
+    min-width: 0;
+}
+
+/* 접기 / 펼치기 버튼 */
+#calc-modal .mobo-cum-fold-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    margin: -6px 0;
+
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #888;
+
+    cursor: pointer;
+}
+
+#calc-modal .mobo-cum-fold-button:hover {
+    background: #f1f1f3;
+    color: #333;
+}
+
+/* Lucide 화살표 */
+#calc-modal .mobo-cum-fold-button svg {
+    width: 16px;
+    height: 16px;
+
+    transition: transform 0.2s ease;
+}
+
+/* 펼쳐졌을 때 위쪽 화살표 */
+#calc-modal .mobo-cum-fold-button[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+}
+
+/* =========================================
+   플랫폼별 작품 목록 스크롤
+========================================= */
+
+#calc-modal .mobo-cum-work-list {
+    width: 100%;
+    min-width: 0;
+
+    /* 작품 약 3개 정도가 보이는 최대 높이 */
+    max-height: 190px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding-right: 3px;
+    box-sizing: border-box;
+
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+}
+
+/* 마지막 작품 아래 불필요한 여백 제거 */
+#calc-modal .mobo-cum-work-list>.mobo-cum-card:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+/* 다크 모드 */
+body.dark-mode #calc-modal .mobo-cum-fold-button {
+    color: #ccc;
+}
+
+body.dark-mode #calc-modal .mobo-cum-fold-button:hover {
+    background: #38383a;
+    color: #fff;
+}
+
+body.dark-mode #calc-modal .mobo-cum-work-list {
+    scrollbar-color: #666 transparent;
+}
+
+/* =========================================
+   누적 계산 - 부드러운 접기 / 펼치기
+========================================= */
+
+/* 애니메이션을 담당하는 바깥 영역 */
+#calc-modal .mobo-cum-work-list {
+    display: grid;
+    grid-template-rows: 0fr;
+
+    width: 100%;
+    min-height: 0;
+    max-height: none;
+
+    margin: 0;
+    padding: 0;
+
+    overflow: hidden;
+    opacity: 0;
+
+    transition:
+        grid-template-rows 0.28s ease,
+        opacity 0.22s ease;
+}
+
+/* 펼쳐진 상태 */
+#calc-modal .mobo-cum-work-list.is-open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+}
+
+/* 실제 작품 스크롤 영역 */
+#calc-modal .mobo-cum-work-scroll {
+    min-height: 0;
+    max-height: 190px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    box-sizing: border-box;
+    padding-right: 3px;
+
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+}
+
+/* 마지막 작품 아래 추가 여백 제거 */
+#calc-modal .mobo-cum-work-scroll>.mobo-cum-card:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+/* 다크 모드 스크롤 */
+body.dark-mode #calc-modal .mobo-cum-work-scroll {
+    scrollbar-color: #666 transparent;
+}
+
+/* 모션 최소화 설정을 사용하는 경우 */
+@media (prefers-reduced-motion: reduce) {
+
+    #calc-modal .mobo-cum-work-list,
+    #calc-modal .mobo-cum-fold-button svg {
+        transition: none;
+    }
+}
+
+/* =========================================
+   누적 계산 - 펼침 애니메이션 스크롤바 깜빡임 방지
+========================================= */
+
+/* 애니메이션 중에는 스크롤바 숨기기 */
+#calc-modal .mobo-cum-work-list .mobo-cum-work-scroll {
+    overflow-y: hidden;
+}
+
+/* 완전히 펼쳐진 뒤 스크롤 활성화 */
+#calc-modal .mobo-cum-work-list.is-open.is-scroll-ready .mobo-cum-work-scroll {
+    overflow-y: auto;
+}
+
+/* =========================================
+   누적 계산 - 모달 높이 제한 + 내부 스크롤
+========================================= */
+
+/* 누적 계산일 때만 모달 높이 제한 */
+#calc-modal.mobo-cum-contained>.modal-content {
+    display: flex;
+    flex-direction: column;
+
+    box-sizing: border-box;
+
+    /* 화면이 커도 모달은 최대 470px */
+    max-height: min(470px,
+            calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
+
+    /* 모달 전체가 스크롤되지 않도록 */
+    overflow: hidden;
+}
+
+/* 기존 정주행 / 빠른 차감 탭은 상단에 유지 */
+#calc-modal.mobo-cum-contained #calc-main-header {
+    flex: 0 0 auto;
+}
+
+/* 누적 계산 화면을 세로 영역으로 분리 */
+#calc-modal.mobo-cum-contained #mobo-cum-view {
+    display: flex !important;
+    flex-direction: column;
+
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* 누적 계산 제목은 고정 영역 */
+#calc-modal.mobo-cum-contained .mobo-cum-head {
+    flex: 0 0 auto;
+}
+
+/* 목록 화면의 세로 레이아웃 */
+#calc-modal.mobo-cum-contained #mobo-cum-list-screen {
+    flex: 1 1 auto;
+    flex-direction: column;
+
+    min-height: 0;
+}
+
+/* 안내 문구는 스크롤 대상에서 제외 */
+#calc-modal.mobo-cum-contained .mobo-cum-description {
+    flex: 0 0 auto;
+}
+
+/* =========================================
+   실제로 스크롤되는 플랫폼 목록
+========================================= */
+
+#calc-modal.mobo-cum-contained #mobo-cum-items {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding-right: 3px;
+
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+}
+
+/* 플랫폼 안쪽 스크롤이 끝나면
+   바깥 플랫폼 목록으로 스크롤 전달 */
+#calc-modal.mobo-cum-contained .mobo-cum-work-scroll {
+    overscroll-behavior-y: auto;
+}
+
+/* =========================================
+   하단 버튼은 스크롤되지 않도록 고정
+========================================= */
+
+#calc-modal.mobo-cum-contained #mobo-cum-bottom-actions {
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* 작품 수정 화면은 별도로 내부 스크롤 허용 */
+#calc-modal.mobo-cum-contained #mobo-cum-editor-screen {
+    flex: 1 1 auto;
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 다크 모드 스크롤바 */
+body.dark-mode #calc-modal.mobo-cum-contained #mobo-cum-items {
+    scrollbar-color: #666 transparent;
+}
+
+/* =========================================
+   누적 계산 - 플랫폼 목록 스크롤바 숨기기
+========================================= */
+
+/* 플랫폼 목록은 스크롤 가능하지만 스크롤바는 숨김 */
+#calc-modal.mobo-cum-contained #mobo-cum-items {
+    overflow-y: auto;
+
+    /* Firefox */
+    scrollbar-width: none;
+
+    /* 구형 Edge / IE */
+    -ms-overflow-style: none;
+}
+
+/* Chrome, Safari, 모바일 브라우저 */
+#calc-modal.mobo-cum-contained #mobo-cum-items::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+/* ======================================
+   연재일 미설정 작품 안내
+====================================== */
+
+/* 메인 안내 */
+#mobo-pending-schedule-banner {
+    width: 100%;
+    margin: 10px 0 14px;
+    box-sizing: border-box;
+}
+
+.mobo-pending-schedule-banner-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: #f5f7ff;
+    color: #344054;
+    border: 1px solid #dce3f5;
+    border-radius: 10px;
+    text-align: left;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.mobo-pending-schedule-banner-btn>svg:first-child {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+}
+
+.mobo-pending-schedule-banner-btn>svg:last-child {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+    opacity: 0.65;
+}
+
+.mobo-pending-schedule-banner-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.mobo-pending-schedule-banner-text strong {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mobo-pending-schedule-banner-text small {
+    font-size: 10px;
+    color: #7b8494;
+}
+
+
+/* 미설정 작품 목록 모달 */
+.mobo-pending-schedule-content {
+    width: 100%;
+    max-width: 380px;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.mobo-pending-schedule-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.mobo-pending-schedule-header h3 {
+    margin: 0;
+    font-size: 17px;
+}
+
+.mobo-pending-schedule-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    border: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.mobo-pending-schedule-close svg {
+    width: 19px;
+    height: 19px;
+}
+
+.mobo-pending-schedule-description {
+    font-size: 12px;
+    line-height: 1.6;
+    color: #7b8494;
+    margin: 12px 0 16px;
+}
+
+#mobo-pending-schedule-list {
+    max-height: 50dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mobo-pending-schedule-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 10px;
+    margin-bottom: 7px;
+    border: 1px solid #e6e8ee;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.mobo-pending-schedule-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mobo-pending-schedule-info strong {
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.mobo-pending-schedule-info small {
+    font-size: 11px;
+    color: #89919d;
+}
+
+.mobo-pending-schedule-edit {
+    padding: 6px 9px;
+    font-size: 11px;
+    border-radius: 6px;
+    background: #eef2ff;
+    color: #526aab;
+    flex-shrink: 0;
+}
+
+
+/* 다크모드 */
+body.dark-mode .mobo-pending-schedule-banner-btn {
+    background: #282c39;
+    border-color: #444b60;
+    color: #f1f3f8;
+}
+
+body.dark-mode .mobo-pending-schedule-banner-text small,
+body.dark-mode .mobo-pending-schedule-description,
+body.dark-mode .mobo-pending-schedule-info small {
+    color: #aeb6c6;
+}
+
+body.dark-mode .mobo-pending-schedule-item {
+    border-color: #4b4f5c;
+}
+
+body.dark-mode .mobo-pending-schedule-edit {
+    background: #343e58;
+    color: #cad7ff;
+}
+
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
 a[x-apple-data-detectors] {
     color: inherit !important;
