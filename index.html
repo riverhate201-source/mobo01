@@ -1715,6 +1715,12 @@
                 // 다른 서버에는 전송하지 않음
                 console.log('MoBo FCM 토큰:', token);
 
+                // 테스트용: 휴대폰에서도 토큰을 복사할 수 있게 표시
+                window.prompt(
+                    'FCM 테스트 토큰입니다. 전체 선택 후 복사해 주세요.',
+                    token
+                );
+
                 if (button) {
                     button.textContent = '푸시 알림 연결 완료';
                 }
