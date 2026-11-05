@@ -1,5 +1,29 @@
+// ==========================================
+// MoBo - Firebase Cloud Messaging
+// 기존 PWA 서비스 워커와 함께 사용
+// ==========================================
+
+// Firebase SDK (compat 방식)
+importScripts(
+    'https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js',
+    'https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js'
+);
+
+// Firebase 프로젝트 연결
+firebase.initializeApp({
+    apiKey: "AIzaSyBrbB-48ir6JbUO_JmIcxU_RO3bhWdm8cU",
+    authDomain: "mobo-web-2026.firebaseapp.com",
+    projectId: "mobo-web-2026",
+    storageBucket: "mobo-web-2026.firebasestorage.app",
+    messagingSenderId: "425510218840",
+    appId: "1:425510218840:web:9a9df828ff1b0f8318ee2d"
+});
+
+// 백그라운드 푸시 수신 활성화
+const moboFirebaseMessaging = firebase.messaging();
+
 // 🌟 버전 숫자를 하나 올렸습니다! (적용을 위해)
-const CACHE_NAME = 'mobo-cache-v21';
+const CACHE_NAME = 'mobo-cache-v22';
 const DYNAMIC_CACHE = 'mobo-dynamic-v4'; // 🌟 외부 이미지/아이콘을 훔쳐(?) 담을 새로운 보조 창고!
 
 const urlsToCache = [
