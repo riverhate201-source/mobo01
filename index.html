@@ -1624,7 +1624,7 @@
                     </span>
 
                     <input type="checkbox" id="mobo-noti-enabled" onchange="moboUpdateNotificationUI()"
-                        style="width:20px; height:20px; accent-color:#686C9D;">
+                        style="width:20px; height:20px; margin-bottom: 0; accent-color:#686C9D;">
                 </label>
             </div>
 
@@ -1633,7 +1633,7 @@
                 <!-- 연재일 -->
                 <div style="padding:12px 0; border-bottom:1px solid rgba(128,128,128,.2);">
 
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                    <label style="display:flex; gap:10px; cursor:pointer;">
                         <input type="checkbox" id="mobo-noti-serial"
                             style="width:18px; height:18px; accent-color:#686C9D;">
                         <strong>연재일 알림</strong>
@@ -1654,7 +1654,7 @@
                 <!-- 재화 소멸 -->
                 <div style="padding:14px 0; border-bottom:1px solid rgba(128,128,128,.2);">
 
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                    <label style="display:flex;  gap:10px; cursor:pointer;">
                         <input type="checkbox" id="mobo-noti-expire"
                             style="width:18px; height:18px; accent-color:#686C9D;">
                         <strong>코인·캐시 소멸 알림</strong>
@@ -1679,7 +1679,7 @@
                 <!-- 업데이트 -->
                 <div style="padding:14px 0;">
 
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                    <label style="display:flex;  gap:10px; cursor:pointer;">
                         <input type="checkbox" id="mobo-noti-update"
                             style="width:18px; height:18px; accent-color:#686C9D;">
                         <strong>모보 업데이트 알림</strong>
@@ -1697,6 +1697,26 @@
                 Firebase 서버에도 등록돼요.
                 자동 발송 기능은 아직 준비 중이에요.
             </p>
+
+            <button type="button" class="menu-item" onclick="moboPreviewTodayNotification()"
+                style="width:100%; text-align:center; margin-top:12px;">
+                오늘의 알림 미리보기
+            </button>
+
+            <button type="button" class="menu-item" onclick="moboPreviewNext14Days()"
+                style="width:100%; text-align:center; margin-top:8px;">
+                앞으로 14일 알림 미리보기
+            </button>
+
+            <button type="button" class="menu-item" onclick="moboPreviewServerScheduleData()"
+                style="width:100%; text-align:center; margin-top:8px;">
+                Firebase 저장 예정 데이터 확인 (테스트)
+            </button>
+
+            <button type="button" class="menu-item" onclick="moboSaveScheduleToFirestoreQA()"
+                style="width:100%; text-align:center; margin-top:8px;">
+                Firebase 일정 저장 테스트
+            </button>
 
             <div style="display:flex; gap:8px; margin-top:16px;">
                 <button type="button" class="cancel-btn" onclick="moboCloseNotificationSettings()" style="flex:1;">
@@ -1910,10 +1930,25 @@
                 .doc(user.uid);
 
             // 자동 알림을 끄면 서버 등록 정보 삭제
+            // QA-044D-3D | 알림 OFF 시 구독 + 일정 동시 삭제
             if (!settings.enabled) {
-                await docRef.delete();
+                const db = firebase.firestore();
 
-                console.log('MoBo 자동 알림 서버 등록 해제');
+                const scheduleRef = db
+                    .collection('pushSchedules')
+                    .doc(user.uid);
+
+                const batch = db.batch();
+
+                batch.delete(scheduleRef);
+                batch.delete(docRef);
+
+                await batch.commit();
+
+                console.log(
+                    'MoBo 자동 알림 서버 등록 및 일정 해제 완료'
+                );
+
                 return;
             }
 
@@ -2123,6 +2158,14 @@
             try {
                 await moboSyncNotificationSettingsToFirestore(settings);
 
+                // QA-044D-3D | 알림 ON 시 일정 자동 재등록
+                if (
+                    settings.enabled &&
+                    typeof moboQueueScheduleAutoSync === 'function'
+                ) {
+                    moboQueueScheduleAutoSync(true);
+                }
+
                 moboCloseNotificationSettings();
 
                 if (settings.enabled) {
@@ -2150,6 +2193,1168 @@
                 );
             }
         }
+
+        // ==========================================
+        // MoBo 오늘의 알림 일정 미리보기
+        // 실제 발송 및 데이터 수정 없음
+        // ==========================================
+
+        function moboPreviewTodayNotification() {
+
+            try {
+                const settings = moboGetNotificationSettings();
+
+                const webtoonDate = getWebtoonDate();
+                const realDate = getKSTDate();
+
+                const weekDay = days[webtoonDate.getDay()];
+                const webtoonDateStr = formatDate(webtoonDate);
+
+                const platforms = Array.isArray(platformOrder)
+                    ? platformOrder
+                    : ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
+
+                let serialCount = 0;
+                let expireCount = 0;
+
+                const serialDetails = [];
+                const expireDetails = [];
+
+                // 1. 연재 작품 확인
+                platforms.forEach(plt => {
+                    const platformState = state[plt];
+                    if (!platformState) return;
+
+                    const seen = new Set();
+
+                    const checkWorks = (group, checker) => {
+                        (platformState[group] || []).forEach((work, index) => {
+                            if (!work || !checker(work)) return;
+
+                            if (
+                                work.registeredOn &&
+                                work.registeredOn > webtoonDateStr
+                            ) return;
+
+                            if (isWorkOnBreak(work)) return;
+
+                            const key = work.id
+                                ? String(work.id)
+                                : `${group}-${index}`;
+
+                            if (seen.has(key)) return;
+                            seen.add(key);
+
+                            serialCount++;
+                            serialDetails.push(
+                                `${plt} · ${work.title || '제목 없음'}`
+                            );
+                        });
+                    };
+
+                    // 일반 요일 연재
+                    checkWorks(weekDay, () => true);
+
+                    // 10일 연재
+                    checkWorks('10일 연재', work =>
+                        isDateMatch(work.cycle, webtoonDate, plt)
+                    );
+
+                    // 격주 연재
+                    checkWorks('격주 연재', work => {
+                        const match = String(work.cycle || '').match(
+                            /격주 연재\s*\((\d{1,2})\/(\d{1,2})\)/
+                        );
+
+                        return !!match &&
+                            Number(match[1]) === webtoonDate.getMonth() + 1 &&
+                            Number(match[2]) === webtoonDate.getDate();
+                    });
+                });
+
+                // 2. 코인·캐시 소멸 예정 확인
+                const todayUTC = Date.UTC(
+                    realDate.getFullYear(),
+                    realDate.getMonth(),
+                    realDate.getDate()
+                );
+
+                ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
+                    const raw = localStorage.getItem(plt + 'Expire');
+                    if (!raw) return;
+
+                    let expire;
+
+                    try {
+                        expire = JSON.parse(raw);
+                    } catch {
+                        return;
+                    }
+
+                    if (!expire?.date || !(Number(expire.amount) > 0)) {
+                        return;
+                    }
+
+                    const parts = expire.date.split('-').map(Number);
+
+                    if (parts.length !== 3 ||
+                        parts.some(n => !Number.isInteger(n))) return;
+
+                    const targetUTC = Date.UTC(
+                        parts[0], parts[1] - 1, parts[2]
+                    );
+
+                    const diff = Math.round(
+                        (targetUTC - todayUTC) / 86400000
+                    );
+
+                    if (diff === Number(settings.expireDays)) {
+                        expireCount++;
+                        expireDetails.push(plt);
+                    }
+                });
+
+                const lines = [
+                    'MoBo · 오늘의 알림 미리보기',
+                    '',
+                    `자동 알림 설정: ${settings.enabled ? 'ON' : 'OFF'}`,
+                    '',
+                    `연재 기준일: ${webtoonDateStr}`,
+                    `연재 예정 작품: ${serialCount}개`,
+                    `설정한 연재 알림 시간: ${settings.serialTime}`,
+                    '',
+                    `재화 소멸 기준일: ${formatDate(realDate)}`,
+                    `소멸 ${settings.expireDays}일 전인 플랫폼: ${expireCount}개`,
+                    '',
+                    '※ 아직 실제 자동 발송은 진행되지 않아요.'
+                ];
+
+                if (serialDetails.length) {
+                    lines.push(
+                        '',
+                        '[연재 목록]',
+                        ...serialDetails
+                    );
+                }
+
+                if (expireDetails.length) {
+                    lines.push(
+                        '',
+                        '[소멸 예정 플랫폼]',
+                        ...expireDetails
+                    );
+                }
+
+                alert(lines.join('\n'));
+
+            } catch (error) {
+                console.error('MoBo 알림 미리보기 오류:', error);
+                alert('알림 미리보기 계산 중 오류가 발생했어요.');
+            }
+        }
+
+        // ==========================================
+        // QA-044D-2 | 앞으로 14일 알림 일정 미리보기
+        // 읽기 전용: 기존 데이터 / Firebase 변경 없음
+        // ==========================================
+        function moboPreviewNext14Days() {
+            try {
+                const settings = moboGetNotificationSettings();
+                const startWebtoon = getWebtoonDate();
+                const startReal = getKSTDate();
+
+                startWebtoon.setHours(12, 0, 0, 0);
+                startReal.setHours(12, 0, 0, 0);
+
+                const platforms = Array.isArray(platformOrder)
+                    ? platformOrder
+                    : ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
+
+                const platformNames = {
+                    lezhin: '레진',
+                    bomtoon: '봄툰',
+                    ridi: '리디',
+                    mrblue: '미스터블루'
+                };
+
+                const lines = [
+                    'MoBo · 앞으로 14일 알림 미리보기',
+                    '오늘 포함 14일 / 읽기 전용',
+                    `전체 알림: ${settings.enabled ? 'ON' : 'OFF'}`,
+                    `연재 알림: ${settings.serial ? 'ON' : 'OFF'} (${settings.serialTime})`,
+                    `재화 소멸 알림: ${settings.expire ? 'ON' : 'OFF'} (${settings.expireDays}일 전)`,
+                    '',
+                    '※ 실제 알림은 전송하지 않아요.'
+                ];
+
+                for (let offset = 0; offset < 14; offset++) {
+
+                    const webtoonDate = new Date(startWebtoon);
+                    webtoonDate.setDate(
+                        startWebtoon.getDate() + offset
+                    );
+
+                    const realDate = new Date(startReal);
+                    realDate.setDate(
+                        startReal.getDate() + offset
+                    );
+
+                    const webtoonDateStr = formatDate(webtoonDate);
+                    const weekDay = days[webtoonDate.getDay()];
+
+                    const serialWorks = [];
+                    const expirePlatforms = [];
+
+                    // 1. 플랫폼별 연재 작품 계산
+                    platforms.forEach(plt => {
+                        const platformState = state[plt];
+                        if (!platformState) return;
+
+                        const seen = new Set();
+
+                        const collect = (group, matchesDate) => {
+                            (platformState[group] || []).forEach(
+                                (work, index) => {
+
+                                    if (!work || !matchesDate(work)) {
+                                        return;
+                                    }
+
+                                    if (
+                                        work.registeredOn &&
+                                        work.registeredOn > webtoonDateStr
+                                    ) return;
+
+                                    if (work.status === '완결') return;
+
+                                    let checkWork = work;
+
+                                    // 미래 복귀 예정인 작품
+                                    if (work.status === '휴재') {
+                                        const returnDate =
+                                            String(work.breakDate || '');
+
+                                        if (
+                                            !/^\d{4}-\d{2}-\d{2}$/.test(returnDate) ||
+                                            webtoonDateStr < returnDate
+                                        ) return;
+
+                                        // 실제 작품 상태는 변경하지 않음
+                                        checkWork = {
+                                            ...work,
+                                            status: '연재중'
+                                        };
+                                    }
+
+                                    // 미래 날짜 기준 정기휴재 판정
+                                    if (
+                                        isWorkOnBreakOnDate(
+                                            checkWork,
+                                            webtoonDate
+                                        )
+                                    ) return;
+
+                                    // 동일 작품 중복 제거
+                                    const key = work.id
+                                        ? String(work.id)
+                                        : `${group}-${index}`;
+
+                                    if (seen.has(key)) return;
+                                    seen.add(key);
+
+                                    serialWorks.push(
+                                        `${platformNames[plt] || plt} · ${work.title || '제목 없음'}`
+                                    );
+                                }
+                            );
+                        };
+
+                        // 일반 요일 연재
+                        collect(weekDay, () => true);
+
+                        // 10일 연재: 봄툰 날짜 보정 유지
+                        collect('10일 연재', work =>
+                            isDateMatch(
+                                work.cycle,
+                                webtoonDate,
+                                plt
+                            )
+                        );
+
+                        // 격주 연재: 14일 간격 계산
+                        collect('격주 연재', work =>
+                            wasBiweeklyReleaseOn(
+                                work,
+                                webtoonDate
+                            )
+                        );
+                    });
+
+                    // 2. 재화 소멸 알림 날짜 계산
+                    const realUTC = Date.UTC(
+                        realDate.getFullYear(),
+                        realDate.getMonth(),
+                        realDate.getDate()
+                    );
+
+                    ['lezhin', 'bomtoon', 'ridi', 'mrblue']
+                        .forEach(plt => {
+
+                            let expire;
+
+                            try {
+                                expire = JSON.parse(
+                                    localStorage.getItem(
+                                        plt + 'Expire'
+                                    ) || 'null'
+                                );
+                            } catch {
+                                return;
+                            }
+
+                            if (
+                                !expire ||
+                                !(Number(expire.amount) > 0) ||
+                                typeof expire.date !== 'string' ||
+                                !/^\d{4}-\d{2}-\d{2}$/.test(expire.date)
+                            ) return;
+
+                            const [y, m, d] =
+                                expire.date.split('-').map(Number);
+
+                            const expireUTC =
+                                Date.UTC(y, m - 1, d);
+
+                            const check = new Date(expireUTC);
+
+                            // 잘못된 날짜 제외
+                            if (
+                                check.getUTCFullYear() !== y ||
+                                check.getUTCMonth() + 1 !== m ||
+                                check.getUTCDate() !== d
+                            ) return;
+
+                            const diff =
+                                (expireUTC - realUTC) / 86400000;
+
+                            if (
+                                diff === Number(settings.expireDays)
+                            ) {
+                                expirePlatforms.push(
+                                    platformNames[plt]
+                                );
+                            }
+                        });
+
+                    // 3. 해당 날짜 결과 표시
+                    lines.push(
+                        '',
+                        `${webtoonDateStr} (${weekDay.replace('요일', '')}) · 연재 ${serialWorks.length}개 / 소멸 ${expirePlatforms.length}곳`
+                    );
+
+                    if (serialWorks.length) {
+                        lines.push(
+                            '  연재: ' +
+                            serialWorks.slice(0, 3).join(' / ') +
+                            (
+                                serialWorks.length > 3
+                                    ? ` 외 ${serialWorks.length - 3}개`
+                                    : ''
+                            )
+                        );
+                    }
+
+                    if (expirePlatforms.length) {
+                        lines.push(
+                            '  재화 소멸: ' +
+                            expirePlatforms.join(', ')
+                        );
+                    }
+                }
+
+                // QA-044D-2 | 스크롤 가능한 미리보기 팝업
+                document.getElementById('mobo14DayPreview')?.remove();
+
+                const overlay = document.createElement('div');
+                overlay.id = 'mobo14DayPreview';
+
+                overlay.style.cssText = `
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+`;
+
+                const panel = document.createElement('div');
+                panel.style.cssText = `
+    width: 100%;
+    max-width: 520px;
+    max-height: 85vh;
+    max-height: 85dvh;
+    background: #fff;
+    color: #222;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+`;
+
+                const content = document.createElement('pre');
+                content.textContent = lines.join('\n');
+
+                content.style.cssText = `
+    margin: 0;
+    padding: 20px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font: 14px/1.7 sans-serif;
+`;
+
+                const closeButton = document.createElement('button');
+                closeButton.type = 'button';
+                closeButton.textContent = '닫기';
+
+                closeButton.style.cssText = `
+    padding: 15px;
+    border: 0;
+    background: #f2f2f2;
+    color: #222;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+`;
+
+                closeButton.onclick = () => overlay.remove();
+
+                panel.appendChild(content);
+                panel.appendChild(closeButton);
+                overlay.appendChild(panel);
+                document.body.appendChild(overlay);
+
+                overlay.addEventListener('click', e => {
+                    if (e.target === overlay) overlay.remove();
+                });;
+
+            } catch (error) {
+                console.error(
+                    'MoBo 14일 알림 미리보기 오류:',
+                    error
+                );
+
+                alert(
+                    '향후 알림 일정 계산 중 오류가 발생했어요.'
+                );
+            }
+        }
+
+        // ==========================================
+        // QA-044D-3A | 서버 저장 예정 데이터 미리보기
+        // 읽기 전용: Firebase / 작품 / 지갑 변경 없음
+        // ==========================================
+        function moboPreviewServerScheduleData(options = {}) {
+            try {
+                const settings = moboGetNotificationSettings();
+                const now = getKSTDate();
+                const start = new Date(now);
+                start.setHours(12, 0, 0, 0);
+
+                const allowedPlatforms = [
+                    'lezhin', 'bomtoon', 'ridi', 'mrblue'
+                ];
+
+                const activePlatforms = Array.isArray(platformOrder)
+                    ? platformOrder.filter(plt =>
+                        allowedPlatforms.includes(plt))
+                    : allowedPlatforms;
+
+                const [hour, minute] =
+                    settings.serialTime.split(':').map(Number);
+
+                if (
+                    !Number.isInteger(hour) || hour < 0 || hour > 23 ||
+                    !Number.isInteger(minute) || minute < 0 || minute > 59
+                ) {
+                    throw new Error('연재 알림 시간이 올바르지 않아요.');
+                }
+
+                const payload = {
+                    version: 2,
+                    timezone: 'Asia/Seoul',
+                    serialTime: settings.serialTime,
+                    expireDays: Number(settings.expireDays),
+                    days: []
+                };
+
+                if (settings.enabled) {
+                    for (let offset = 0; offset < 14; offset++) {
+                        const sendDay = new Date(start);
+                        sendDay.setDate(start.getDate() + offset);
+
+                        const sendDate = formatDate(sendDay);
+
+                        // 실제 알림 시간 기준 연재일 계산
+                        const webtoonDay = new Date(sendDay);
+
+                        if (hour >= 22) {
+                            webtoonDay.setDate(
+                                webtoonDay.getDate() + 1
+                            );
+                        }
+
+                        const webtoonDate = formatDate(webtoonDay);
+                        const weekDay = days[webtoonDay.getDay()];
+
+                        let serialCount = 0;
+                        let expireCount = 0;
+
+                        // 오늘 이미 지난 알림 시간은 제외
+                        const serialTimeNotPassed =
+                            offset > 0 ||
+                            hour * 60 + minute >
+                            now.getHours() * 60 + now.getMinutes();
+
+                        // 1. 연재 알림 계산
+                        if (settings.serial && serialTimeNotPassed) {
+                            activePlatforms.forEach(plt => {
+                                if (!state[plt]) return;
+
+                                const seen = new Set();
+
+                                const collect = (group, matches) => {
+                                    (state[plt][group] || []).forEach(
+                                        (work, index) => {
+                                            if (!work || !matches(work)) return;
+
+                                            if (
+                                                work.registeredOn &&
+                                                work.registeredOn > webtoonDate
+                                            ) return;
+
+                                            if (work.status === '완결') return;
+
+                                            let candidate = work;
+
+                                            // 복귀 예정 작품 처리
+                                            if (work.status === '휴재') {
+                                                const returnDate =
+                                                    String(work.breakDate || '');
+
+                                                if (
+                                                    !/^\d{4}-\d{2}-\d{2}$/.test(returnDate) ||
+                                                    webtoonDate < returnDate
+                                                ) return;
+
+                                                candidate = {
+                                                    ...work,
+                                                    status: '연재중'
+                                                };
+                                            }
+
+                                            // 정기휴재 계산
+                                            if (
+                                                isWorkOnBreakOnDate(
+                                                    candidate,
+                                                    webtoonDay
+                                                )
+                                            ) return;
+
+                                            const key = work.id
+                                                ? String(work.id)
+                                                : `${group}-${index}`;
+
+                                            if (seen.has(key)) return;
+                                            seen.add(key);
+
+                                            serialCount++;
+                                        }
+                                    );
+                                };
+
+                                // 일반 요일 연재
+                                collect(weekDay, () => true);
+
+                                // 10일 연재
+                                collect('10일 연재', work =>
+                                    isDateMatch(
+                                        work.cycle,
+                                        webtoonDay,
+                                        plt
+                                    )
+                                );
+
+                                // 격주 연재
+                                collect('격주 연재', work =>
+                                    wasBiweeklyReleaseOn(
+                                        work,
+                                        webtoonDay
+                                    )
+                                );
+                            });
+                        }
+
+                        // 2. 코인·캐시 소멸 알림 계산
+                        if (settings.expire) {
+                            const sendUTC = Date.UTC(
+                                sendDay.getFullYear(),
+                                sendDay.getMonth(),
+                                sendDay.getDate()
+                            );
+
+                            allowedPlatforms.forEach(plt => {
+                                let record;
+
+                                try {
+                                    record = JSON.parse(
+                                        localStorage.getItem(
+                                            plt + 'Expire'
+                                        ) || 'null'
+                                    );
+                                } catch {
+                                    return;
+                                }
+
+                                if (
+                                    !record ||
+                                    !(Number(record.amount) > 0) ||
+                                    typeof record.date !== 'string' ||
+                                    !/^\d{4}-\d{2}-\d{2}$/.test(record.date)
+                                ) return;
+
+                                const [y, m, d] =
+                                    record.date.split('-').map(Number);
+
+                                const expiryUTC =
+                                    Date.UTC(y, m - 1, d);
+
+                                const check = new Date(expiryUTC);
+
+                                if (
+                                    check.getUTCFullYear() !== y ||
+                                    check.getUTCMonth() + 1 !== m ||
+                                    check.getUTCDate() !== d
+                                ) return;
+
+                                const diff =
+                                    (expiryUTC - sendUTC) / 86400000;
+
+                                if (
+                                    diff === Number(settings.expireDays)
+                                ) {
+                                    expireCount++;
+                                }
+                            });
+                        }
+
+                        // 알림 대상이 있는 날짜만 후보로 기록
+                        if (serialCount > 0 || expireCount > 0) {
+                            // QA-044D-3B | 간소화된 일정 데이터
+                            payload.days.push(
+                                `${sendDate}~${serialCount}~${expireCount}`
+                            );
+                        }
+                    }
+                }
+
+                // QA-044D-3B | 저장용 데이터만 반환
+                // 기존 미리보기 화면을 열지 않음
+                if (options.returnPayload === true) {
+                    return payload;
+                }
+
+                // 3. 데이터 미리보기 (서버 전송 없음)
+                const json = JSON.stringify(payload, null, 2);
+
+                console.log(
+                    'MoBo QA-044D-3A · 저장 예정 데이터 (미전송):',
+                    payload
+                );
+
+                document.getElementById(
+                    'moboSchedulePayloadPreview'
+                )?.remove();
+
+                const overlay = document.createElement('div');
+                overlay.id = 'moboSchedulePayloadPreview';
+
+                overlay.style.cssText = `
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: rgba(0,0,0,0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            box-sizing: border-box;
+        `;
+
+                const panel = document.createElement('div');
+                panel.style.cssText = `
+            width: 100%;
+            max-width: 520px;
+            max-height: 85vh;
+            max-height: 85dvh;
+            background: #fff;
+            color: #222;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        `;
+
+                const heading = document.createElement('div');
+                heading.textContent =
+                    'Firebase 저장 예정 데이터 · 테스트 전용';
+
+                heading.style.cssText = `
+            padding: 16px 18px;
+            font-size: 16px;
+            font-weight: 700;
+            border-bottom: 1px solid #ddd;
+        `;
+
+                const content = document.createElement('pre');
+                content.textContent = json;
+
+                content.style.cssText = `
+            margin: 0;
+            padding: 18px;
+            overflow: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font: 13px/1.6 monospace;
+        `;
+
+                const close = document.createElement('button');
+                close.type = 'button';
+                close.textContent = '닫기';
+
+                close.style.cssText = `
+            flex-shrink: 0;
+            padding: 15px;
+            border: 0;
+            background: #f2f2f2;
+            color: #222;
+            font-size: 15px;
+            font-weight: 600;
+        `;
+
+                close.onclick = () => overlay.remove();
+
+                panel.append(heading, content, close);
+                overlay.appendChild(panel);
+
+                overlay.addEventListener('click', event => {
+                    if (event.target === overlay) {
+                        overlay.remove();
+                    }
+                });
+
+                document.body.appendChild(overlay);
+
+            } catch (error) {
+                console.error(
+                    'MoBo QA-044D-3A 미리보기 오류:',
+                    error
+                );
+
+                alert('일정 데이터 계산 중 오류가 발생했어요.');
+            }
+        }
+
+        // ==========================================
+        // QA-044D-3B | Firebase 일정 저장 테스트
+        // 수동 실행 전용
+        // ==========================================
+
+        let moboScheduleSaveBusy = false;
+
+        async function moboSaveScheduleToFirestoreQA() {
+            if (moboScheduleSaveBusy) return;
+
+            moboScheduleSaveBusy = true;
+
+            let writeCompleted = false;
+
+            try {
+                const settings = moboGetNotificationSettings();
+
+                if (!settings.enabled) {
+                    throw new Error(
+                        '자동 알림을 먼저 켜고 설정을 저장해 주세요.'
+                    );
+                }
+
+                if (typeof firebase === 'undefined') {
+                    throw new Error(
+                        'Firebase SDK를 불러오지 못했어요.'
+                    );
+                }
+
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(moboFirebaseConfig);
+                }
+
+                const auth = firebase.auth();
+
+                const user = auth.currentUser ||
+                    (await auth.signInAnonymously()).user;
+
+                const db = firebase.firestore();
+
+                // 먼저 기존 구독 문서 확인
+                const subscription = await db
+                    .collection('pushSubscriptions')
+                    .doc(user.uid)
+                    .get({ source: 'server' });
+
+                if (!subscription.exists) {
+                    throw new Error(
+                        'Firebase에 활성화된 알림 등록 정보가 없어요.'
+                    );
+                }
+
+                const sub = subscription.data();
+
+                if (
+                    sub.enabled !== true ||
+                    sub.serialTime !== settings.serialTime ||
+                    sub.expireDays !== Number(settings.expireDays)
+                ) {
+                    throw new Error(
+                        '기기 설정과 Firebase 설정이 달라요.\n' +
+                        '알림 설정을 다시 저장한 뒤 시도해 주세요.'
+                    );
+                }
+
+                // 이미 검증한 14일 계산 함수 재사용
+                const payload = moboPreviewServerScheduleData({
+                    returnPayload: true
+                });
+
+                if (
+                    !payload ||
+                    !Array.isArray(payload.days)
+                ) {
+                    throw new Error(
+                        '저장할 일정 데이터를 생성하지 못했어요.'
+                    );
+                }
+
+                const docRef = db
+                    .collection('pushSchedules')
+                    .doc(user.uid);
+
+                // Firebase에 일정 저장
+                await docRef.set({
+                    ...payload,
+                    updatedAt:
+                        firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                writeCompleted = true;
+
+                // 실제 서버에 저장된 데이터 재조회
+                const snapshot = await docRef.get({
+                    source: 'server'
+                });
+
+                if (!snapshot.exists) {
+                    throw new Error(
+                        '저장된 일정 문서를 찾을 수 없어요.'
+                    );
+                }
+
+                const saved = snapshot.data();
+
+                // 필드 순서에 영향을 받지 않는 날짜 비교
+                // QA-044D-3B | 간소화된 일정 비교
+                const matches =
+                    saved.version === payload.version &&
+                    saved.timezone === payload.timezone &&
+                    saved.serialTime === payload.serialTime &&
+                    saved.expireDays === payload.expireDays &&
+                    Array.isArray(saved.days) &&
+                    JSON.stringify(saved.days) ===
+                    JSON.stringify(payload.days) &&
+                    !!saved.updatedAt;
+
+                if (!matches) {
+                    throw new Error(
+                        '저장된 일정과 계산 결과가 일치하지 않아요.'
+                    );
+                }
+
+                console.log(
+                    'MoBo QA-044D-3B 저장 및 검증 성공',
+                    {
+                        scheduleDays: saved.days.length,
+                        verified: true
+                    }
+                );
+
+                alert(
+                    'QA-044D-3B 저장 및 검증 성공!\n\n' +
+                    `일정 포함 날짜: ${saved.days.length}일\n` +
+                    'Firestore 저장: 성공\n' +
+                    '서버 재조회: 성공\n' +
+                    '계산 결과 비교: 일치\n\n' +
+                    '실제 푸시 알림은 발송하지 않았어요.'
+                );
+
+            } catch (error) {
+                console.error(
+                    'MoBo 일정 저장 테스트 실패:',
+                    error
+                );
+
+                alert(
+                    writeCompleted
+                        ? 'Firebase 저장은 완료됐지만\n' +
+                        '서버 재검증에 실패했어요.\n\n' +
+                        error.message
+                        : 'Firebase 일정 저장에 실패했어요.\n\n' +
+                        error.message
+                );
+
+            } finally {
+                moboScheduleSaveBusy = false;
+            }
+        }
+
+        // ==========================================
+        // QA-044D-3C | 알림 일정 자동 동기화
+        // 기존 로컬 데이터 저장과 분리
+        // ==========================================
+
+        let moboScheduleSyncTimer = null;
+        let moboScheduleSyncBusy = false;
+        let moboScheduleSyncAgain = false;
+        let moboScheduleLastSynced = null;
+
+        // 일정 동기화 예약
+        function moboQueueScheduleAutoSync(forceCheck = false) {
+            if (forceCheck) {
+                moboScheduleLastSynced = null;
+            }
+
+            clearTimeout(moboScheduleSyncTimer);
+
+            // 연속 저장 시 마지막 변경을 기준으로 실행
+            moboScheduleSyncTimer = setTimeout(() => {
+                moboScheduleSyncTimer = null;
+                moboRunScheduleAutoSync();
+            }, 1500);
+        }
+
+        // 실제 Firestore 동기화
+        async function moboRunScheduleAutoSync() {
+
+            // 서버 쓰기가 진행 중이면 중복 실행 방지
+            if (moboScheduleSyncBusy) {
+                moboScheduleSyncAgain = true;
+                return;
+            }
+
+            // 오래된 탭에서는 Firebase 일정 갱신 금지
+            if (
+                typeof moboMainTabIsStale === 'function' &&
+                moboMainTabIsStale()
+            ) {
+                console.warn(
+                    'MoBo · 오래된 탭의 Firebase 동기화를 차단했어요.'
+                );
+                return;
+            }
+
+            const settings = moboGetNotificationSettings();
+
+            if (!settings.enabled) {
+                moboScheduleLastSynced = null;
+                return;
+            }
+
+            if (
+                !navigator.onLine ||
+                typeof firebase === 'undefined'
+            ) return;
+
+            moboScheduleSyncBusy = true;
+
+            try {
+                // 기존 QA-044D-3B 계산 함수 재사용
+                const payload = moboPreviewServerScheduleData({
+                    returnPayload: true
+                });
+
+                if (
+                    !payload ||
+                    payload.version !== 2 ||
+                    !Array.isArray(payload.days) ||
+                    payload.days.length > 14 ||
+                    !payload.days.every(item =>
+                        typeof item === 'string'
+                    )
+                ) {
+                    throw new Error(
+                        'QA-044D-3B version 2 일정 형식이 아니에요.'
+                    );
+                }
+
+                const signature = JSON.stringify(payload);
+
+                // 이미 성공적으로 동기화한 일정이면 생략
+                if (signature === moboScheduleLastSynced) {
+                    return;
+                }
+
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(moboFirebaseConfig);
+                }
+
+                const auth = firebase.auth();
+
+                const user = auth.currentUser ||
+                    (await auth.signInAnonymously()).user;
+
+                const db = firebase.firestore();
+
+                // 1. 기존 알림 구독 문서 확인
+                const subscription = await db
+                    .collection('pushSubscriptions')
+                    .doc(user.uid)
+                    .get({ source: 'server' });
+
+                if (!subscription.exists) {
+                    console.info(
+                        'MoBo 자동 일정 동기화 건너뜀: 서버 구독 없음'
+                    );
+                    return;
+                }
+
+                const sub = subscription.data();
+
+                if (
+                    sub.enabled !== true ||
+                    sub.serialTime !== payload.serialTime ||
+                    sub.expireDays !== payload.expireDays
+                ) {
+                    console.info(
+                        'MoBo 자동 일정 동기화 보류: 서버 설정 불일치'
+                    );
+                    return;
+                }
+
+                // 2. 현재 서버 일정과 비교
+                const ref = db
+                    .collection('pushSchedules')
+                    .doc(user.uid);
+
+                const snapshot = await ref.get({
+                    source: 'server'
+                });
+
+                if (snapshot.exists) {
+                    const saved = snapshot.data();
+
+                    const savedSignature = JSON.stringify({
+                        version: saved.version,
+                        timezone: saved.timezone,
+                        serialTime: saved.serialTime,
+                        expireDays: saved.expireDays,
+                        days: saved.days
+                    });
+
+                    if (savedSignature === signature) {
+                        moboScheduleLastSynced = signature;
+
+                        console.info(
+                            'MoBo 자동 일정: 변경 없음, 저장 생략'
+                        );
+
+                        return;
+                    }
+                }
+
+                // 3. 서버 조회 중 로컬 데이터가 변경됐는지 확인
+                const latest = moboPreviewServerScheduleData({
+                    returnPayload: true
+                });
+
+                if (
+                    !moboGetNotificationSettings().enabled ||
+                    JSON.stringify(latest) !== signature
+                ) {
+                    moboScheduleSyncAgain = true;
+                    return;
+                }
+
+                // 4. 변경된 일정만 서버 저장
+                // 비동기 처리 도중 다른 탭이 변경했는지 다시 확인
+                if (
+                    typeof moboMainTabIsStale === 'function' &&
+                    moboMainTabIsStale()
+                ) {
+                    console.warn(
+                        'MoBo · 서버 저장 직전 다른 탭 변경 감지'
+                    );
+                    return;
+                }
+
+                await ref.set({
+                    ...payload,
+                    updatedAt:
+                        firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                moboScheduleLastSynced = signature;
+
+                console.info(
+                    'MoBo 자동 일정 동기화 완료:',
+                    payload.days.length,
+                    '일'
+                );
+
+            } catch (error) {
+                // Firebase 오류가 로컬 작품 저장을 막지 않음
+                console.warn(
+                    'MoBo 자동 일정 동기화 실패:',
+                    error.code || error.message
+                );
+
+            } finally {
+                moboScheduleSyncBusy = false;
+
+                // 저장 도중 추가 변경이 있었다면 다시 계산
+                if (moboScheduleSyncAgain) {
+                    moboScheduleSyncAgain = false;
+                    moboQueueScheduleAutoSync();
+                }
+            }
+        }
+
+        // 앱 실행 시 기존 일정 점검
+        window.addEventListener('load', () => {
+            moboQueueScheduleAutoSync(true);
+        });
+
+        // 인터넷 연결 복구 시 재확인
+        window.addEventListener('online', () => {
+            moboQueueScheduleAutoSync(true);
+        });
+
+        // 앱으로 돌아왔을 때 날짜 변경 여부 점검
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                moboQueueScheduleAutoSync();
+            }
+        });
     </script>
 
 

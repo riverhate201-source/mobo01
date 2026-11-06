@@ -244,6 +244,44 @@ let viewDay = days[getWebtoonDate().getDay()];
 let currentPlatform = ''; let tempImg = ""; let editMode = false; let actionPlt = ''; let actionOrigDay = ''; let actionIdx = -1;
 const STORAGE_KEY = 'WEBTOON_APP_STABLE_V1';
 
+// QA-044D-3D-3B | 멀티탭 데이터 충돌 방지
+let moboMainLastSavedRaw =
+    localStorage.getItem(STORAGE_KEY);
+
+let moboMainTabStale = false;
+let moboMainStaleWarned = false;
+
+function moboMainTabIsStale() {
+    if (moboMainTabStale) return true;
+
+    try {
+        return localStorage.getItem(STORAGE_KEY) !==
+            moboMainLastSavedRaw;
+    } catch (error) {
+        console.error('MoBo 멀티탭 상태 확인 실패:', error);
+        return true;
+    }
+}
+
+// 다른 탭이 통합 작품 데이터를 변경하면 감지
+window.addEventListener('storage', event => {
+    if (event.storageArea !== localStorage) return;
+
+    if (
+        event.key !== STORAGE_KEY &&
+        event.key !== null
+    ) return;
+
+    if (event.newValue !== moboMainLastSavedRaw) {
+        moboMainTabStale = true;
+
+        console.warn(
+            'MoBo · 다른 탭에서 데이터 변경 감지. ' +
+            '현재 탭은 새로고침 전까지 저장을 제한합니다.'
+        );
+    }
+});
+
 
 // 플랫폼별 기본 정렬 방식
 let platformSortModes = {
@@ -5385,6 +5423,25 @@ function loadAllData() {
 
 // 2. 데이터 저장하기 (🌟 완전 무소음 완벽판!)
 function saveData(silent = false) {
+    // QA-044D-3D-3B | 오래된 탭 저장 차단
+    if (moboMainTabIsStale()) {
+        if (!moboMainStaleWarned) {
+            moboMainStaleWarned = true;
+
+            alert(
+                '다른 모보 탭에서 데이터가 변경됐어요.\n\n' +
+                '오래된 데이터로 덮어쓰지 않도록 ' +
+                '현재 탭의 저장을 차단했습니다.\n\n' +
+                '다른 탭에서 최신 데이터가 저장됐는지 확인하고, ' +
+                '이 탭을 새로고침해 주세요.\n\n' +
+                '현재 탭에서 저장하지 않은 변경 사항은 ' +
+                '새로고침 시 사라질 수 있어요.'
+            );
+        }
+
+        return false;
+    }
+
     if (!silent) {
         forceSortBreaks();
     }
@@ -5422,7 +5479,12 @@ function saveData(silent = false) {
     };
 
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+        const serialized = JSON.stringify(d);
+
+        localStorage.setItem(STORAGE_KEY, serialized);
+
+        // 이 탭에서 정상 저장한 최신 데이터 기록
+        moboMainLastSavedRaw = serialized;
     } catch (error) {
         console.error('모보 데이터 저장 실패:', error);
 
@@ -5446,6 +5508,12 @@ function saveData(silent = false) {
         } catch (error) {
             console.error('모보 화면 갱신 오류:', error);
         }
+    }
+
+    // QA-044D-3C
+    // 로컬 저장 성공 후 알림 일정 동기화 요청
+    if (typeof moboQueueScheduleAutoSync === 'function') {
+        moboQueueScheduleAutoSync();
     }
 
     return true;
