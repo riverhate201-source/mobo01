@@ -42,6 +42,12 @@
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js" defer></script>
 
+    <!-- Firebase 익명 인증 -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js" defer></script>
+
+    <!-- Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js" defer></script>
+
     <script src="./js/custom.js" defer></script>
 
 
@@ -113,8 +119,8 @@
                     <button type="button" id="mobo-push-enable-btn" class="menu-item" onclick="moboEnablePush()">
                         푸시 알림 켜기
                     </button>
-                    <button type="button" class="menu-item" onclick="moboTestHeadsUp()">
-                        알림 팝업 테스트 (임시)
+                    <button type="button" class="menu-item" onclick="moboOpenNotificationSettings()">
+                        알림 설정 (준비 중)
                     </button>
 
                 </div>
@@ -1584,6 +1590,127 @@
         </div>
     </div>
 
+    <!-- MoBo 알림 설정창 -->
+    <div id="mobo-noti-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mobo-noti-title"
+        style="display:none; z-index:12000; padding:16px; box-sizing:border-box;">
+
+        <div class="modal-content"
+            style="width:100%; max-width:380px; max-height:calc(100dvh - 32px); overflow-y:auto; box-sizing:border-box;">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px;">
+                <h3 id="mobo-noti-title" style="margin:0;">
+                    알림 설정
+                </h3>
+
+                <button type="button" onclick="moboCloseNotificationSettings()" aria-label="닫기"
+                    style="background:none; border:none; font-size:24px; cursor:pointer; color:inherit;">
+                    &times;
+                </button>
+            </div>
+
+            <p id="mobo-noti-permission" style="font-size:12px; opacity:.7; margin-bottom:14px;">
+            </p>
+
+            <!-- 전체 알림 -->
+            <div style="padding:13px; border-radius:12px; background:rgba(128,128,128,.08); margin-bottom:15px;">
+
+                <label
+                    style="display:flex; align-items:center; justify-content:space-between; gap:12px; cursor:pointer;">
+                    <span>
+                        <strong>자동 알림 사용</strong>
+                        <small style="display:block; font-size:11px; opacity:.65; margin-top:4px;">
+                            자동 발송 기능 연결 후 적용돼요.
+                        </small>
+                    </span>
+
+                    <input type="checkbox" id="mobo-noti-enabled" onchange="moboUpdateNotificationUI()"
+                        style="width:20px; height:20px; accent-color:#686C9D;">
+                </label>
+            </div>
+
+            <div id="mobo-noti-options">
+
+                <!-- 연재일 -->
+                <div style="padding:12px 0; border-bottom:1px solid rgba(128,128,128,.2);">
+
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <input type="checkbox" id="mobo-noti-serial"
+                            style="width:18px; height:18px; accent-color:#686C9D;">
+                        <strong>연재일 알림</strong>
+                    </label>
+
+                    <p style="font-size:12px; opacity:.65; margin:7px 0 10px;">
+                        오늘 연재되는 작품을 알려드려요.
+                    </p>
+
+                    <label for="mobo-noti-serial-time" style="font-size:12px;">
+                        알림 시간
+                    </label>
+
+                    <input type="time" id="mobo-noti-serial-time" value="20:00"
+                        style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:9px; border:1px solid #ddd; border-radius:8px;">
+                </div>
+
+                <!-- 재화 소멸 -->
+                <div style="padding:14px 0; border-bottom:1px solid rgba(128,128,128,.2);">
+
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <input type="checkbox" id="mobo-noti-expire"
+                            style="width:18px; height:18px; accent-color:#686C9D;">
+                        <strong>코인·캐시 소멸 알림</strong>
+                    </label>
+
+                    <p style="font-size:12px; opacity:.65; margin:7px 0 10px;">
+                        소멸 예정 재화를 미리 알려드려요.
+                    </p>
+
+                    <label for="mobo-noti-expire-days" style="font-size:12px;">
+                        소멸 며칠 전에 알릴까요?
+                    </label>
+
+                    <select id="mobo-noti-expire-days"
+                        style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:9px; border:1px solid #ddd; border-radius:8px;">
+                        <option value="1">1일 전</option>
+                        <option value="3">3일 전</option>
+                        <option value="7">7일 전</option>
+                    </select>
+                </div>
+
+                <!-- 업데이트 -->
+                <div style="padding:14px 0;">
+
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                        <input type="checkbox" id="mobo-noti-update"
+                            style="width:18px; height:18px; accent-color:#686C9D;">
+                        <strong>모보 업데이트 알림</strong>
+                    </label>
+
+                    <p style="font-size:12px; opacity:.65; margin:7px 0;">
+                        새로운 기능과 업데이트 소식을 알려드려요.
+                    </p>
+                </div>
+
+            </div>
+
+            <p style="font-size:11px; line-height:1.6; opacity:.65; margin:12px 0;">
+                알림 설정을 저장하면 해당 기기의 알림 수신 정보가
+                Firebase 서버에도 등록돼요.
+                자동 발송 기능은 아직 준비 중이에요.
+            </p>
+
+            <div style="display:flex; gap:8px; margin-top:16px;">
+                <button type="button" class="cancel-btn" onclick="moboCloseNotificationSettings()" style="flex:1;">
+                    취소
+                </button>
+
+                <button type="button" class="save-btn" onclick="moboSaveNotificationSettings()" style="flex:2;">
+                    설정 저장
+                </button>
+            </div>
+
+        </div>
+    </div>
+
     <div class="sync-btn-wrapper">
         <button class="sync-btn" onclick="window.location.reload()" aria-label="새로고침 버튼">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -1627,36 +1754,6 @@
             "BDMmgho7ZgFXV-RHkNTmrtNoQ7_EFS_o0yYdYn8N8xLplV9Wvvn_I4PYDyO6mj9WcLFnI94g_mDXYeq3lPdXegc";
 
         let moboPushBusy = false;
-
-        // MoBo 헤드업 알림 진단용 임시 함수
-        async function moboTestHeadsUp() {
-            try {
-                if (
-                    !('Notification' in window) ||
-                    Notification.permission !== 'granted'
-                ) {
-                    alert('모보 알림 권한을 먼저 허용해 주세요.');
-                    return;
-                }
-
-                const registration =
-                    await navigator.serviceWorker.ready;
-
-                await registration.showNotification(
-                    'MoBo 헤드업 테스트 💗',
-                    {
-                        body: '이 알림이 화면 상단에 표시되나요?',
-                        icon: './icon.png',
-                        tag: 'mobo-test-' + Date.now(),
-                        vibrate: [150, 80, 150]
-                    }
-                );
-
-            } catch (error) {
-                console.error('알림 표시 테스트 실패:', error);
-                alert('테스트 알림 표시 실패: ' + error.message);
-            }
-        }
 
         async function moboEnablePush() {
             if (moboPushBusy) return;
@@ -1781,6 +1878,276 @@
                 if (button) {
                     button.disabled = false;
                 }
+            }
+        }
+    </script>
+
+    <script>
+        // ==========================================
+        // MoBo 알림 설정 - UI 및 로컬 저장
+        // ==========================================
+
+        // ==========================================
+        // MoBo 알림 서버 등록 / 해제
+        // ==========================================
+
+        async function moboSyncNotificationSettingsToFirestore(settings) {
+
+            // 기존 Firebase 프로젝트 사용
+            if (!firebase.apps.length) {
+                firebase.initializeApp(moboFirebaseConfig);
+            }
+
+            // 익명 인증으로 기기별 사용자 구분
+            const auth = firebase.auth();
+
+            const user = auth.currentUser ||
+                (await auth.signInAnonymously()).user;
+
+            // 해당 사용자 자신의 문서만 사용
+            const docRef = firebase.firestore()
+                .collection('pushSubscriptions')
+                .doc(user.uid);
+
+            // 자동 알림을 끄면 서버 등록 정보 삭제
+            if (!settings.enabled) {
+                await docRef.delete();
+
+                console.log('MoBo 자동 알림 서버 등록 해제');
+                return;
+            }
+
+            if (
+                !('Notification' in window) ||
+                Notification.permission !== 'granted'
+            ) {
+                throw new Error(
+                    '먼저 푸시 알림 권한을 허용해 주세요.'
+                );
+            }
+
+            // 기존 MoBo 서비스 워커 활용
+            const registration =
+                await navigator.serviceWorker.register('./sw.js');
+
+            await navigator.serviceWorker.ready;
+
+            const messaging = firebase.messaging();
+
+            // 현재 기기의 FCM 토큰 확인
+            const token = await messaging.getToken({
+                vapidKey: MOBO_VAPID_KEY,
+                serviceWorkerRegistration: registration
+            });
+
+            if (!token) {
+                throw new Error('FCM 토큰을 가져오지 못했어요.');
+            }
+
+            // 개인 작품·지갑 정보는 전송하지 않음
+            await docRef.set({
+                token: token,
+
+                enabled: true,
+                serial: settings.serial === true,
+                expire: settings.expire === true,
+                update: settings.update === true,
+
+                serialTime: settings.serialTime,
+                expireDays: Number(settings.expireDays),
+
+                timezone: 'Asia/Seoul',
+
+                updatedAt:
+                    firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            console.log(
+                'MoBo 알림 설정 Firestore 등록 완료'
+            );
+        }
+
+        const MOBO_NOTI_STORAGE_KEY = 'moboNotificationSettingsV1';
+
+        const MOBO_NOTI_DEFAULTS = {
+            enabled: false,
+            serial: true,
+            expire: true,
+            update: false,
+            serialTime: '20:00',
+            expireDays: 1
+        };
+
+        // 저장된 설정 읽기
+        function moboGetNotificationSettings() {
+            try {
+                const saved = JSON.parse(
+                    localStorage.getItem(MOBO_NOTI_STORAGE_KEY)
+                );
+
+                if (!saved || typeof saved !== 'object') {
+                    return { ...MOBO_NOTI_DEFAULTS };
+                }
+
+                return {
+                    ...MOBO_NOTI_DEFAULTS,
+                    ...saved
+                };
+
+            } catch (error) {
+                console.warn('알림 설정 읽기 실패:', error);
+                return { ...MOBO_NOTI_DEFAULTS };
+            }
+        }
+
+        // 전체 설정 ON/OFF에 따라 하위 항목 활성화
+        function moboUpdateNotificationUI() {
+            const enabled =
+                document.getElementById('mobo-noti-enabled').checked;
+
+            const options = document.getElementById('mobo-noti-options');
+
+            options.style.opacity = enabled ? '1' : '0.45';
+
+            options.querySelectorAll('input, select').forEach(el => {
+                el.disabled = !enabled;
+            });
+        }
+
+        // 설정창 열기
+        function moboOpenNotificationSettings() {
+            const settings = moboGetNotificationSettings();
+
+            if (typeof closeNav === 'function') {
+                closeNav();
+            }
+
+            document.getElementById('mobo-noti-enabled').checked =
+                settings.enabled === true;
+
+            document.getElementById('mobo-noti-serial').checked =
+                settings.serial === true;
+
+            document.getElementById('mobo-noti-expire').checked =
+                settings.expire === true;
+
+            document.getElementById('mobo-noti-update').checked =
+                settings.update === true;
+
+            document.getElementById('mobo-noti-serial-time').value =
+                settings.serialTime || '20:00';
+
+            document.getElementById('mobo-noti-expire-days').value =
+                String(settings.expireDays || 1);
+
+            const permission =
+                'Notification' in window
+                    ? Notification.permission
+                    : 'unsupported';
+
+            const permissionText = {
+                granted: '허용됨',
+                denied: '차단됨',
+                default: '아직 선택하지 않음',
+                unsupported: '지원하지 않는 환경'
+            };
+
+            document.getElementById('mobo-noti-permission').textContent =
+                '기기 알림 권한: ' +
+                (permissionText[permission] || '확인 불가');
+
+            moboUpdateNotificationUI();
+
+            document.getElementById('mobo-noti-modal').style.display = 'flex';
+        }
+
+        // 설정창 닫기
+        function moboCloseNotificationSettings() {
+            document.getElementById('mobo-noti-modal').style.display = 'none';
+        }
+
+        async function moboSaveNotificationSettings() {
+
+            const settings = {
+                enabled:
+                    document.getElementById('mobo-noti-enabled').checked,
+
+                serial:
+                    document.getElementById('mobo-noti-serial').checked,
+
+                expire:
+                    document.getElementById('mobo-noti-expire').checked,
+
+                update:
+                    document.getElementById('mobo-noti-update').checked,
+
+                serialTime:
+                    document.getElementById('mobo-noti-serial-time').value
+                    || '20:00',
+
+                expireDays:
+                    Number(
+                        document.getElementById('mobo-noti-expire-days').value
+                    )
+            };
+
+            // 알림 ON이면 먼저 권한을 확인
+            if (
+                settings.enabled &&
+                (
+                    !('Notification' in window) ||
+                    Notification.permission !== 'granted'
+                )
+            ) {
+                alert(
+                    '먼저 메뉴에서 푸시 알림 켜기를 눌러\n' +
+                    '알림 권한을 허용해 주세요.'
+                );
+                return;
+            }
+
+            // 기존 기기 내부 저장 기능 유지
+            try {
+                localStorage.setItem(
+                    MOBO_NOTI_STORAGE_KEY,
+                    JSON.stringify(settings)
+                );
+
+            } catch (error) {
+                console.error('알림 설정 저장 실패:', error);
+                alert('기기에 알림 설정을 저장하지 못했어요.');
+                return;
+            }
+
+            // Firebase 서버와 설정 동기화
+            try {
+                await moboSyncNotificationSettingsToFirestore(settings);
+
+                moboCloseNotificationSettings();
+
+                if (settings.enabled) {
+                    alert(
+                        '알림 설정이 저장되었어요!\n\n' +
+                        '자동 알림 발송 기능은 준비 중이에요.'
+                    );
+                } else {
+                    alert(
+                        '알림 설정이 저장되었어요!\n\n' +
+                        '자동 알림 서버 등록을 해제했어요.'
+                    );
+                }
+
+            } catch (error) {
+                console.error(
+                    'MoBo 알림 서버 동기화 실패:',
+                    error
+                );
+
+                alert(
+                    '기기에는 설정을 저장했지만\n' +
+                    'Firebase 서버 반영에 실패했어요.\n\n' +
+                    '인터넷 연결을 확인하고 다시 저장해 주세요.'
+                );
             }
         }
     </script>
