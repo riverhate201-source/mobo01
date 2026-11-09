@@ -1,0 +1,30 @@
+
+name: MoBo Push - Firestore Dedupe Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  firestore-dedupe-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Firebase Admin SDK
+        run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
+
+      - name: Test Firestore duplicate prevention
+        env:
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/mobo-dedupe-firestore-test.cjs
