@@ -16,8 +16,11 @@ const {
 // LIVE: 명시적 확인이 있을 때만 실행
 // ==========================================
 
+
 const MODE = process.env.MOBO_AUTO_MODE || 'PREVIEW';
 const WINDOW_MS = 20 * 60 * 1000;
+const TEST_UID = process.env.MOBO_AUTO_TEST_UID?.trim() || '';
+
 
 function parseDay(entry) {
     if (typeof entry !== 'string') return null;
@@ -66,12 +69,17 @@ async function main() {
         throw new Error('지원하지 않는 실행 모드입니다.');
     }
 
-    if (
-        MODE === 'LIVE' &&
-        process.env.MOBO_AUTO_LIVE_CONFIRM !== 'YES'
-    ) {
-        throw new Error('LIVE 발송 확인 설정이 없습니다.');
+
+    if (MODE === 'LIVE') {
+        if (process.env.MOBO_AUTO_LIVE_CONFIRM !== 'YES') {
+            throw new Error('LIVE 발송 확인 설정이 없습니다.');
+        }
+
+        if (!/^[A-Za-z0-9_-]{8,128}$/.test(TEST_UID)) {
+            throw new Error('허용된 테스트 기기 UID가 없습니다.');
+        }
     }
+
 
     const secret = process.env.MOBO_FIREBASE_SERVICE_ACCOUNT;
 
@@ -115,10 +123,18 @@ async function main() {
         errors: 0
     };
 
+
     for (const doc of schedules.docs) {
         const uid = doc.id;
+
+        // QA-044E-3D: LIVE는 지정된 테스트 기기만 허용
+        if (MODE === 'LIVE' && uid !== TEST_UID) {
+            continue;
+        }
+
         const schedule = doc.data();
         const sub = subscribers.get(uid);
+
 
         if (!validPair(sub, schedule)) {
             stats.skippedPairs++;
