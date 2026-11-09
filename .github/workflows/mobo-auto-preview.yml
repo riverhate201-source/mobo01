@@ -21,6 +21,9 @@ jobs:
         with:
           node-version: '22'
 
+          
+      - name: Install Firebase Admin SDK
+        run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
  
       - name: Verify LIVE safety gates
         env:
@@ -51,8 +54,7 @@ jobs:
         run: node scripts/mobo-push-dedupe.cjs
 
 
-      - name: Install Firebase Admin SDK
-        run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
+
 
       - name: Preview automatic notifications
         env:
