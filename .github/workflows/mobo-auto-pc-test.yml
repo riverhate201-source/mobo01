@@ -14,6 +14,17 @@ on:
           - GALAXY
           - PC
 
+
+      preview_clock:
+        description: '알림 계산 시간'
+        required: true
+        default: 'NOW'
+        type: choice
+        options:
+          - NOW
+          - TODAY_20_05
+
+
       run_mode:
 
         description: '실행 모드'
@@ -64,6 +75,7 @@ jobs:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
           MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_GALAXY_TEST_UID }}
           MOBO_AUTO_MODE: ${{ inputs.run_mode }}
+          MOBO_PREVIEW_CLOCK: ${{ inputs.preview_clock }}          
           MOBO_AUTO_LIVE_CONFIRM: ${{ inputs.live_confirm }}
         run: node scripts/mobo-auto-dispatch.cjs
 
@@ -73,6 +85,7 @@ jobs:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
           MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_TEST_UID }}
           MOBO_AUTO_MODE: ${{ inputs.run_mode }}
+          MOBO_PREVIEW_CLOCK: ${{ inputs.preview_clock }}
           MOBO_AUTO_LIVE_CONFIRM: ${{ inputs.live_confirm }}
         run: node scripts/mobo-auto-dispatch.cjs
 
