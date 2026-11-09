@@ -1,0 +1,32 @@
+
+name: MoBo Push - Test Notification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-notification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Firebase Admin SDK
+        run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
+
+      - name: Validate test notification
+        env:
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
+          MOBO_TEST_UID: ${{ secrets.MOBO_TEST_UID }}
+          MOBO_SEND_MODE: DRY_RUN
+        run: node scripts/mobo-test-push.cjs
