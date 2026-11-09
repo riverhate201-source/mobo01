@@ -127,10 +127,12 @@ async function main() {
     for (const doc of schedules.docs) {
         const uid = doc.id;
 
-        // QA-044E-3D: LIVE는 지정된 테스트 기기만 허용
-        if (MODE === 'LIVE' && uid !== TEST_UID) {
+
+        // 테스트 UID가 지정되면 PREVIEW와 LIVE 모두 해당 기기만 확인
+        if (TEST_UID && uid !== TEST_UID) {
             continue;
         }
+
 
         const schedule = doc.data();
         const sub = subscribers.get(uid);
