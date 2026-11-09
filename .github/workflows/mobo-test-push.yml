@@ -3,6 +3,15 @@ name: MoBo Push - Test Notification
 
 on:
   workflow_dispatch:
+    inputs:
+      send_mode:
+        description: '테스트 알림 발송 방식'
+        required: true
+        default: 'DRY_RUN'
+        type: choice
+        options:
+          - DRY_RUN
+          - SEND_ONCE
 
 permissions:
   contents: read
@@ -28,5 +37,5 @@ jobs:
         env:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
           MOBO_TEST_UID: ${{ secrets.MOBO_TEST_UID }}
-          MOBO_SEND_MODE: DRY_RUN
+          MOBO_SEND_MODE: ${{ inputs.send_mode }}
         run: node scripts/mobo-test-push.cjs
