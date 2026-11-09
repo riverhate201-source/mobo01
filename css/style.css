@@ -5726,7 +5726,7 @@ body.dark-mode #calc-modal .mobo-cum-work-scroll {
     box-sizing: border-box;
 
     /* 화면이 커도 모달은 최대 470px */
-    max-height: min(470px,
+    max-height: min(680px,
             calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
 
     /* 모달 전체가 스크롤되지 않도록 */

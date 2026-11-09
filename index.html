@@ -3339,6 +3339,63 @@
             }
         }
 
+        // ==========================================
+        // QA-044D-3D-3B-5F
+        // Firebase 일정 동기화 Web Lock 보호
+        // ==========================================
+
+        // 기존에 검증한 동기화 함수 보존
+        const moboRunScheduleAutoSyncWithoutLock =
+            moboRunScheduleAutoSync;
+
+        // 잠금이 적용된 동기화 함수로 연결
+        moboRunScheduleAutoSync = async function (...args) {
+
+            const isStale = () =>
+                typeof moboMainTabIsStale === 'function' &&
+                moboMainTabIsStale();
+
+            // 오래된 탭에서 동기화 시도 차단
+            if (isStale()) {
+                console.warn(
+                    'MoBo · 오래된 탭의 일정 동기화를 차단했어요.'
+                );
+                return;
+            }
+
+            // Web Locks 미지원 환경은 기존 보호 방식 유지
+            if (typeof navigator.locks?.request !== 'function') {
+                console.warn(
+                    'MoBo · Web Locks 미지원: 기존 동기화 방식 사용'
+                );
+
+                return moboRunScheduleAutoSyncWithoutLock.apply(
+                    this, args
+                );
+            }
+
+            // 같은 출처에서는 한 번에 한 탭만 일정 동기화
+            return navigator.locks.request(
+                'mobo-push-schedule-write-v2',
+                { mode: 'exclusive' },
+                async () => {
+
+                    // 잠금을 기다리는 동안 다른 탭이 변경됐는지 확인
+                    if (isStale()) {
+                        console.warn(
+                            'MoBo · 잠금 획득 후 오래된 탭 감지. 동기화 취소.'
+                        );
+                        return;
+                    }
+
+                    // 기존 검증된 Firebase 동기화 실행
+                    return moboRunScheduleAutoSyncWithoutLock.apply(
+                        this, args
+                    );
+                }
+            );
+        };
+
         // 앱 실행 시 기존 일정 점검
         window.addEventListener('load', () => {
             moboQueueScheduleAutoSync(true);

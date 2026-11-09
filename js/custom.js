@@ -263,6 +263,28 @@ function moboMainTabIsStale() {
     }
 }
 
+// ==========================================
+// QA-044D-3D-3B-3
+// 지갑·정산·복원 작업의 사전 충돌 차단
+// ==========================================
+
+function moboBlockStaleSensitiveWrite() {
+    if (!moboMainTabIsStale()) return false;
+
+    if (!moboMainStaleWarned) {
+        moboMainStaleWarned = true;
+
+        alert(
+            '다른 모보 탭에서 데이터가 변경됐어요.\n\n' +
+            '이 탭에서는 지갑·정산·복원 작업을 ' +
+            '진행할 수 없어요.\n\n' +
+            '최신 탭을 확인한 뒤 이 탭을 새로고침해 주세요.'
+        );
+    }
+
+    return true;
+}
+
 // 다른 탭이 통합 작품 데이터를 변경하면 감지
 window.addEventListener('storage', event => {
     if (event.storageArea !== localStorage) return;
@@ -2297,6 +2319,121 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+/* =========================================
+   QA-045B | 모바일 누적 계산 스크롤 연결
+   작품 목록 끝에서 전체 플랫폼 목록으로 이동
+========================================= */
+
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('calc-modal');
+    const platformList = document.getElementById('mobo-cum-items');
+
+    if (!modal || !platformList) return;
+
+    let touchedWorkList = null;
+    let lastTouchY = 0;
+    let lastTouchX = 0;
+
+    modal.addEventListener('touchstart', event => {
+        touchedWorkList = null;
+
+        if (
+            !modal.classList.contains('mobo-cum-contained') ||
+            event.touches.length !== 1
+        ) return;
+
+        const workList = event.target instanceof Element
+            ? event.target.closest('.mobo-cum-work-scroll')
+            : null;
+
+        if (
+            !workList ||
+            !platformList.contains(workList) ||
+            !workList.parentElement?.classList.contains('is-scroll-ready')
+        ) return;
+
+        touchedWorkList = workList;
+        lastTouchY = event.touches[0].clientY;
+        lastTouchX = event.touches[0].clientX;
+
+    }, { passive: true });
+
+    modal.addEventListener('touchmove', event => {
+        if (
+            !touchedWorkList ||
+            event.touches.length !== 1 ||
+            !modal.classList.contains('mobo-cum-contained')
+        ) return;
+
+        const touch = event.touches[0];
+
+        const deltaY = lastTouchY - touch.clientY;
+        const deltaX = lastTouchX - touch.clientX;
+
+        lastTouchY = touch.clientY;
+        lastTouchX = touch.clientX;
+
+        // 가로 움직임이나 미세한 터치는 무시
+        if (
+            Math.abs(deltaY) < 1 ||
+            Math.abs(deltaX) > Math.abs(deltaY)
+        ) return;
+
+        const inner = touchedWorkList;
+
+        const atBottom = deltaY > 0 &&
+            inner.scrollTop + inner.clientHeight >=
+            inner.scrollHeight - 2;
+
+        const atTop = deltaY < 0 &&
+            inner.scrollTop <= 2;
+
+        // 내부에 아직 스크롤할 내용이 있으면 그대로 유지
+        if (!atBottom && !atTop) return;
+
+        const maxScroll =
+            platformList.scrollHeight - platformList.clientHeight;
+
+        if (maxScroll <= 0) return;
+
+        const nextScroll = Math.max(
+            0,
+            Math.min(
+                maxScroll,
+                platformList.scrollTop + deltaY
+            )
+        );
+
+        if (
+            Math.abs(nextScroll - platformList.scrollTop) < 0.5
+        ) return;
+
+        // 내부 목록 끝에서 전체 플랫폼 목록 스크롤
+        if (event.cancelable) {
+            event.preventDefault();
+            platformList.scrollTop = nextScroll;
+        }
+
+    }, { passive: false });
+
+    const resetTouch = () => {
+        touchedWorkList = null;
+    };
+
+    modal.addEventListener('touchend', event => {
+        if (event.touches.length === 0) {
+            resetTouch();
+        }
+    }, { passive: true });
+
+    modal.addEventListener(
+        'touchcancel',
+        resetTouch,
+        { passive: true }
+    );
+});
+
+
 // 일반 계산기 화면으로 돌아가기
 function moboCumBack() {
     // 기존 탭 메뉴는 항상 표시
@@ -2739,6 +2876,8 @@ let moboCumCheckoutBusy = false;
 function moboCumCheckout() {
     if (moboCumCheckoutBusy) return;
 
+    if (moboBlockStaleSensitiveWrite()) return;
+
     const items = moboCumRead();
 
     if (!items) {
@@ -2811,6 +2950,7 @@ function moboCumCheckout() {
     );
 
     if (!confirmed) return;
+    if (moboBlockStaleSensitiveWrite()) return;
 
     const button = document.getElementById('mobo-cum-checkout');
 
@@ -3023,6 +3163,13 @@ function moboCumCheckout() {
         // 기존 레진 차감 규칙 유지
         if (totals.lezhin > 0) {
             changes.set('lezhinBonusExpire', null);
+        }
+
+        // 실제 저장 직전 멀티탭 상태 재검사
+        if (moboMainTabIsStale()) {
+            throw new Error(
+                '다른 탭에서 데이터가 변경되어 차감을 중단했어요.'
+            );
         }
 
         // 실제 저장 시작
@@ -3691,6 +3838,8 @@ function calculateCoins() {
 
 // 🌟 [통합 결제 시스템] 지갑 차감 + 가계부 작성 + 통계 업데이트를 한 번에!
 function executeDeduction(plt, title, amount) {
+    if (moboBlockStaleSensitiveWrite()) return false;
+
     if (amount <= 0) return false;
 
     // 차감 과정에서 변경될 수 있는 저장 데이터 보관
@@ -5289,11 +5438,41 @@ function checkSaleDays() {
     }
 }
 
-function checkAttendanceReset() { const kst = getKSTDate(); const todayStr = `${kst.getFullYear()}-${kst.getMonth() + 1}-${kst.getDate()}`; if (localStorage.getItem('lastAttendDate') !== todayStr) { localStorage.setItem('lastAttendDate', todayStr); localStorage.setItem('lezhinAttend', 'false'); localStorage.setItem('bomtoonAttend', 'false'); } updateAttendUI(); }
+function checkAttendanceReset() {
+    const kst = getKSTDate();
+
+    const todayStr =
+        `${kst.getFullYear()}-${kst.getMonth() + 1}-${kst.getDate()}`;
+
+    if (localStorage.getItem('lastAttendDate') !== todayStr) {
+
+        // 다른 탭의 변경을 감지한 경우 초기화 금지
+        if (
+            typeof moboMainTabIsStale === 'function' &&
+            moboMainTabIsStale()
+        ) {
+            console.warn(
+                'MoBo · 오래된 탭의 출석 초기화를 건너뜁니다.'
+            );
+
+            updateAttendUI();
+            return;
+        }
+
+        localStorage.setItem('lastAttendDate', todayStr);
+        localStorage.setItem('lezhinAttend', 'false');
+        localStorage.setItem('bomtoonAttend', 'false');
+    }
+
+    updateAttendUI();
+}
 function updateAttendUI() { const lAttend = localStorage.getItem('lezhinAttend') === 'true'; const bAttend = localStorage.getItem('bomtoonAttend') === 'true'; const lBtn = document.getElementById('lezhin-attend-btn'); const bBtn = document.getElementById('bomtoon-attend-btn'); if (lAttend) { lBtn.classList.add('done'); lBtn.textContent = ' 출석완료'; } else { lBtn.classList.remove('done'); lBtn.textContent = '레진 출석 전'; } if (bAttend) { bBtn.classList.add('done'); bBtn.textContent = ' 출석완료'; } else { bBtn.classList.remove('done'); bBtn.textContent = '봄툰 출석 전'; } }
 
 // 🚨 [교체] 출석 확인 및 레진 코인 자동 적립 (무한 복사 방지 적용!)
 function checkAttendance(plt) {
+
+    // QA-044D | 오래된 탭의 출석 및 코인 지급 차단
+    if (moboBlockStaleSensitiveWrite()) return;
     // 1. 🌟 [핵심] 이미 출석 도장을 찍었는지 먼저 검사합니다!
     const alreadyAttended = localStorage.getItem(plt + 'Attend') === 'true';
 
@@ -5330,6 +5509,20 @@ function forceSortBreaks() {
 
 // 1. 데이터 불러오기
 function loadAllData() {
+    // QA-044D-3D-3B-5E
+    // 오래된 탭에서 통합 데이터 재적용 차단
+    if (
+        typeof moboMainTabIsStale === 'function' &&
+        moboMainTabIsStale()
+    ) {
+        console.warn(
+            'MoBo · 오래된 탭의 데이터 재적용을 차단했어요. ' +
+            '최신 데이터를 사용하려면 새로고침해 주세요.'
+        );
+
+        return false;
+    }
+
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
         const p = JSON.parse(data);
@@ -5519,7 +5712,20 @@ function saveData(silent = false) {
     return true;
 }
 
-function toggleDarkMode() { const isDark = document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); saveData(); }
+function toggleDarkMode() {
+    // 오래된 탭에서는 설정 변경 금지
+    if (moboBlockStaleSensitiveWrite()) return;
+
+    const isDark =
+        document.body.classList.toggle('dark-mode');
+
+    localStorage.setItem(
+        'theme',
+        isDark ? 'dark' : 'light'
+    );
+
+    saveData();
+}
 
 
 function changeDay(day) {
@@ -8422,6 +8628,9 @@ function closeCoinModal() {
 
 // 3. 모달창에서 [저장하기] 버튼을 눌렀을 때 실행되는 함수
 function saveCoinUpdate() {
+    // 오래된 탭에서는 지갑 변경 금지
+    if (moboBlockStaleSensitiveWrite()) return;
+
     const balanceRaw =
         document.getElementById('coin-input-val').value.trim();
 
@@ -8783,6 +8992,11 @@ function isValidMoboCumBackup(data) {
 
 // 🚨 브라우저가 절대 무시할 수 없는 가장 튼튼하고 똑똑한 복구+이사 함수! (철벽 방어 유지, 구글 연동만 제거)
 function handleImport(event) {
+    if (moboBlockStaleSensitiveWrite()) {
+        if (event?.target) event.target.value = '';
+        return;
+    }
+
     const file = event.target.files[0];
     if (!file) return;
 
@@ -8892,6 +9106,14 @@ function handleImport(event) {
                 }
 
                 // 사진 처리가 끝난 뒤에만 최종 저장 시작
+                // 파일 처리 중 다른 탭이 변경되었다면 복원 중단
+                if (moboMainTabIsStale()) {
+                    throw new Error(
+                        '복원 도중 다른 탭에서 데이터가 변경됐어요. ' +
+                        '현재 복원을 중단합니다.'
+                    );
+                }
+
                 saveStarted = true;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(parsedData));
 
