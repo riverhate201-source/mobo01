@@ -4,6 +4,15 @@ name: MoBo Push - Test Notification
 on:
   workflow_dispatch:
     inputs:
+      target_device:
+        description: '테스트할 기기 선택'
+        required: true
+        default: 'GALAXY'
+        type: choice
+        options:
+          - GALAXY
+          - PC
+
       send_mode:
         description: '테스트 알림 발송 방식'
         required: true
@@ -33,9 +42,21 @@ jobs:
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
-      - name: Validate test notification
+      
+      # PC 테스트
+      - name: Test notification - PC
+        if: ${{ inputs.target_device == 'PC' }}
         env:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
           MOBO_TEST_UID: ${{ secrets.MOBO_TEST_UID }}
+          MOBO_SEND_MODE: ${{ inputs.send_mode }}
+        run: node scripts/mobo-test-push.cjs
+
+      # Galaxy 테스트
+      - name: Test notification - Galaxy
+        if: ${{ inputs.target_device == 'GALAXY' }}
+        env:
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
+          MOBO_TEST_UID: ${{ secrets.MOBO_GALAXY_TEST_UID }}
           MOBO_SEND_MODE: ${{ inputs.send_mode }}
         run: node scripts/mobo-test-push.cjs
