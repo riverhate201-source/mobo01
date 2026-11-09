@@ -1,0 +1,55 @@
+
+name: MoBo Push - Auto PC Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_mode:
+        description: '실행 모드'
+        required: true
+        default: 'PREVIEW'
+        type: choice
+        options:
+          - PREVIEW
+          - LIVE
+
+      live_confirm:
+        description: '실제 발송 승인'
+        required: true
+        default: 'NO'
+        type: choice
+        options:
+          - 'NO'
+          - 'YES'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobo-auto-pc-test
+  cancel-in-progress: false
+
+jobs:
+  auto-pc-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Firebase Admin SDK
+        run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
+
+      - name: Run PC automatic notification test
+        env:
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
+          MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_TEST_UID }}
+          MOBO_AUTO_MODE: ${{ inputs.run_mode }}
+          MOBO_AUTO_LIVE_CONFIRM: ${{ inputs.live_confirm }}
+        run: node scripts/mobo-auto-dispatch.cjs
