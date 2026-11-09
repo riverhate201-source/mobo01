@@ -21,7 +21,31 @@ jobs:
         with:
           node-version: '22'
 
-          
+ 
+      - name: Verify LIVE safety gates
+        env:
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ''
+        run: |
+          set -eu
+
+          if MOBO_AUTO_MODE=LIVE MOBO_AUTO_LIVE_CONFIRM=NO MOBO_AUTO_TEST_UID=SafetyTestUid_123 node scripts/mobo-auto-dispatch.cjs > /tmp/mobo-gate-1.log 2>&1; then
+            echo "FAIL: LIVE without confirmation was allowed"
+            exit 1
+          fi
+
+          grep -q 'LIVE 발송 확인 설정이 없습니다' /tmp/mobo-gate-1.log
+          echo "PASS: LIVE without confirmation blocked"
+
+          if MOBO_AUTO_MODE=LIVE MOBO_AUTO_LIVE_CONFIRM=YES MOBO_AUTO_TEST_UID='' node scripts/mobo-auto-dispatch.cjs > /tmp/mobo-gate-2.log 2>&1; then
+            echo "FAIL: LIVE without test UID was allowed"
+            exit 1
+          fi
+
+          grep -q '허용된 테스트 기기 UID가 없습니다' /tmp/mobo-gate-2.log
+          echo "PASS: LIVE without test UID blocked"
+
+          echo "Actual notifications sent: 0"
+         
 
       - name: Test duplicate notification prevention
         run: node scripts/mobo-push-dedupe.cjs
