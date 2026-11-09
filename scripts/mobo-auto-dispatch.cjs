@@ -22,6 +22,18 @@ const WINDOW_MS = 20 * 60 * 1000;
 const TEST_UID = process.env.MOBO_AUTO_TEST_UID?.trim() || '';
 
 
+const PREVIEW_CLOCK = process.env.MOBO_PREVIEW_CLOCK || 'NOW';
+
+if (!['NOW', 'TODAY_20_05'].includes(PREVIEW_CLOCK)) {
+    throw new Error('올바르지 않은 가상 시간 설정입니다.');
+}
+
+if (MODE === 'LIVE' && PREVIEW_CLOCK !== 'NOW') {
+    throw new Error('LIVE에서는 가상 시간을 사용할 수 없습니다.');
+}
+
+
+
 function parseDay(entry) {
     if (typeof entry !== 'string') return null;
 
@@ -108,8 +120,28 @@ async function main() {
         subscriptions.docs.map(doc => [doc.id, doc.data()])
     );
 
-    const now = Date.now();
+
+    // PREVIEW에서만 오늘 오후 8시 5분을 가상으로 적용
+    let now = Date.now();
+
+    if (MODE === 'PREVIEW' && PREVIEW_CLOCK === 'TODAY_20_05') {
+        const todayKST = new Date(Date.now() + 9 * 3600000)
+            .toISOString()
+            .slice(0, 10);
+
+        now = Date.parse(`${todayKST}T20:05:00+09:00`);
+    }
+
+    console.log(
+        '알림 계산 기준 시각(KST):',
+        new Date(now + 9 * 3600000)
+            .toISOString()
+            .slice(0, 16)
+            .replace('T', ' ')
+    );
+
     const candidates = [];
+
 
     const stats = {
         subscriptions: subscriptions.size,
