@@ -34,3 +34,11 @@ jobs:
         env:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
         run: node scripts/mobo-auto-preview.cjs
+
+
+      - name: Preview automatic dispatch engine
+        env:
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
+          MOBO_AUTO_MODE: PREVIEW
+        run: node scripts/mobo-auto-dispatch.cjs
+        
