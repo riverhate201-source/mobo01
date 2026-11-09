@@ -21,6 +21,12 @@ jobs:
         with:
           node-version: '22'
 
+          
+
+      - name: Test duplicate notification prevention
+        run: node scripts/mobo-push-dedupe.cjs
+
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
