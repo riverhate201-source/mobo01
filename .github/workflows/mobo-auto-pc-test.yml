@@ -1,10 +1,21 @@
 
 name: MoBo Push - Auto PC Test
 
+
 on:
   workflow_dispatch:
     inputs:
+      target_device:
+        description: '테스트할 기기'
+        required: true
+        default: 'GALAXY'
+        type: choice
+        options:
+          - GALAXY
+          - PC
+
       run_mode:
+
         description: '실행 모드'
         required: true
         default: 'PREVIEW'
@@ -46,10 +57,22 @@ jobs:
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
+
+      - name: Run Galaxy automatic notification test
+        if: ${{ inputs.target_device == 'GALAXY' }}
+        env:
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
+          MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_GALAXY_TEST_UID }}
+          MOBO_AUTO_MODE: ${{ inputs.run_mode }}
+          MOBO_AUTO_LIVE_CONFIRM: ${{ inputs.live_confirm }}
+        run: node scripts/mobo-auto-dispatch.cjs
+
       - name: Run PC automatic notification test
+        if: ${{ inputs.target_device == 'PC' }}
         env:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
           MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_TEST_UID }}
           MOBO_AUTO_MODE: ${{ inputs.run_mode }}
           MOBO_AUTO_LIVE_CONFIRM: ${{ inputs.live_confirm }}
         run: node scripts/mobo-auto-dispatch.cjs
+
