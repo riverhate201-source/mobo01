@@ -1509,12 +1509,34 @@
                     있어요!</p>
 
                 <!-- 📜 플랫폼 리스트가 들어갈 공간 -->
+
+                <!-- 📜 플랫폼 리스트가 들어갈 공간 -->
                 <div id="platform-sort-list"
                     style="border: 1px solid #eee; border-radius: 8px; padding: 10px; background: #fdfdfd;">
                 </div>
 
+                <!-- QA-045C | 요일별 플랫폼 자동 우선 -->
+                <label class="mobo-auto-platform-option"
+                    style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 15px; padding: 12px 20px 12px 12px; border: 1px solid #eee; border-radius: 10px; cursor: pointer;">
+
+                    <span style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-size: 13px; font-weight: 600;">
+                            연재 플랫폼 자동 우선
+                        </span>
+                        <span style="font-size: 11px; color: #888; line-height: 1.5;">
+                            연재작품이 있는 플랫폼을 먼저 표시해요.
+                        </span>
+                    </span>
+
+                    <span class="toggle-switch" style="flex-shrink: 0;">
+                        <input type="checkbox" id="mobo-auto-platform-priority">
+                        <span class="toggle-slider"></span>
+                    </span>
+                </label>
+
                 <button onclick="savePlatformSetting()" class="save-btn"
                     style="width: 100%; margin-top: 15px;">저장하기</button>
+
             </div>
         </div>
 

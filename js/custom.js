@@ -1079,6 +1079,17 @@ function openPlatformSettingModal() {
         ghostClass: 'sortable-ghost'
     });
 
+
+    // QA-045C: 연재 플랫폼 자동 우선 설정 불러오기
+    const autoPriorityToggle =
+        document.getElementById('mobo-auto-platform-priority');
+
+    if (autoPriorityToggle) {
+        autoPriorityToggle.checked =
+            localStorage.getItem('moboAutoPlatformPriority') === 'true';
+    }
+
+
     document.getElementById('platform-setting-modal').style.display = 'flex';
 }
 
@@ -1108,10 +1119,23 @@ function savePlatformSetting() {
         return alert("최소 1개 이상의 플랫폼은 켜두셔야 합니다!");
     }
 
-    // 진짜 저장!
+
+    // QA-045C: 연재 플랫폼 자동 우선 설정 저장
+    const autoPriorityToggle =
+        document.getElementById('mobo-auto-platform-priority');
+
+    if (autoPriorityToggle) {
+        localStorage.setItem(
+            'moboAutoPlatformPriority',
+            String(autoPriorityToggle.checked)
+        );
+    }
+
+    // 기존 플랫폼 순서 및 설정 저장
     platformOrder = newOrder;
     localStorage.setItem('platformOrder', JSON.stringify(platformOrder));
     saveData();
+
 
     // 화면 레이아웃 즉시 새로고침
     updatePlatformOrder();
@@ -2193,9 +2217,11 @@ function moboCumRender() {
 
         container.appendChild(section);
 
-        // 화면 갱신 전 스크롤 위치 복원
-        workList.scrollTop =
+
+        // QA-045D: 작품 목록의 실제 스크롤 위치 복원
+        workScroll.scrollTop =
             previousScroll.get(platform) || 0;
+
     }
 
     // 새로 생성된 화살표를 Lucide 아이콘으로 변환
@@ -5750,12 +5776,98 @@ function changeDay(day) {
     setTimeout(checkScrollArrows, 20);
 }
 
+
+/**
+ * QA-045C
+ * 선택한 요일에 실제 연재 작품이 있는 플랫폼인지 확인
+ * 저장된 플랫폼 순서와 작품 데이터는 변경하지 않음
+ */
+function moboHasReleaseOnViewedDay(platform) {
+    const regularDays = [
+        '월요일', '화요일', '수요일', '목요일',
+        '금요일', '토요일', '일요일'
+    ];
+
+    if (!regularDays.includes(viewDay)) return false;
+
+    const platformWorks = state[platform];
+    if (!platformWorks) return false;
+
+    const targetDate = getTargetDateForViewDay(viewDay);
+    const targetDateStr = formatDate(targetDate);
+
+    const isEligible = (work) => {
+        if (!work) return false;
+
+        // 작품 등록일 이전에는 연재 작품으로 계산하지 않음
+        if (
+            typeof work.registeredOn === 'string' &&
+            /^\d{4}-\d{2}-\d{2}$/.test(work.registeredOn) &&
+            work.registeredOn > targetDateStr
+        ) {
+            return false;
+        }
+
+        // 완결 및 선택 날짜 기준 휴재 작품 제외
+        return !isWorkOnBreakForViewedDay(work, viewDay);
+    };
+
+    // 1. 선택한 요일에 등록된 일반 연재 작품
+    const weeklyWorks = platformWorks[viewDay] || [];
+
+    if (weeklyWorks.some(isEligible)) {
+        return true;
+    }
+
+    // 2. 해당 날짜에 연재하는 10일 연재 작품
+    const tenDayWorks = platformWorks['10일 연재'] || [];
+
+    if (tenDayWorks.some(work =>
+        isEligible(work) &&
+        isDateMatch(work.cycle, targetDate, platform)
+    )) {
+        return true;
+    }
+
+    // 3. 해당 날짜에 연재하는 격주 작품
+    const biweeklyWorks = platformWorks['격주 연재'] || [];
+
+    if (biweeklyWorks.some(work =>
+        isEligible(work) &&
+        (work.cycle || '').includes('격주 연재') &&
+        isBiweeklyReleaseOnViewedDate(work, targetDate)
+    )) {
+        return true;
+    }
+
+    // 4. 다른 요일에서 복귀하는 작품
+    return Object.keys(platformWorks).some(dayKey => {
+        if (
+            dayKey === viewDay ||
+            dayKey === '10일 연재' ||
+            dayKey === '격주 연재'
+        ) {
+            return false;
+        }
+
+        return (platformWorks[dayKey] || []).some(work =>
+            work &&
+            work.status === '휴재' &&
+            work.breakDate === targetDateStr &&
+            isEligible(work)
+        );
+    });
+}
+
+
+
 function updatePlatformOrder() {
     const container = document.getElementById('main-content-area');
     if (!container) return;
 
-    // 1. 먼저 4개 플랫폼을 싹 다 확인해서, 비밀번호에 안 적힌 녀석들은 화면에서 끕니다!
     const allPlats = ['lezhin', 'bomtoon', 'ridi', 'mrblue'];
+
+    // 기존 플랫폼 숨김 설정 유지
     allPlats.forEach(plt => {
         if (!platformOrder.includes(plt)) {
             const section = document.getElementById(plt + '-section');
@@ -5763,15 +5875,47 @@ function updatePlatformOrder() {
         }
     });
 
+    // 사용자가 저장한 원본 순서는 절대 수정하지 않음
+    let displayOrder = [...platformOrder];
 
-    platformOrder.forEach(plt => {
+    const autoPriorityEnabled =
+        localStorage.getItem('moboAutoPlatformPriority') === 'true';
+
+    const regularDays = [
+        '월요일', '화요일', '수요일', '목요일',
+        '금요일', '토요일', '일요일'
+    ];
+
+    // ON + 일반 요일 탭에서만 자동 우선순위 적용
+    if (autoPriorityEnabled && regularDays.includes(viewDay)) {
+        const activePlatforms = [];
+        const inactivePlatforms = [];
+
+        displayOrder.forEach(plt => {
+            if (moboHasReleaseOnViewedDay(plt)) {
+                activePlatforms.push(plt);
+            } else {
+                inactivePlatforms.push(plt);
+            }
+        });
+
+        displayOrder = [
+            ...activePlatforms,
+            ...inactivePlatforms
+        ];
+    }
+
+    // 화면에 표시되는 순서만 변경
+    displayOrder.forEach(plt => {
         const section = document.getElementById(plt + '-section');
+
         if (section) {
-            section.style.display = ''; // 다시 보이게 켜주고
-            container.appendChild(section); // 정해진 순서대로 밑으로 착착착 이동!
+            section.style.display = '';
+            container.appendChild(section);
         }
     });
 }
+
 
 // =========================================
 // 연재일 미설정 작품 안내
@@ -5969,9 +6113,14 @@ function renderAll() {
     });
     document.querySelectorAll('.day-btn').forEach(btn => { if (btn.dataset.day === viewDay) btn.classList.add('active'); else btn.classList.remove('active'); });
 
+
     ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => renderList(plt));
 
+    // QA-045C: 요일 및 작품 상태에 맞춰 플랫폼 표시 순서 갱신
+    updatePlatformOrder();
+
     refreshBalance();
+
 
     // 작품 등록·수정·삭제 후 연재일 미설정 안내 갱신
     moboUpdatePendingScheduleBanner();
