@@ -12,18 +12,18 @@ importScripts(
 // Firebase 프로젝트 연결
 firebase.initializeApp({
     apiKey: "AIzaSyCi-EyujgiOKyj_m4pN2OdXoMJ-UoW5JCY",
-  authDomain: "mobo-qa-2026.firebaseapp.com",
-  projectId: "mobo-qa-2026",
-  storageBucket: "mobo-qa-2026.firebasestorage.app",
-  messagingSenderId: "694099450490",
-  appId: "1:694099450490:web:7e9bc16ff3f2c7a622b9c3"
+    authDomain: "mobo-qa-2026.firebaseapp.com",
+    projectId: "mobo-qa-2026",
+    storageBucket: "mobo-qa-2026.firebasestorage.app",
+    messagingSenderId: "694099450490",
+    appId: "1:694099450490:web:7e9bc16ff3f2c7a622b9c3"
 });
 
 // 백그라운드 푸시 수신 활성화
 const moboFirebaseMessaging = firebase.messaging();
 
 // 🌟 버전 숫자를 하나 올렸습니다! (적용을 위해)
-const CACHE_NAME = 'mobo-qa-cache-v1';
+const CACHE_NAME = 'mobo-qa-cache-v2';
 const DYNAMIC_CACHE = 'mobo-dynamic-v4'; // 🌟 외부 이미지/아이콘을 훔쳐(?) 담을 새로운 보조 창고!
 
 const urlsToCache = [
