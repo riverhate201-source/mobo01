@@ -2,6 +2,7 @@
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
+const { createHash } = require('node:crypto');
 
 // ==========================================
 // MoBo QA-044E-2 | 지정 기기 테스트 푸시
@@ -52,6 +53,21 @@ async function main() {
     ) {
         throw new Error('테스트 기기의 알림이 활성화되지 않았어요.');
     }
+
+        // QA-045G-7 | 발송 대상 식별값 확인
+    // UID와 FCM 토큰 원문은 출력하지 않음
+    const fingerprint = (value) =>
+        createHash('sha256')
+            .update(value, 'utf8')
+            .digest('hex')
+            .slice(0, 12);
+
+    console.log('QA 발송 대상 확인');
+    console.log('UID 식별값:', fingerprint(uid));
+    console.log(
+        'FCM 토큰 식별값:',
+        fingerprint(subscription.token)
+    );
 
     const message = {
         token: subscription.token,
