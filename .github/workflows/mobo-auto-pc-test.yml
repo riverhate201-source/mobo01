@@ -53,6 +53,7 @@ concurrency:
 
 jobs:
   auto-pc-test:
+    if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -72,8 +73,8 @@ jobs:
       - name: Run Galaxy automatic notification test
         if: ${{ inputs.target_device == 'GALAXY' }}
         env:
-          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
-          MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_GALAXY_TEST_UID }}
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
+          MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_QA_GALAXY_TEST_UID }}
           MOBO_AUTO_MODE: ${{ inputs.run_mode }}
           MOBO_PREVIEW_CLOCK: ${{ inputs.preview_clock }}          
           MOBO_AUTO_LIVE_CONFIRM: ${{ inputs.live_confirm }}
@@ -82,8 +83,8 @@ jobs:
       - name: Run PC automatic notification test
         if: ${{ inputs.target_device == 'PC' }}
         env:
-          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
-          MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_TEST_UID }}
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
+          MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_QA_TEST_UID }}
           MOBO_AUTO_MODE: ${{ inputs.run_mode }}
           MOBO_PREVIEW_CLOCK: ${{ inputs.preview_clock }}
           MOBO_AUTO_LIVE_CONFIRM: ${{ inputs.live_confirm }}
