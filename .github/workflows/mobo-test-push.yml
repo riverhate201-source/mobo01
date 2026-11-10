@@ -27,6 +27,7 @@ permissions:
 
 jobs:
   test-notification:
+    if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -47,8 +48,8 @@ jobs:
       - name: Test notification - PC
         if: ${{ inputs.target_device == 'PC' }}
         env:
-          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
-          MOBO_TEST_UID: ${{ secrets.MOBO_TEST_UID }}
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
+          MOBO_TEST_UID: ${{ secrets.MOBO_QA_TEST_UID }}
           MOBO_SEND_MODE: ${{ inputs.send_mode }}
         run: node scripts/mobo-test-push.cjs
 
@@ -56,7 +57,7 @@ jobs:
       - name: Test notification - Galaxy
         if: ${{ inputs.target_device == 'GALAXY' }}
         env:
-          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_FIREBASE_SERVICE_ACCOUNT }}
-          MOBO_TEST_UID: ${{ secrets.MOBO_GALAXY_TEST_UID }}
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
+          MOBO_TEST_UID: ${{ secrets.MOBO_QA_GALAXY_TEST_UID }}
           MOBO_SEND_MODE: ${{ inputs.send_mode }}
         run: node scripts/mobo-test-push.cjs
