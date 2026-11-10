@@ -3,6 +3,16 @@
 // 기존 PWA 서비스 워커와 함께 사용
 // ==========================================
 
+
+// QA-045G-5 | FCM PUSH 수신 진단
+// 테스트 완료 후 제거할 임시 코드
+self.addEventListener('push', () => {
+    console.log(
+        '🔔 [MoBo QA] 실제 PUSH 이벤트 도착!',
+        new Date().toISOString()
+    );
+});
+
 // Firebase SDK (compat 방식)
 importScripts(
     'https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js',
@@ -23,7 +33,7 @@ firebase.initializeApp({
 const moboFirebaseMessaging = firebase.messaging();
 
 // 🌟 버전 숫자를 하나 올렸습니다! (적용을 위해)
-const CACHE_NAME = 'mobo-qa-cache-v2';
+const CACHE_NAME = 'mobo-qa-cache-v3';
 const DYNAMIC_CACHE = 'mobo-dynamic-v4'; // 🌟 외부 이미지/아이콘을 훔쳐(?) 담을 새로운 보조 창고!
 
 const urlsToCache = [
