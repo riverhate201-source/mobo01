@@ -24,7 +24,7 @@ async function main() {
 
     const serviceAccount = JSON.parse(secret);
 
-    if (serviceAccount.project_id !== 'mobo-web-2026') {
+    if (serviceAccount.project_id !== 'mobo-qa-2026') {
         throw new Error('Firebase 프로젝트가 일치하지 않아요.');
     }
 
