@@ -80,6 +80,27 @@ function validPair(sub, schedule) {
     );
 }
 
+// ==========================================
+// QA-046C-2 | 출석 상태 공통 판단
+// ==========================================
+
+function moboClassifyAttendance(status, date) {
+    if (
+        !status ||
+        status.date !== date ||
+        typeof status.lezhin !== 'boolean' ||
+        typeof status.bomtoon !== 'boolean'
+    ) return null;
+
+    const missingLezhin = !status.lezhin;
+    const missingBomtoon = !status.bomtoon;
+
+    return {
+        due: missingLezhin || missingBomtoon,
+        missingLezhin,
+        missingBomtoon
+    };
+}
 async function main() {
     if (!['PREVIEW', 'LIVE'].includes(MODE)) {
         throw new Error('지원하지 않는 실행 모드입니다.');
@@ -286,35 +307,32 @@ async function main() {
                 continue;
             }
 
-            const status = sub.attendanceStatus;
+                        // QA-046C-2 | 공통 함수로 출석 판단
+            const result = moboClassifyAttendance(
+                sub.attendanceStatus,
+                todayKST
+            );
 
-            // 오늘 출석 상태가 확인된 경우만 테스트
-            if (
-                !status ||
-                status.date !== todayKST ||
-                typeof status.lezhin !== 'boolean' ||
-                typeof status.bomtoon !== 'boolean'
-            ) {
+            if (!result) {
                 attendanceStats.todayStatusMissing++;
                 continue;
             }
 
-            // 두 플랫폼 모두 출석했으면 알림 불필요
-            if (status.lezhin && status.bomtoon) {
+            if (!result.due) {
                 attendanceStats.allCompleted++;
                 continue;
             }
 
+            // 플랫폼이 둘 다 미출석이어도 알림은 1건
             attendanceStats.dueNotifications++;
 
-            if (!status.lezhin) {
+            if (result.missingLezhin) {
                 attendanceStats.missingLezhin++;
             }
 
-            if (!status.bomtoon) {
+            if (result.missingBomtoon) {
                 attendanceStats.missingBomtoon++;
             }
-        }
 
         console.log(
             'MoBo QA-046C-1 · 미출석 알림 미리보기'
@@ -322,6 +340,94 @@ async function main() {
 
         console.log('출석 기준 날짜(KST):', todayKST);
         console.table(attendanceStats);
+                // ==========================================
+        // QA-046C-2 | 가상 출석 4가지 테스트
+        // 실제 사용자 데이터 변경 없음
+        // ==========================================
+
+        const assert = require('node:assert/strict');
+
+        const testCases = [
+            {
+                name: '레진만 미출석',
+                lezhin: false,
+                bomtoon: true,
+                expected: {
+                    due: true,
+                    missingLezhin: true,
+                    missingBomtoon: false
+                }
+            },
+            {
+                name: '봄툰만 미출석',
+                lezhin: true,
+                bomtoon: false,
+                expected: {
+                    due: true,
+                    missingLezhin: false,
+                    missingBomtoon: true
+                }
+            },
+            {
+                name: '둘 다 미출석',
+                lezhin: false,
+                bomtoon: false,
+                expected: {
+                    due: true,
+                    missingLezhin: true,
+                    missingBomtoon: true
+                }
+            },
+            {
+                name: '둘 다 출석 완료',
+                lezhin: true,
+                bomtoon: true,
+                expected: {
+                    due: false,
+                    missingLezhin: false,
+                    missingBomtoon: false
+                }
+            }
+        ];
+
+        console.log(
+            'MoBo QA-046C-2 · 가상 출석 조건 테스트'
+        );
+
+        for (const testCase of testCases) {
+            const actual = moboClassifyAttendance(
+                {
+                    date: todayKST,
+                    lezhin: testCase.lezhin,
+                    bomtoon: testCase.bomtoon
+                },
+                todayKST
+            );
+
+            assert.deepEqual(
+                actual,
+                testCase.expected,
+                `${testCase.name} 판단 오류`
+            );
+
+            console.log(
+                `PASS: ${testCase.name} → ` +
+                (actual.due
+                    ? '알림 후보 1건'
+                    : '알림 없음')
+            );
+        }
+
+        // 출석 기록이 없다면 무조건 미출석으로
+        // 판단하지 않고 후보에서 제외
+        assert.equal(
+            moboClassifyAttendance(null, todayKST),
+            null
+        );
+
+        console.log('PASS: 출석 상태 누락은 후보 제외');
+        console.log('QA-046C-2 · 전체 테스트 PASS');
+            
 
         console.log('미리보기 완료');
         console.log('실제 푸시 발송: 없음');
