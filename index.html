@@ -1817,7 +1817,11 @@
                                 payload.notification?.body ||
                                 '새로운 알림이 도착했어요.',
                             icon: './icon.png',
-                            tag: 'mobo-qa-foreground'
+                            badge: './notification-badge.png',
+                            tag: 'mobo-qa-foreground',
+                            data: {
+                                url: 'https://staging--mobo-demo.netlify.app/'
+                            }
                         }
                     );
 

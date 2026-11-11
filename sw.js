@@ -13,6 +13,39 @@ self.addEventListener('push', () => {
     );
 });
 
+// QA-045H | 화면 활성 상태에서 생성한 알림 클릭 처리
+// Firebase 자동 생성 알림은 기존 Firebase SDK가 처리
+
+self.addEventListener('notificationclick', (event) => {
+    if (event.notification.tag !== 'mobo-qa-foreground') {
+        return;
+    }
+
+    event.stopImmediatePropagation();
+    event.notification.close();
+
+    event.waitUntil((async () => {
+        const targetUrl =
+            'https://staging--mobo-demo.netlify.app/';
+
+        const windows = await self.clients.matchAll({
+            type: 'window',
+            includeUncontrolled: true
+        });
+
+        const existingWindow = windows.find(client =>
+            client.url.startsWith(targetUrl)
+        );
+
+        if (existingWindow) {
+            await existingWindow.focus();
+            return;
+        }
+
+        await self.clients.openWindow(targetUrl);
+    })());
+});
+
 // Firebase SDK (compat 방식)
 importScripts(
     'https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js',
@@ -33,7 +66,7 @@ firebase.initializeApp({
 const moboFirebaseMessaging = firebase.messaging();
 
 // 🌟 버전 숫자를 하나 올렸습니다! (적용을 위해)
-const CACHE_NAME = 'mobo-qa-cache-v4';
+const CACHE_NAME = 'mobo-qa-cache-v5';
 const DYNAMIC_CACHE = 'mobo-dynamic-v4'; // 🌟 외부 이미지/아이콘을 훔쳐(?) 담을 새로운 보조 창고!
 
 const urlsToCache = [
@@ -49,6 +82,7 @@ const urlsToCache = [
     './images/mrblue_bg.png',
     './images/ridi_bg.png',
     './icon.png',
+    './notification-badge.png',
     'https://unpkg.com/lucide@latest'
 ];
 
