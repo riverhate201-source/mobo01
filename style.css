@@ -1,0 +1,6052 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+
+* {
+    font-family: 'Pretendard', sans-serif;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+@font-face {
+    font-family: 'OngleipParkDahyeon';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2411-3@1.0/Ownglyph_ParkDaHyun.woff2') format('woff2');
+    font-weight: normal;
+    font-display: swap;
+}
+
+
+
+body {
+    background-color: #f4f6f8;
+    padding: 15px;
+    margin: 0;
+    color: #333;
+    transition: background-color 0.3s, color 0.3s;
+    overflow-x: hidden;
+    word-break: keep-all;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+}
+
+html,
+body {
+    -ms-overflow-style: none;
+    /* IE, 엣지 */
+    scrollbar-width: none;
+    /* 파이어폭스 */
+}
+
+
+body::-webkit-scrollbar,
+html::-webkit-scrollbar {
+    display: none;
+}
+
+
+body.dark-mode {
+    background-color: #1a1a1b;
+    color: #e0e0e0;
+}
+
+.header {
+    width: 100%;
+    max-width: 468px;
+    /* 모보 앱 너비 고정 */
+    margin: 0 auto;
+    position: relative;
+}
+
+.hd_wrap {
+    padding: 24px 16px 10px 6px;
+    display: flex;
+    gap: 20px;
+}
+
+.hd_wrap a {
+    font-family: 'OngleipParkDahyeon' !important;
+}
+
+body.dark-mode .hd_wrap a {
+    color: #bfbfbf;
+}
+
+
+.main-page-title {
+    font-size: 32px;
+    line-height: 1.2;
+    margin-bottom: 8px;
+    color: #555555;
+}
+
+
+
+/* 상단 유틸리티 바 (햄버거 버튼 감싸는 영역) */
+/* 가출한 햄버거 버튼 구출 작전 (창 크기 변동 완벽 대응) */
+.top-util-bar {
+    position: absolute;
+    top: 18px;
+    right: 0;
+    z-index: 2300;
+    pointer-events: none;
+    /* 투명한 상자 통과해서 뒤에 클릭 되게 하기 */
+}
+
+@media screen and (min-width: 500px) {
+    .top-util-bar {
+        /* PC 풀화면에서는 양옆 쿠션을 0으로 빼서 하얀 박스와 완벽한 칼각을 맞춥니다! */
+        right: 0;
+    }
+}
+
+/* =========================================
+   🚀 햄버거 버튼 (스크롤 후: 스르륵 내려와서 고정!)
+========================================= */
+.top-util-bar.scroll-fixed {
+    position: fixed;
+    top: 15px;
+
+    /* fixed 상태일 땐 화면 중앙으로 모아주기 */
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 468px;
+
+    /* 🚨 모바일 마법: 바디 패딩(30px) 무시하고 칼각 맞추기 */
+    width: calc(100% - 30px);
+
+    display: flex;
+    justify-content: flex-end;
+    padding: 0;
+
+    animation: dropDownBtn 0.3s ease-out forwards;
+}
+
+@media screen and (min-width: 500px) {
+    .top-util-bar.scroll-fixed {
+        /* 🚨 PC 마법: PC에서는 30px 빼기 취소!! 원래대로 꽉 채워서 468px 방어막에 맞추기! */
+        width: 100%;
+        padding: 0;
+    }
+}
+
+/* 내려오는 애니메이션 */
+@keyframes dropDownBtn {
+    0% {
+        top: -50px;
+    }
+
+    100% {
+        top: 15px;
+    }
+}
+
+/* 1. 햄버거 버튼 (알약 모양 배경) */
+.menu-btn {
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    color: #333 !important;
+
+    /* 🌟 중요: 아이콘을 정중앙에 똭! 박아넣는 마법 */
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+
+    padding: 6px !important;
+    /* 아이콘이 30px로 커졌으니 여백도 살짝 더 줬어요 */
+    margin: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+/* 2. 루시드 아이콘 (i와 svg 둘 다 기강 잡기) */
+.menu-btn i,
+.menu-btn svg {
+    width: 24px !important;
+    /* 🌟 !important로 절대 권력 행사 */
+    height: 24px !important;
+    display: block;
+    /* 불필요한 하단 공백 제거 */
+    flex-shrink: 0;
+    /* 찌그러짐 방지 */
+    stroke: #333 !important;
+}
+
+/* 다크모드 햄버거 버튼(알약) 디자인 */
+body.dark-mode .menu-btn {
+    background: rgba(44, 44, 46, 0.5);
+    /* 어두운 반투명 배경 */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* 테두리를 더 흐릿하게 */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    /* 그림자를 좀 더 진하게 */
+    color: #eee !important;
+    /* 다크모드에선 햄버거 아이콘(글씨)이 잘 보이게 밝은 색으로! */
+}
+
+body.dark-mode .menu-btn svg {
+    stroke: #eee !important;
+}
+
+.menu-btn:active {
+    transform: scale(0.9);
+}
+
+
+
+.nav-overlay {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 3000;
+    display: flex;
+    justify-content: flex-end;
+    backdrop-filter: blur(2px);
+}
+
+.nav-content {
+    width: 270px;
+    background: white;
+    height: 100%;
+    padding: 25px 20px;
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.3s ease-out;
+    overflow-y: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.nav-content::-webkit-scrollbar {
+    display: none;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+body.dark-mode .nav-content {
+    background: #2c2c2e;
+    color: white;
+}
+
+.nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.nav-header h3 {
+    margin: 0;
+    font-size: 22px;
+    font-family: 'OngleipParkDahyeon' !important;
+}
+
+.close-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #888;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.close-btn svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+
+/* 모보 공통 모달 닫기 버튼 */
+.mobo-modal-close {
+    position: absolute;
+    top: 19px;
+    right: 16px;
+
+    width: 32px;
+    height: 32px;
+    padding: 0;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: right;
+    flex-shrink: 0;
+
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #888;
+
+    cursor: pointer;
+    z-index: 1;
+}
+
+/* Lucide X 아이콘 */
+.mobo-modal-close svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+}
+
+/* 터치·클릭 시 */
+.mobo-modal-close:active {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* 다크모드 */
+body.dark-mode .mobo-modal-close {
+    color: #AAA;
+}
+
+body.dark-mode .mobo-modal-close:active {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+
+.nav-section {
+    margin-bottom: 20px;
+}
+
+.nav-section h4 {
+    font-size: 13px;
+    color: #aaa;
+    margin-bottom: 10px;
+    font-weight: normal;
+}
+
+.nav-section button {
+    font-weight: normal;
+}
+
+.menu-item {
+    width: 100%;
+    text-align: left;
+    padding: 12px 15px;
+    border: none;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s;
+    color: #333;
+    font-weight: bold;
+}
+
+body.dark-mode .menu-item {
+    background: #3a3a3c;
+    color: #eee;
+}
+
+.menu-item:active {
+    transform: scale(0.98);
+    background: #eee;
+}
+
+.storage-mini-info {
+    font-size: 12px;
+    color: #888;
+    margin-top: 15px;
+}
+
+.mini-bar {
+    background: #eee;
+    height: 6px;
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+body.dark-mode .mini-bar {
+    background: #444;
+}
+
+#storage-bar-fill {
+    background: #fb9292;
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s;
+}
+
+
+/* ==========================================
+
+   🌟 요일 탭: 지갑처럼 가로 스와이프 + 가운데 정렬 마법
+
+   ========================================== */
+
+.day-nav {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    /* 🚨 절대 두 줄 꺾임 금지! */
+    overflow-x: auto !important;
+    /* 넘치면 가로 스와이프 허용 */
+
+    /* 🌟 화면이 넓으면 가운데 정렬, 좁으면 알아서 스크롤 되게 하는 마법 */
+    width: fit-content;
+    max-width: 100%;
+    margin: 30px auto 20px auto;
+    gap: 8px;
+    padding: 5px 5px;
+    /* 양끝에서 짤리지 않게 여백 넉넉히 */
+    box-sizing: border-box;
+
+
+
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
+}
+
+
+
+.day-nav::-webkit-scrollbar {
+
+    display: none;
+    /* 투박한 스크롤바 싹 숨기기 */
+
+}
+
+
+
+/* ==========================================
+
+   🌟 요일 탭 버튼 디자인 (찌그러짐 방지 철벽)
+
+   ========================================== */
+
+.day-btn {
+
+    background: #fff;
+    border: 1px dashed #ddd;
+    width: 40px;
+    /* '전체' 글씨가 예쁘게 들어가도록 아주 살짝만 키움 */
+    height: 40px;
+    border-radius: 14px;
+    color: #797979;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: normal;
+
+    transition: 0.2s;
+
+
+
+
+    flex-shrink: 0 !important;
+    display: flex !important;
+    justify-content: center;
+
+    align-items: center !important;
+    white-space: nowrap !important;
+
+}
+
+
+
+body.dark-mode .day-btn {
+
+    background: #2c2c2e;
+
+    border-color: #444;
+
+    color: #cccccc;
+
+}
+
+
+
+.day-btn.active {
+
+    background: #333 !important;
+
+    color: #fff !important;
+
+    border-color: #333 !important;
+    box-shadow: 0 0 1px rgba(51, 51, 51, 0.5);
+
+
+}
+
+
+
+body.dark-mode .day-btn.active {
+
+    background: #fff !important;
+
+    color: #333 !important;
+
+    border-color: #fff !important;
+    box-shadow: 0 0 1px rgba(51, 51, 51, 0.5);
+
+
+}
+
+
+
+.wide-btn {
+    width: auto !important;
+    padding: 0 14px;
+    border-radius: 20px !important;
+}
+
+
+.my-wallet-container {
+    max-width: 100%;
+    margin: 0 auto 30px auto;
+    padding: 45px 18px 18px 18px !important;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+body.dark-mode .my-wallet-container {
+    background: #2c2c2e;
+}
+
+.coin-amount {
+    font-size: 25px;
+    font-weight: 800;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+.lezhin-wallet {
+    color: #333;
+}
+
+.bomtoon-wallet {
+    color: #333;
+}
+
+body.dark-mode .lezhin-wallet {
+    color: #fff;
+}
+
+body.dark-mode .bomtoon-wallet {
+    color: #fff;
+}
+
+.wallet-divider {
+    width: 1px;
+    height: 40px;
+    background: #eee;
+}
+
+body.dark-mode .wallet-divider {
+    background: #444;
+}
+
+
+.webtoon-container {
+    max-width: 468px;
+    width: 100%;
+    background: #fff;
+    padding: 20px;
+    border-radius: 24px;
+
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+
+
+    margin: 0 auto 35px auto;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 20px 20px;
+}
+
+body.dark-mode .webtoon-container {
+    background: #2c2c2e;
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+}
+
+.add-work-btn {
+    background: #666;
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+body.dark-mode .add-work-btn {
+    background: #444;
+}
+
+.total-coin-banner {
+    position: relative;
+    background: #fff4d1;
+    padding: 14px;
+    margin-top: 8px;
+    border-radius: 15px;
+    text-align: center;
+    font-weight: 500;
+    margin-bottom: 13px;
+    font-size: 14px;
+    color: #4c4c4c;
+}
+
+#lezhin-needed-val,
+#bomtoon-needed-val,
+#ridi-needed-val,
+#mrblue-needed-val {
+    font-weight: 900;
+    color: #333;
+    /* 일반 bold보다 더 두꺼운 900을 주면 훨씬 눈에 잘 띕니다! */
+}
+
+body.dark-mode #lezhin-needed-val,
+body.dark-mode #bomtoon-needed-val,
+body.dark-mode #ridi-needed-val,
+body.dark-mode #mrblue-needed-val {
+    color: #fff;
+}
+
+body.dark-mode .total-coin-banner {
+    background: #3d3521;
+    color: #eeee;
+}
+
+
+
+
+/* 🚨 여기서부터 빠져있던 핵심 뼈대들입니다! 🚨 */
+
+/* 🌑 모달 배경 (z-index 9999로 화면 덮기!) */
+.filter-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ⬜ 모달 하얀색 알맹이 박스 */
+.filter-modal-content {
+    background-color: #ffffff;
+    width: 85%;
+    max-width: 340px;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 🔘 모달 안 옵션 버튼들 (순서 편집, 숨기기 버튼) */
+.filter-option-btn {
+    width: 100%;
+    padding: 16px;
+    margin-bottom: 10px;
+    background-color: #f8f9fa;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-align: center;
+}
+
+.filter-option-btn:hover {
+    background-color: #f1f3f5;
+}
+
+.filter-option-btn span {
+    font-size: 15px;
+    font-weight: 400;
+    color: #333;
+}
+
+/* 🎛️ 리스트 필터(정렬/숨기기) 버튼 스타일 */
+.filter-btn {
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #8b8b8b;
+    /* 우니님이 선택하신 찰떡 회색! */
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 📝 헤더 영역 (제목 한가운데 정렬) */
+.filter-modal-header {
+    display: flex;
+    justify-content: center;
+    /* 🌟 양끝 정렬에서 한가운데 정렬로 변경! */
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.filter-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+    font-weight: bold;
+    /* (선택) 제목을 조금 더 또렷하게 보이고 싶다면 추가! */
+}
+
+
+/* ❌ 맨 아래 닫기 버튼 스타일 */
+.filter-close-bottom-btn {
+    width: 100%;
+    padding: 0;
+    margin-top: 10px;
+    /* 위 버튼들과 살짝 떨어뜨려서 구분감 주기 */
+    background-color: transparent;
+    /* 배경은 투명하게 */
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+
+.filter-close-bottom-btn span {
+    font-size: 15px;
+    font-weight: bold;
+    color: #888888;
+    /* 메인 옵션들과 구분되도록 연한 회색 텍스트 사용 */
+}
+
+/* =========================================
+   🌙 다크모드: 작품 순서 설정 모달창 (무채색 에디션)
+   ========================================= */
+
+/* ⬛ 모달 바탕 박스 (어두운 진회색 & 그림자 진하게) */
+body.dark-mode .filter-modal-content {
+    background-color: #2a2a2a;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* 🔘 모달 안 옵션 버튼들 (바탕보다 살짝 밝은 회색) */
+body.dark-mode .filter-option-btn {
+    background-color: #3a3a3a;
+}
+
+/* 👆 버튼 호버 시 (누를 때 살짝 더 밝아짐) */
+body.dark-mode .filter-option-btn:hover {
+    background-color: #4a4a4a;
+}
+
+/* 📝 옵션 버튼 안의 글씨 (깔끔한 밝은 회색/흰색) */
+body.dark-mode .filter-option-btn span {
+    color: #eeeeee;
+}
+
+/* 🎛️ 리스트 필터(정렬/숨기기) 아이콘 (어두운 배경에 맞게 명도 업) */
+body.dark-mode .filter-btn {
+    color: #bbbbbb;
+}
+
+/* 📝 헤더 영역 제목 ('작품 순서 설정' 글씨) */
+body.dark-mode .filter-modal-header h3 {
+    color: #eeeeee;
+}
+
+/* ❌ 맨 아래 닫기 버튼 텍스트 (메인 옵션들보다 한 톤 죽여서 위계질서 유지) */
+body.dark-mode .filter-close-bottom-btn span {
+    color: #999999;
+}
+
+.balance-info {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: #999;
+    margin-top: 4px;
+}
+
+.scroll-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.webtoon-list {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 24px 2px;
+    min-height: 180px;
+    scroll-behavior: smooth;
+}
+
+.webtoon-list::-webkit-scrollbar {
+    display: none;
+}
+
+.webtoon-card-link {
+    flex: 0 0 135px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #f0f0f0;
+    background: #fff;
+    position: relative;
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+
+body.dark-mode .webtoon-card-link {
+    background: #3a3a3c;
+    border-color: #444;
+}
+
+.card-thumbnail {
+    height: 170px;
+    background-size: cover;
+    background-position: center;
+    background-color: #f8f8f8;
+    position: relative;
+}
+
+.no-img-title {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.lezhin-card .no-img-title {
+    background: linear-gradient(135deg, #fff0f0 0%, #ffe0e0 100%);
+    color: #e60012;
+}
+
+.bomtoon-card .no-img-title {
+    background: linear-gradient(135deg, #fff0f8 0%, #ffe0f0 100%);
+    color: #ff69b4;
+}
+
+body.dark-mode .lezhin-card .no-img-title {
+    background: linear-gradient(135deg, #3d2022 0%, #2d1012 100%);
+    color: #ff4d5a;
+}
+
+body.dark-mode .bomtoon-card .no-img-title {
+    background: linear-gradient(135deg, #3d2030 0%, #2d1030 100%);
+    color: #ff85c0;
+}
+
+.progress-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+}
+
+.more-options-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 10;
+}
+
+/* 작품 개인설정 버튼의 투명 터치 영역 확대 */
+.more-options-btn::after {
+    content: "";
+    position: absolute;
+    inset: -9px;
+}
+
+.card-info {
+    padding: 10px 10px;
+}
+
+.card-info .title {
+    font-weight: bold;
+    font-size: 15px;
+    margin-top: 6px;
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: auto;
+    /* 🌟 바닥에서 2px 정도만 띄워주는 안전 마진! */
+    margin-bottom: 2px !important;
+    gap: 4px;
+}
+
+.card-info .coin {
+    color: #999;
+    font-size: 11px !important;
+    margin: 0;
+    /* 🌟 글자가 바닥 선에 너무 붙지 않게 미세 조정 */
+    padding-bottom: 5px;
+    white-space: nowrap;
+    flex-shrink: 1;
+}
+
+/* 3. 버튼 그룹 (버튼들끼리 안 겹치게) */
+.quick-btn-group {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    /* 🚨 버튼 바구니는 절대 찌그러지지 마! */
+}
+
+/* 4. 버튼 디자인 (가로/세로 크기 박제!) */
+/* 4. 버튼 디자인 (가로/세로 크기 박제! - important 제거 완료) */
+.quick-btn {
+    background: #f1f1f1;
+    border: 1px solid #ddd;
+    color: #666;
+    border-radius: 6px;
+
+    /* 🌟 !important의 절대 권력을 빼고 순수하게 크기와 정렬만 잡아줍니다 */
+    width: 34px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    /* 안쪽 여백 때문에 커지는 것 방지 */
+
+    font-size: 10px;
+    font-weight: normal;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* 다크모드 버튼 색상 유지 */
+body.dark-mode .quick-btn {
+    background: #444;
+    border-color: #555;
+    color: #ccc;
+}
+
+
+.scroll-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-110%);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 10;
+    cursor: pointer;
+    display: flex;
+
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .scroll-btn {
+    background: rgba(60, 60, 60, 0.9);
+    border-color: #555;
+    color: #fff;
+}
+
+.left-btn {
+    left: -10px;
+    padding-left: 4px;
+}
+
+.right-btn {
+    right: -10px;
+    padding-left: 5px;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 4000;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 25px;
+    border-radius: 24px;
+    width: 90%;
+    max-width: 360px;
+}
+
+body.dark-mode .modal-content {
+    background: #2c2c2e;
+    color: #fff;
+}
+
+
+.modal-content input,
+.modal-select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 8px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 14px;
+    background: #f9f9f9;
+    color: #333;
+}
+
+body.dark-mode .modal-content input,
+body.dark-mode .modal-select {
+    background: #3a3a3c;
+    border-color: #444;
+    color: #fff;
+}
+
+.img-pick-btn {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px dashed #ccc;
+    background: #fdfdfd;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    box-sizing: border-box;
+}
+
+body.dark-mode .img-pick-btn {
+    background: #333;
+    border-color: #555;
+    color: #aaa;
+}
+
+.modal-btns {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-btns button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.cancel-btn {
+    background: #eee;
+    color: #666;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    background-color: transparent;
+    border: none;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+
+
+
+.save-btn {
+    background: #333;
+    color: #fff;
+    font-size: 13px;
+    border: none;
+    border-radius: 12px;
+    padding: 6px;
+}
+
+body.dark-mode .save-btn {
+    background: #474747;
+}
+
+.work-count-text {
+    font-size: 13px;
+    color: #777;
+    font-weight: normal;
+    margin-left: 6px;
+}
+
+body.dark-mode .work-count-text {
+    color: #aaa;
+}
+
+.highlight-result-lezhin {
+    font-weight: 800;
+    font-size: 13px;
+    color: #333;
+}
+
+body.dark-mode .highlight-result-lezhin {
+    color: #eee;
+}
+
+.highlight-result-bomtoon {
+    font-weight: 800;
+    font-size: 13px;
+    color: #333;
+}
+
+body.dark-mode .highlight-result-bomtoon {
+    color: #eee;
+}
+
+.backup-alert {
+    text-align: center;
+    font-size: 13px;
+    color: #333;
+    background: #ffebee;
+    border: 1px dashed #e60012;
+    padding: 12px;
+    border-radius: 15px;
+    margin: 0 auto 20px auto;
+    max-width: 468px;
+    font-weight: bold;
+}
+
+body.dark-mode .backup-alert {
+    background: #3d2022;
+    color: #eee;
+}
+
+.weekly-stat-container {
+    max-width: 468px;
+    margin: 20px auto 40px auto;
+    padding: 15px;
+    background: #e8f0fe;
+    border-radius: 15px;
+    text-align: center;
+    font-size: 15px;
+    color: #5f5f5f;
+    font-weight: normal;
+    box-shadow: 0 2px 8px rgba(25, 103, 210, 0.1);
+}
+
+body.dark-mode .weekly-stat-container {
+    background: #1a233a;
+    color: #d6d6d6;
+    box-shadow: 0 2px 8px rgba(138, 180, 248, 0.1);
+}
+
+.weekly-highlight {
+    font-size: 18px;
+    color: #333;
+}
+
+body.dark-mode .weekly-highlight {
+    color: #fff;
+
+}
+
+
+/* 🌟 주간 누적 통계 금액 강조 (라이트 모드 기본) */
+.stat-val {
+    color: #333;
+    font-weight: 800;
+    font-size: 16px;
+}
+
+/* 🌟 구분선 (라이트 모드 기본) */
+.stat-val+.stat-val::before {
+    content: "|";
+    color: #ccc;
+    margin: 0 8px;
+    font-weight: normal;
+    font-size: 12px;
+}
+
+/* ========================================= */
+/* 🌙 다크 모드 전용 색상 덮어쓰기! */
+/* ========================================= */
+body.dark-mode .stat-val {
+    color: #fff;
+    /* 까만 배경에서 눈에 더 잘 띄는 밝고 화사한 파스텔 블루! */
+}
+
+body.dark-mode .stat-val+.stat-val::before {
+    color: #555;
+    /* 까만 배경에 맞게 구분선도 자연스럽게 톤다운! */
+}
+
+
+
+.action-btns-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: background 0.2s;
+}
+
+.act-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    font-weight: 400;
+    transition: all 0.2s ease;
+}
+
+.edit-btn {
+    background: #f8f9fa;
+    color: #333;
+}
+
+body.dark-mode .edit-btn {
+    background: #3A3A3A;
+    color: #eee;
+}
+
+.del-btn {
+    background: #f8f9fa;
+    color: #333;
+}
+
+body.dark-mode .del-btn {
+    background: #3A3A3A;
+    color: #eeee;
+}
+
+.dup-btn {
+    background: #f8f9fa;
+    color: #333;
+}
+
+body.dark-mode .dup-btn {
+    background: #3A3A3A;
+    color: #eee;
+}
+
+.action-btns-container .act-btn:hover {
+    background-color: #f1f3f5;
+
+
+}
+
+body.dark-mode .action-btns-container .act-btn:hover {
+    background-color: #4a4a4a;
+
+}
+
+
+.attend-btn {
+    display: block;
+    width: 100%;
+    margin: 10px auto 0 auto;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.attend-btn.done {
+    background: #e8f5e9;
+    color: #666;
+    border-color: #c8e6c9;
+}
+
+body.dark-mode .attend-btn {
+    background: #3a3a3c;
+    border-color: #555;
+    color: #ccc;
+}
+
+body.dark-mode .attend-btn.done {
+    background: #1b3320;
+    color: #d4d4d4;
+    border-color: #2e7d32;
+}
+
+
+body.dark-mode #calc-result-box,
+body.dark-mode #deduction-list {
+    background: #3a3a3c !important;
+    border-color: #444 !important;
+}
+
+body.dark-mode #calc-modal label,
+body.dark-mode #deduction-msg,
+body.dark-mode #calc-result-box p {
+    color: #eee !important;
+}
+
+body.dark-mode #calc-remain-ep {
+    color: #fff !important;
+}
+
+body.dark-mode #deduction-list label span {
+    color: #eee !important;
+}
+
+/* --- 코인백 이벤트 계산기 색상 (라이트 모드) --- */
+.coinback-box {
+    background-color: #fff0f5;
+}
+
+.coinback-label {
+    color: #333;
+}
+
+/* --- 코인백 이벤트 계산기 색상 (다크 모드) --- */
+body.dark-mode .coinback-box {
+    background-color: #2d3436;
+    /* 다크모드용 어두운 배경 */
+}
+
+body.dark-mode .coinback-label {
+    color: #eee;
+    /* 다크모드용 밝은 핑크 글씨 */
+}
+
+/* --- 애플(iOS) 파란색 강제 변환 금지 (더블 체크) --- */
+.menu-item,
+.scroll-btn,
+.nav-section button {
+    color: inherit !important;
+    /* 부모 색상을 무조건 따라가게 만듦! */
+    -webkit-text-fill-color: currentcolor !important;
+    /* 애플 전용 강제 고정 */
+    -webkit-appearance: none !important;
+    appearance: none !important;
+}
+
+/* ==========================================
+   🌟 신규 추가: 지갑 전체 카드 스와이프 & 안쪽 도트 점
+   ========================================== */
+.wallet-master-wrapper {
+    position: relative;
+    max-width: 468px;
+    margin: 0 auto 30px auto;
+    width: 100%;
+    box-sizing: border-box;
+
+
+    /* 🚨 아까 넣었던 overflow-x: hidden; 은 무조건 지워주세요! (얘가 범인입니다) 🚨 */
+}
+
+.wallet-swipe-wrapper {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    gap: 24px;
+    /* 🌟 정석 해결법: 안쪽으로 여백을 주고 꽉 차게 만들기 */
+    width: 100%;
+    box-sizing: border-box;
+    /* 패딩을 넣어도 100% 너비가 유지되게 묶어줌 */
+    padding: 5px 0 5px 0;
+    /* 위 15, 오른쪽 0, 아래 10, 왼쪽 15 (오른쪽은 아래 투명방패가 책임짐!) */
+}
+
+.wallet-swipe-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+.snap-page {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    box-sizing: border-box;
+    margin-bottom: 0 !important;
+    padding-bottom: 45px !important;
+    /* 🌟 하얀 박스 밑을 살짝 늘려서 도트 점 공간 확보! */
+}
+
+/* 🌟 도트 점을 하얀 박스 안쪽 맨 밑으로 쏙! */
+.wallet-pagination {
+    position: absolute;
+    bottom: 25px;
+    /* 하얀 박스 밑바닥에서 살짝 위로 */
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 0;
+    z-index: 10;
+    pointer-events: none;
+    /* 클릭 방해 금지 */
+}
+
+.wallet-pagination .dot {
+    width: 6px;
+    height: 6px;
+    background-color: #d1d8e0;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+/* 지갑 페이지 점 클릭 영역 */
+.wallet-pagination .dot {
+    position: relative;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+/* 보이는 점 크기는 유지하고 클릭 영역만 확대 */
+.wallet-pagination .dot::after {
+    content: '';
+    position: absolute;
+    top: -9px;
+    bottom: -9px;
+    left: -4px;
+    right: -4px;
+}
+
+/* 키보드로 선택했을 때 */
+.wallet-pagination .dot:focus-visible {
+    outline: 2px solid #686c9d;
+    outline-offset: 5px;
+}
+
+.wallet-pagination .dot.active {
+    background-color: #696969;
+    transform: scale(1.4);
+}
+
+body.dark-mode .wallet-pagination .dot {
+    background-color: #444;
+}
+
+body.dark-mode .wallet-pagination .dot.active {
+    background-color: #fbfbfb;
+}
+
+/* ==========================================
+   🌟 신규 추가: 리디 & 미블 작품 썸네일 테마색 (솔리드 컬러)
+   ========================================== */
+/* 리디 썸네일 (연하늘 바탕 + 짙은 회/검정 글씨) */
+.ridi-card .no-img-title {
+    background: #e6f2ff;
+    color: #333;
+}
+
+/* 다크모드 리디 (톤다운 네이비 바탕 + 파스텔 하늘색 글씨) */
+body.dark-mode .ridi-card .no-img-title {
+    background: #1a334d;
+    color: #b3d9ff;
+}
+
+/* 미블 썸네일 (하얀 바탕 + 짙은 파랑 글씨) */
+.mrblue-card .no-img-title {
+    background: #ffffff;
+    color: #004e9a;
+    border: 1px solid #eaeaea;
+    /* 하얀색이라 배경이랑 섞이지 않게 얇은 선! */
+}
+
+/* 다크모드 미블 (다크 회색 바탕 + 파스텔 블루 글씨) */
+body.dark-mode .mrblue-card .no-img-title {
+    background: #2c2c2e;
+    color: #8ab4f8;
+    border: 1px solid #444;
+}
+
+.platform-name {
+    margin-bottom: 2px;
+    font-size: 14px;
+    font-weight: normal;
+    color: #666;
+}
+
+body.dark-mode .platform-name {
+    color: #eee;
+}
+
+/* --- 리디 지갑 색상 관리 --- */
+.ridi-wallet .coin-amount {
+    color: #333;
+    /* 라이트 모드: 원래 리디색 */
+}
+
+body.dark-mode .ridi-wallet .coin-amount {
+    color: #fff;
+    /* 다크 모드: 눈 편한 하늘색 */
+}
+
+/* --- 미블 지갑 색상 관리 --- */
+.mrblue-wallet .coin-amount {
+    color: #333;
+    /* 라이트 모드: 원래 미블색 */
+}
+
+body.dark-mode .mrblue-wallet .coin-amount {
+    color: #fff;
+    /* 다크 모드: 선생님이 찜한 밝은 파랑! */
+}
+
+
+/* 정산 후 남은 코인 강조색 */
+.highlight-result-ridi {
+    font-weight: 800;
+    font-size: 13px;
+    color: #333;
+}
+
+body.dark-mode .highlight-result-ridi {
+    color: #eee;
+}
+
+.highlight-result-mrblue {
+    font-weight: 800;
+    font-size: 13px;
+    color: #333;
+}
+
+body.dark-mode .highlight-result-mrblue {
+    color: #eee;
+}
+
+/* 공통 이벤트 뱃지 스타일  */
+/* 1. 뱃지 공통 뼈대 (모양, 크기, 정렬) */
+.sale-badge {
+    align-items: center;
+    /* 🚨 텍스트 수직 중앙 칼각! */
+    justify-content: center;
+
+    color: #fff;
+    font-size: 11px;
+    /* 시원하게 키운 글씨 */
+    padding: 5px 4px;
+    /* 빵빵한 여백 */
+    font-weight: normal;
+    border-radius: 6px;
+}
+
+/* 플랫폼별 뱃지 배경색 */
+#lezhin-sale-badge {
+    background-color: #e60012;
+}
+
+/* 레진 (빨강) */
+#bomtoon-sale-badge {
+    background-color: #ec559e;
+}
+
+/* 봄툰 (핑크) */
+#ridi-sale-badge {
+    background-color: #1e90ff;
+}
+
+#mrblue-sale-badge {
+    background-color: #004e9a;
+}
+
+.wallet-item .sale-badge:not([style*="none"]):has(+ div[id$="-expire-badge"]:not([style*="none"])) {
+    margin-left: -6px;
+}
+
+/* 지갑 영역 중앙선 철벽 방어! (글씨 길이에 상관없이 무조건 50:50 고정) */
+.wallet-item {
+    flex: 1 !important;
+    /* 양쪽 비율을 무조건 1:1로 고정! */
+    width: 50% !important;
+    /* 억지로 밀어내지 못하게 50% 못 박기! */
+    box-sizing: border-box;
+    /* 여백까지 계산해서 딱 맞추기! */
+}
+
+/* 🌟 출석/이벤트 버튼 가로로 쫙 늘어나는 현상 방지! */
+.attend-btn {
+    width: fit-content !important;
+    /* 글씨 길이에 딱 맞게 사이즈 줄여! */
+    min-width: 90px !important;
+    /* 그래도 너무 옹졸해 보이지 않게 최소 크기 유지! */
+    padding: 6px 16px !important;
+    /* 좌우로 통통하고 예쁜 여백 주기! */
+    margin: 0 auto !important;
+    /* 상자 한가운데로 예쁘게 정렬! */
+    margin-top: 16px !important;
+}
+
+
+
+.move-btn {
+    background-color: #f8f9fa;
+    color: #333;
+    /* rgb(255, 157, 91)을 예쁘게 코드로 바꿨습니다 */
+}
+
+/* 다크 모드 - 눈이 편안하고 고급스러운 다크 오렌지 컬러! */
+.dark-mode .move-btn {
+    background-color: #3A3A3A;
+    color: #eee;
+}
+
+/* 🌟 요일 체크박스 - 일반 입력창(Input) 스타일로 동기화 */
+.chk-label {
+    font-size: 14px !important;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    /* 1. 다른 입력창과 똑같은 배경 & 테두리 */
+    background: #ffffff !important;
+    border: 1px solid #ccc !important;
+    color: #333 !important;
+
+    /* 2. 다른 입력창과 높이 맞추기 (패딩 조절) */
+    padding: 10px 12px;
+    border-radius: 8px;
+    /* 입력창 모서리 둥글기와 맞춤 */
+
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+
+    /* 슬림하게 한 줄로 흐르는 디자인 */
+    flex: 0 1 auto;
+}
+
+/* 체크박스 본체 */
+.chk-label input[type="checkbox"] {
+    width: 15px !important;
+    height: 15px !important;
+    margin: 0;
+    accent-color: #1967d2;
+    /* 체크했을 때만 포인트 색상 */
+}
+
+/* "색상 대비" 제거 - 체크해도 배경색 안 바뀜 */
+.chk-label:has(input:checked) {
+    background: #ffffff !important;
+    /* 라이트모드에선 계속 흰색 */
+    border-color: #1967d2 !important;
+    /* 테두리만 살짝 포인트 */
+    color: #333 !important;
+    /* 글씨색 유지 */
+}
+
+/* 3. 다크 모드 - 다른 입력창의 다크모드 스타일과 동기화 */
+body.dark-mode .chk-label,
+.dark-mode .chk-label {
+    background: #2c2c2c !important;
+    /* 일반 다크 입력창 배경색 */
+    border-color: #555 !important;
+    color: #e8eaed !important;
+}
+
+/* 다크모드 체크 시 */
+body.dark-mode .chk-label:has(input:checked),
+.dark-mode .chk-label:has(input:checked) {
+    background: #2c2c2c !important;
+    /* 배경색 그대로 유지 */
+    border-color: #8ab4f8 !important;
+    /* 테두리만 강조 */
+    color: #e8eaed !important;
+}
+
+/* 요일 묶음 상자 배경도 투명하게 처리해서 이질감 제거 */
+#day-selection-area>div {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* 크 모드일 때 썸네일 이미지 밝기를 80%로 낮추기 */
+body.dark-mode .card-thumbnail {
+    filter: brightness(0.8);
+}
+
+/* 라이트/다크 모드를 전환할 때 팍! 바뀌지 않고 스르륵 부드럽게 바뀌게 해줍니다 */
+.card-thumbnail {
+    transition: filter 0.3s ease-in-out;
+}
+
+/* --- 코인 수정 모달창 라이트/다크모드 글씨 색상 --- */
+
+/* 1. 라이트 모드 (기본) */
+#coin-modal-title,
+.dynamic-label {
+    color: #333;
+    margin-bottom: 8px;
+}
+
+#coin-update-modal input {
+    color: #727272;
+    /* 입력창 안의 글씨도 기본은 진하게! */
+}
+
+/* 2. 다크 모드 (body에 dark-mode 클래스가 있을 때) */
+body.dark-mode #coin-modal-title,
+body.dark-mode .dynamic-label {
+    color: #f9f9f9;
+}
+
+body.dark-mode #coin-update-modal input {
+    color: #f9f9f9;
+    background-color: #333;
+    /* 다크모드일 땐 입력창 배경도 살짝 어둡게 (선택사항) */
+    border-color: #555;
+}
+
+/* --- 소멸 예정 박스 (라이트 모드 기본) --- */
+.expire-warning-box {
+    background-color: #fff0f0;
+    border: 1px dashed #ffcccc;
+}
+
+.expire-warning-box .expire-label {
+    color: #333;
+}
+
+.expire-warning-box .expire-input {
+    border: 1px solid #ff9999;
+}
+
+.expire-warning-box .expire-desc {
+    color: #333;
+}
+
+/* --- 소멸 예정 박스 (다크 모드) --- */
+body.dark-mode .expire-warning-box {
+    background-color: #2b1818;
+    /* 눈이 편안한 어두운 와인/초콜릿색 */
+    border: 1px dashed #5c2b2b;
+    /* 테두리도 차분하게 톤다운 */
+}
+
+body.dark-mode .expire-warning-box .expire-label {
+    color: #fff;
+    /* 다크모드에서 잘 보이면서 눈 안 아픈 파스텔톤 빨강 */
+}
+
+body.dark-mode .expire-warning-box .expire-input {
+    border: 1px solid #5c2b2b;
+    background-color: #222;
+    /* 입력창 안쪽도 살짝 어둡게 */
+    color: #f9f9f9;
+}
+
+body.dark-mode .expire-warning-box .expire-desc {
+    color: #eee;
+    /* 아래쪽 안내 글씨도 눈에 잘 띄는 연분홍으로 */
+}
+
+/* --- 🍞 토스트 팝업 스타일 --- */
+.toast {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #333;
+    /* 다크그레이 배경 */
+    color: #fff;
+    text-align: left;
+    border-radius: 8px;
+    padding: 14px 20px;
+    position: fixed;
+    z-index: 9999;
+    left: 50%;
+    bottom: -50px;
+    /* 처음에 화면 아래 숨어있음 */
+    transform: translateX(-50%);
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition: bottom 0.4s ease, opacity 0.4s ease, visibility 0.4s;
+}
+
+/* 토스트가 화면에 나타날 때! */
+.toast.show {
+    visibility: visible;
+    opacity: 1;
+    bottom: 40px;
+    /* 스르륵 위로 올라옴! */
+}
+
+/* 실행 취소 버튼 디자인 */
+#toast-undo-btn {
+    background: transparent;
+    color: #4d96ea;
+    /* 예쁜 파란색 포인트 */
+    border: none;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 0 0 20px;
+}
+
+#toast-undo-btn:active {
+    color: #1a6cc2;
+}
+
+/* ==========================================
+   🧾 월말정산 영수증 스타일
+   ========================================== */
+.report-modal-content {
+    padding: 0 !important;
+    overflow: hidden;
+    background: #fdfdfd;
+    max-width: 320px;
+}
+
+.report-header {
+    background: #333;
+    color: #fff;
+    padding: 22px 20px;
+    text-align: center;
+}
+
+body.dark-mode .report-header {
+    background: #1a1a1b;
+}
+
+.report-header h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.report-subtitle {
+    margin: 6px 0 0 0;
+    font-size: 12px;
+    color: #aaa;
+}
+
+.report-body {
+    padding: 20px;
+    max-height: 55vh;
+    overflow-y: auto;
+    background: #fff;
+}
+
+body.dark-mode .report-body {
+    background: #2c2c2e;
+}
+
+.report-body::-webkit-scrollbar {
+    display: none;
+}
+
+.report-plt-section {
+    margin-bottom: 25px;
+}
+
+.report-plt-title {
+    font-weight: 900;
+    font-size: 15px;
+    border-bottom: 2px solid;
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+}
+
+.report-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13.5px;
+    color: #555;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+body.dark-mode .report-item {
+    color: #ccc;
+}
+
+.report-total {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 900;
+    font-size: 15px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed #ddd;
+}
+
+body.dark-mode .report-total {
+    border-top-color: #444;
+}
+
+.report-footer {
+    padding: 15px 20px;
+    background: #fdfdfd;
+    border-top: 1px solid #eee;
+}
+
+body.dark-mode .report-footer {
+    background: #2c2c2e;
+    border-top-color: #333;
+}
+
+
+/* ==========================================
+   🌟 서랍 모달창 전용: 모던 카드(박스) 그룹화 디자인
+   ========================================== */
+.drawer-day-group {
+    margin-bottom: 18px;
+}
+
+/* 1. 요일 타이틀 (스티키 유지, 선 없애고 심플하게) */
+.drawer-day-header {
+    position: sticky;
+    top: -5px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    padding: 8px 0;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 5;
+}
+
+body.dark-mode .drawer-day-header {
+    background: rgba(44, 44, 46, 0.95);
+}
+
+.day-badge {
+    background: #f0f4ff;
+    color: #333;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+body.dark-mode .day-badge {
+    background: #1a233a;
+    color: #eee;
+}
+
+.day-count {
+    font-size: 14px;
+    color: #aaa;
+    font-weight: normal;
+}
+
+/* 2. 작품들을 담는 둥근 상자 (iOS 설정창 느낌!) */
+.drawer-items-box {
+    background: #f8f9fa;
+    border-radius: 14px;
+    padding: 0 14px;
+    border: 1px solid #eee;
+}
+
+body.dark-mode .drawer-items-box {
+    background: #333;
+    border-color: #444;
+}
+
+/* 3. 개별 작품 리스트 (마지막 줄은 선 없애기) */
+.drawer-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #eaeaea;
+    transition: opacity 0.2s;
+}
+
+body.dark-mode .drawer-item {
+    border-bottom-color: #444;
+}
+
+.drawer-item:last-child {
+    border-bottom: none;
+    /* 상자 안의 마지막 줄은 선이 없어야 깔끔해요! */
+}
+
+.drawer-item:active {
+    opacity: 0.5;
+}
+
+.drawer-item-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    color: #333;
+    font-weight: normal;
+}
+
+body.dark-mode .drawer-item-title {
+    color: #eee;
+}
+
+/* 상태 뱃지 */
+.drawer-badge {
+    font-size: 11px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    margin-left: 8px;
+    font-weight: normal;
+    white-space: nowrap;
+}
+
+.badge-break {
+    background: #e67e22;
+    color: #fff;
+}
+
+.badge-end {
+    background: #7f8c8d;
+    color: #fff;
+}
+
+/* ==========================================
+   🌟 서랍 모달창: 투박한 스크롤바 완벽 숨기기 (앱 화면처럼!)
+   ========================================== */
+#drawer-list {
+    -ms-overflow-style: none;
+    /* 인터넷 익스플로러, 엣지 방어 */
+    scrollbar-width: none;
+    /* 파이어폭스 방어 */
+}
+
+#drawer-list::-webkit-scrollbar {
+    display: none;
+    /* 크롬, 사파리, 아이폰/갤럭시 기본 브라우저 스크롤바 완전 삭제! */
+}
+
+/* ==========================================
+   🌟 서랍 모달창: 요일별 그룹 타이틀 (스티키 헤더)
+   ========================================== */
+.drawer-day-header {
+    position: sticky;
+    /* 스크롤 시 화면 위에 착! 달라붙음 */
+    top: 0;
+    background: rgba(255, 255, 255, 0.95);
+    /* 살짝 투명해서 뒤에 글씨가 은은하게 비침 */
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    padding: 8px 5px 8px 5px;
+    margin-top: 5px;
+    font-size: 15px;
+    font-weight: normal;
+    color: #1967d2;
+    /* 타이틀 강조색 */
+
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    z-index: 5;
+}
+
+/* 🌟 다크모드 요일 타이틀 */
+body.dark-mode .drawer-day-header {
+    background: rgba(44, 44, 46, 0.95);
+    color: #8ab4f8;
+    border-bottom-color: #444;
+}
+
+/* ==========================================
+   🌟 통합 서랍장 전용: 상단 플랫폼 탭 디자인
+   ========================================== */
+.global-drawer-tabs {
+    display: flex;
+    gap: 6px;
+    position: sticky;
+    top: -5px;
+    /* 모달창 천장에 딱 붙게 */
+    background: #fff;
+    padding-top: 16px;
+    padding-bottom: 10px;
+    z-index: 20;
+    /* 스크롤할 때 제일 위에 뜨도록 */
+    border-bottom: 1px solid #eee;
+}
+
+body.dark-mode .global-drawer-tabs {
+    background: #2c2c2e;
+    /* 다크모드 모달 배경색과 동일하게 */
+    border-bottom-color: #444;
+}
+
+.global-tab-btn {
+    flex: 1;
+    padding: 8px 0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: normal;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.global-tab-btn:active {
+    transform: scale(0.95);
+    /* 누를 때 살짝 눌리는 애니메이션 */
+}
+
+
+
+/* =========================================
+   🌟 작품 추가창 3단 콤보 UI 전용 스타일 🌟
+   ========================================= */
+
+
+
+/* 2. 10일 연재, 격주 연재 등 '특수 버튼'만 살짝 다르게 꾸미기 (다크모드 대응 포함!) */
+body.dark-mode #day-selection-area .chk-label[style*="background: #e8f5e9"] {
+    background: #1a2f1c !important;
+    /* 다크모드용 진한 초록 */
+    border-color: #2d4f30 !important;
+    color: #81c784 !important;
+}
+
+body.dark-mode #day-selection-area .chk-label[style*="background: #fdf2e9"] {
+    background: #362210 !important;
+    /* 다크모드용 진한 오렌지/브라운 */
+    border-color: #523418 !important;
+    color: #ffb74d !important;
+}
+
+/* 3. 다크모드일 때 입력칸(달력, 숫자 등) 색상 안 보이던 현상 방지 */
+body.dark-mode #input-10day-dates,
+body.dark-mode #input-biweekly-date,
+body.dark-mode #input-cycle-week {
+    background: #2c2c2e;
+    color: #eee;
+    border: 1px solid #444;
+}
+
+/* 4. 3단 콤보의 각 영역(박스) 다크모드 대응 */
+body.dark-mode .modal-content>div[style*="background: #f8f9fa"] {
+    background: #1c1c1e !important;
+    border-color: #333 !important;
+}
+
+/* 👻 드래그 중인 카드의 원래 빈자리 디자인 */
+.sortable-ghost {
+    opacity: 0.2;
+    background-color: #f0f4f8;
+    border: 2px dashed #1967d2;
+}
+
+/* 📜 순서 편집 리스트 스크롤바 숨기기 (기능은 유지!) */
+#reorder-list {
+    -ms-overflow-style: none;
+    /* 인터넷 익스플로러, 엣지용 */
+    scrollbar-width: none;
+    /* 파이어폭스용 */
+}
+
+#reorder-list::-webkit-scrollbar {
+    display: none;
+    /* 크롬, 사파리, 오페라, 최신 스마트폰 브라우저용 */
+}
+
+/* =========================================
+   🗂️ 순서 편집 리스트 아이템 (라이트 모드)
+   ========================================= */
+.reorder-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: #ffffff;
+    border-bottom: 1px solid #eeeeee;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.reorder-item-title {
+    flex: 1;
+    font-weight: bold;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #333333;
+    /* 기본 글씨색 */
+}
+
+.reorder-list-item .drag-handle {
+    color: #cccccc;
+    font-size: 20px;
+    cursor: grab;
+    padding-left: 10px;
+}
+
+/* 드래그 중인 카드의 원래 빈자리 (라이트 모드 - 기본 회색 톤) */
+.sortable-ghost {
+    opacity: 0.3;
+    background-color: #f8f9fa !important;
+    border: 2px dashed #bbbbbb !important;
+}
+
+
+/* =========================================
+   🌙 다크모드: 순서 편집 리스트 아이템 (오직 무채색!)
+   ========================================= */
+body.dark-mode .reorder-list-item {
+    background: #333333;
+    /* 모달 바탕(2a2a2a)보다 살짝 튀어나온 밝은 쥐색 */
+    border-bottom: 1px solid #444444;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    /* 그림자는 더 진하게 */
+}
+
+body.dark-mode .reorder-item-title {
+    color: #eeeeee;
+    /* 눈 안 부신 부드러운 흰색 */
+}
+
+body.dark-mode .reorder-list-item .drag-handle {
+    color: #888888;
+    /* 손잡이는 글씨보다 한 톤 죽여서 안 거슬리게 */
+}
+
+/* 드래그 빈자리 (다크모드 무채색 에디션) */
+body.dark-mode .sortable-ghost {
+    background-color: #222222 !important;
+    /* 움푹 파인 느낌나게 더 어둡게 */
+    border: 2px dashed #666666 !important;
+}
+
+/* =========================================
+   🔠 순서 편집 모달 - 정렬 탭 버튼 스타일
+   ========================================= */
+/* 기본 상태 (선택 안 됨 - 연한 회색) */
+.sort-tab-btn {
+    flex: 1;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background-color: #f8f9fa;
+    color: #888888;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    margin-bottom: 0;
+}
+
+/* ⬛ 활성화 상태 (선택됨 - 까만색으로 불 켜짐!) */
+.sort-tab-btn.active {
+    background-color: #333333;
+    color: #ffffff;
+    border-color: #333333;
+}
+
+/* 🌙 다크모드 대응 */
+body.dark-mode .sort-tab-btn {
+    background-color: #333333;
+    border-color: #444444;
+    color: #888888;
+}
+
+body.dark-mode .sort-tab-btn.active {
+    background-color: #eeeeee;
+    color: #222222;
+    border-color: #eeeeee;
+}
+
+/* =========================================
+   🎛️ 플랫폼 설정 모달창 & 토글 스위치
+   ========================================= */
+.plt-setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 10px;
+    background: #ffffff;
+    border-bottom: 1px solid #eeeeee;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.plt-setting-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.plt-setting-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.plt-setting-left .drag-handle {
+    color: #cccccc;
+    font-size: 20px;
+    cursor: grab;
+}
+
+.plt-setting-name {
+    font-size: 14px;
+    font-weight: normal;
+    color: #333333;
+}
+
+/* 🟢 iOS 스타일 토글 스위치 */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cccccc;
+    transition: .3s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 스위치 켜졌을 때 (모보 시그니처 컬러 중 하나인 파란색!) */
+.toggle-switch input:checked+.toggle-slider {
+    background-color: #ffa6aa;
+}
+
+.toggle-switch input:checked+.toggle-slider:before {
+    transform: translateX(20px);
+}
+
+/* 🌙 다크모드 대응 (무채색 에디션) */
+body.dark-mode .plt-setting-item {
+    background: #333333;
+    border-color: #444444;
+}
+
+body.dark-mode .plt-setting-name {
+    color: #eeeeee;
+}
+
+body.dark-mode .toggle-slider {
+    background-color: #555555;
+}
+
+/* 다크모드 켜졌을 때 토글 색깔 */
+body.dark-mode .toggle-switch input:checked+.toggle-slider {
+    background-color: #4d96ea;
+}
+
+/* 브라우저 기본값을 무시하고 내 마음대로 커스텀! */
+.platform-header {
+    font-size: 22px;
+    margin: 2px;
+    padding: 6px 0;
+    font-weight: 800;
+}
+
+/* 🔥 스크롤바 완전 박멸 (사파리/크롬 대응) */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+
+/* ======================================================
+   🔥 일괄 추가 바둑판 UI 스타일 (라이트 모드 기본)
+====================================================== */
+#batch-add-section {
+    margin-bottom: 15px;
+}
+
+.batch-desc {
+    font-size: 12px;
+    color: #333;
+    margin-bottom: 10px;
+    font-weight: normal;
+}
+
+.batch-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 4px;
+    padding-bottom: 5px;
+}
+
+.batch-label {
+    font-size: 11px;
+    font-weight: bold;
+    color: #555;
+    display: block;
+    /* 텍스트 에어리어랑 줄바꿈되도록 */
+    margin-bottom: 4px;
+}
+
+.batch-textarea {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    padding: 6px;
+    font-size: 12px;
+    resize: none;
+    /* 유저가 크기 조절 못하게 막기 */
+    box-sizing: border-box;
+    background-color: #fff;
+    color: #333;
+    font-family: inherit;
+}
+
+.batch-textarea:focus {
+    outline: none;
+    border-color: #1967d2;
+    /* 클릭하면 파란색 테두리 */
+}
+
+/* 10일 연재 전용 스타일 */
+.batch-label-10day {
+    color: #333;
+}
+
+.batch-textarea-10day {
+    border: 1px solid #27ae60;
+    background-color: #f0fdf4;
+}
+
+/* 격주 연재 전용 스타일 */
+.batch-span-2 {
+    grid-column: span 2;
+}
+
+.batch-label-biweekly {
+    color: #333;
+}
+
+.batch-textarea-biweekly {
+    border: 1px solid #e67e22;
+    background-color: #fff8f2;
+}
+
+.batch-footer-desc {
+    font-size: 11px;
+    color: #888;
+    margin: 8px 0 0 0;
+    line-height: 1.4;
+}
+
+
+/* ======================================================
+   🌙 다크 모드 (Dark Mode) 일괄 추가 UI 스타일
+====================================================== */
+body.dark-mode .batch-desc {
+    color: #ddd;
+}
+
+body.dark-mode .batch-label {
+    color: #bbb;
+}
+
+body.dark-mode .batch-textarea {
+    background-color: #2c2c2e;
+    /* 다크모드용 어두운 메모장 배경 */
+    border-color: #444;
+    color: #eee;
+}
+
+body.dark-mode .batch-textarea:focus {
+    border-color: #eee;
+    /* 다크모드용 밝은 파란색 포커스 */
+}
+
+/* 10일 연재 전용 다크모드 스타일 */
+body.dark-mode .batch-label-10day {
+    color: #eee;
+    /* 눈에 띄게 살짝 더 밝은 초록 */
+}
+
+body.dark-mode .batch-textarea-10day {
+    background-color: #1a2f24;
+    /* 아주 어두운 초록 틴트 배경 */
+    border-color: #27ae60;
+}
+
+/* 격주 연재 전용 다크모드 스타일 */
+body.dark-mode .batch-label-biweekly {
+    color: #eee;
+    /* 눈에 띄게 살짝 더 밝은 주황 */
+}
+
+body.dark-mode .batch-textarea-biweekly {
+    background-color: #33261a;
+    /* 아주 어두운 주황 틴트 배경 */
+    border-color: #e67e22;
+}
+
+/* 라이트 모드 (기본 색상) */
+.batch-theme-text {
+    color: #333;
+}
+
+/* 🔥 일괄 추가 가이드 텍스트 (인라인 스타일 대체) */
+.batch-guide-text {
+    font-size: 12px;
+    margin-top: 2px;
+    margin-bottom: 16px;
+    font-weight: normal;
+    color: #888888;
+}
+
+body.dark-mode .batch-guide-text {
+    color: #bdbdbd;
+}
+
+/* 🌙 다크모드 대응 (important 없이 우선순위로 자연스럽게 덮어쓰기!) */
+body.dark-mode .batch-theme-text {
+    color: #eee;
+}
+
+/* 🔥 해시태그(칩) 겉 포장지 (크기 완벽 고정 & 투명 스크롤) */
+#custom-modal .tag-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    padding: 6px;
+    height: 75px;
+    /* 🔥 세로 크기 75px로 꽉 고정 (뚱뚱해짐 방지!) */
+    overflow-y: auto;
+    /* 안에서만 투명 스크롤! */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    background-color: #fff;
+    box-sizing: border-box;
+    cursor: text;
+    align-content: flex-start;
+    transition: 0.2s;
+}
+
+#custom-modal .tag-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+#custom-modal .tag-wrapper:focus-within {
+    border-color: #1967d2;
+    box-shadow: 0 0 0 2px rgba(25, 103, 210, 0.1);
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* 🌟 칩 글자색 #333 통일 (파란색 제거) */
+.tag-chip {
+    background: #e8f0fe;
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: popIn 0.2s ease-out forwards;
+}
+
+/* 🌟 X 버튼 글자색 #333 통일 & 호버 시 빨간색 제거 (투명도만 조절) */
+.tag-chip-del {
+    cursor: pointer;
+    color: #333;
+    opacity: 0.5;
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 4px;
+    margin-right: -4px;
+}
+
+.tag-chip-del:hover {
+    opacity: 1;
+}
+
+/* 🌟 입력창(textarea) 가로세로 폭주 완벽 차단! */
+#custom-modal .tag-wrapper .tag-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+    flex: 1;
+    min-width: 30px;
+    /* 🔥 textarea 기본 가로 고집 꺾기 (가로 팽창 방지!) */
+    max-width: 100%;
+    font-size: 12px;
+    color: #333;
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+    resize: none;
+    /* 유저가 크기 조절 못하게 막기 */
+    height: 18px;
+    /* 🔥 한 줄 높이로 꽉 누르기 (세로 팽창 방지!) */
+    line-height: 18px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+@keyframes popIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 🌟 특수 컬러 (배경과 테두리만 변경) */
+.tag-wrapper.wrapper-10day {
+    border-color: #27ae60;
+    background: #f0fdf4;
+}
+
+.tag-wrapper.wrapper-biweekly {
+    border-color: #e67e22;
+    background: #fff8f2;
+}
+
+/* ====================================
+   🌙 다크모드 대응 (글자색 #eee 통일!)
+==================================== */
+/* 🌙 다크모드 대응 (important 없이 우선순위로 제압) */
+body.dark-mode #custom-modal .tag-wrapper {
+    background-color: #2c2c2e;
+    border-color: #444;
+}
+
+body.dark-mode #custom-modal .tag-wrapper:focus-within {
+    border-color: #8ab4f8;
+}
+
+body.dark-mode #custom-modal .tag-wrapper .tag-input {
+    color: #eee;
+    background: transparent;
+}
+
+body.dark-mode .tag-chip {
+    background: #1a233a;
+    color: #eee;
+}
+
+body.dark-mode .tag-chip-del {
+    color: #eee;
+}
+
+/* 🌟 다크모드 특수 컬러 */
+body.dark-mode .tag-wrapper.wrapper-10day {
+    background-color: #1a2f24;
+    border-color: #27ae60;
+}
+
+body.dark-mode .tag-wrapper.wrapper-biweekly {
+    background-color: #33261a;
+    border-color: #e67e22;
+}
+
+
+/* 🌟 입력창 기본 테두리 완벽 박멸 + 한 줄처럼 위장! */
+#custom-modal #batch-add-section .tag-wrapper .tag-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+    flex: 1;
+    width: 10px;
+    min-width: 30px;
+    font-size: 12px;
+    color: #333;
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+    /* 🔥 다중줄 입력창(textarea)을 한 줄처럼 보이게 꽉 압축! */
+    resize: none;
+    height: 18px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* 🌙 다크모드 대응 */
+body.dark-mode #custom-modal #batch-add-section .tag-wrapper .tag-input {
+    color: #eee;
+    background: transparent;
+}
+
+/* ======================================================
+   🔥 글로벌 이벤트 알림창 스타일 (Light & Dark)
+====================================================== */
+#global-event-alert {
+    text-align: center;
+    font-size: 12px;
+    color: #333;
+    /* 기본 빨간 글씨 */
+    background-color: #fff0f0;
+    /* 연한 핑크빛 배경 */
+    border: 1px dashed #ffcccc;
+    padding: 8px 12px;
+    border-radius: 12px;
+    max-width: 468px;
+    margin: 0 auto 16px auto;
+    font-weight: normal;
+}
+
+/* #global-event-alert {
+    text-align: center;
+    font-size: 12px;
+    color: #333;
+    background-color: #fff0f0;
+    border: 1px solid #ffcccc;
+    
+    /* 🚨 1. 가로로 길어졌으니 위아래 여백을 살짝 더 주면(4px -> 10px) 훨씬 안정감 있어 보입니다! */
+/* padding: 10px 12px; */
+
+/* 🚨 2. 긴 박스에 맞게 모서리 둥글기를 백업 알림창과 비슷하게 살짝 조절했습니다 (원하시면 20px로 두셔도 됩니다!) */
+/* border-radius: 15px;  */
+
+/* 🚨 3. 핵심 마법! 넓이를 꽉 채우고 468px 방어막 치기 */
+/* width: 100%;  */
+/* max-width: 468px;  */
+/* box-sizing: border-box;패딩 때문에 468px 밖으로 삐져나가는 것 방지! */
+
+/* margin: 0 auto 16px auto; */
+/* font-weight: normal; */
+/* } */
+
+/* 🌙 다크모드 대응 (눈부시지 않게 톤 다운된 빨간색으로!) */
+body.dark-mode #global-event-alert {
+    color: #eee;
+    /* 다크모드용 밝은 빨강 */
+    background-color: #3a1c1c;
+    /* 어두운 버건디 배경 */
+    border-color: #5c2e2e;
+    /* 어두운 테두리 */
+}
+
+/* 🌟 알림창 내 강조 텍스트 (이벤트 이름) */
+#global-event-alert .event-highlight-text {
+    color: #333;
+    /* 기존의 진한 빨간색 유지! */
+}
+
+/* 🌙 다크모드 대응 (어두운 배경에서 더 잘 보이도록 살짝 밝은 빨간색으로!) */
+body.dark-mode #global-event-alert .event-highlight-text {
+    color: #fff;
+}
+
+/* ======================================================
+   🧮 계산기 모달창 스타일 (Light & Dark)
+====================================================== */
+
+/* 버튼 여백 및 크기 공통 설정 */
+.calc-btn-full {
+    width: 100%;
+}
+
+/* .calc-mb-15 {
+    margin-bottom: 15px;
+} */
+
+.calc-mt-15 {
+    margin-top: 15px;
+}
+
+/* 🌟 계산 결과 박스 기본 바탕 */
+#calc-result-box {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+/* 텍스트 1: 남은 화수 */
+.calc-text-remain {
+    margin: 0;
+    font-size: 14px;
+    color: #7c7a7a;
+}
+
+#calc-remain-ep {
+    font-weight: bold;
+    color: #333;
+}
+
+/* 텍스트 2: 필요한 금액 */
+.calc-text-need {
+    margin: 5px 0 0 0;
+    font-size: 16px;
+    font-weight: normal;
+    color: #7c7a7a;
+}
+
+body.dark-mode .calc-text-need {
+    color: #d5d5d5;
+}
+
+#calc-need-coin {
+    font-weight: bold;
+    color: #333;
+    font-size: 20px;
+}
+
+/* 🌟 코인백 결과 박스 (점선 테두리) */
+#calc-coinback-result {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #ccc;
+}
+
+/* 텍스트 3: 돌려받는 금액 */
+.calc-text-coinback {
+    margin: 0;
+    font-size: 13px;
+    color: #333;
+}
+
+#calc-back-coin {
+    font-weight: bold;
+}
+
+/* 텍스트 4: N화 더 볼 수 있어요 */
+.calc-text-extra {
+    margin: 5px 0 0 0;
+    font-size: 15px;
+    font-weight: bold;
+    color: #333;
+}
+
+#calc-extra-ep {
+    color: #333;
+    font-size: 18px;
+}
+
+/* 🌟 지갑에서 바로 차감 버튼 */
+#calc-deduct-btn {
+    margin-top: 15px;
+    width: 100%;
+    padding: 12px;
+    background: #e74c3c;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: normal;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+#calc-deduct-btn:hover {
+    background: #c0392b;
+    /* 마우스 올렸을 때 살짝 진해지게 */
+}
+
+
+/* ======================================================
+   🌙 계산기 모달창 다크모드 대응
+====================================================== */
+body.dark-mode #calc-result-box {
+    background: #2c2c2e;
+}
+
+body.dark-mode .calc-text-remain {
+    color: #dcdcdc;
+}
+
+body.dark-mode #calc-remain-ep {
+    color: #eee;
+}
+
+body.dark-mode .calc-text-need {
+    color: #eee;
+}
+
+body.dark-mode #calc-need-coin {
+    color: #fff;
+}
+
+/* 다크모드용 밝은 빨강 */
+
+body.dark-mode #calc-coinback-result {
+    border-top-color: #555;
+}
+
+body.dark-mode .calc-text-coinback {
+    color: #eee;
+}
+
+/* 다크모드용 핑크 */
+body.dark-mode .calc-text-extra {
+    color: #eee;
+}
+
+/* 다크모드용 파랑 */
+body.dark-mode #calc-extra-ep {
+    color: #eee;
+}
+
+body.dark-mode #calc-deduct-btn {
+    background: #d63031;
+}
+
+body.dark-mode #calc-deduct-btn:hover {
+    background: #ff5252;
+}
+
+/* 🌟 작품 검색 모달 제목 (라이트 모드 기본) */
+.search-modal-title {
+    margin-top: 0;
+    text-align: center;
+    color: #333;
+    /* 라이트 모드 색상 */
+}
+
+/* 🌙 작품 검색 모달 제목 (다크 모드) */
+body.dark-mode .search-modal-title {
+    color: #eee;
+    /* 다크 모드 색상 */
+}
+
+/* 🌟 정산 모달 제목 (라이트 모드 기본) */
+.deduction-modal-title {
+    margin-top: 0;
+    margin-bottom: 16px;
+    text-align: center;
+    color: #333;
+    /* 라이트 모드 색상 */
+}
+
+/* 🌙 정산 모달 제목 (다크 모드) */
+body.dark-mode .deduction-modal-title {
+    color: #eee;
+    /* 다크 모드 색상 */
+}
+
+/* 🌟 출석 링크 설정 모달 제목 (라이트 모드 기본) */
+.link-setting-modal-title {
+    margin-top: 0;
+    margin-bottom: 16px;
+    text-align: center;
+    color: #333;
+    /* 라이트 모드 색상 */
+}
+
+/* 🌙 출석 링크 설정 모달 제목 (다크 모드) */
+body.dark-mode .link-setting-modal-title {
+    color: #eee;
+    /* 다크 모드 색상 */
+}
+
+/* 🌟 사진 선택 완료 텍스트 (라이트 모드) */
+.img-status-success {
+    color: #333;
+    /* 기존의 산뜻한 초록색 */
+    transition: color 0.3s ease;
+    /* 색상이 바뀔 때 부드럽게 스르륵 변하는 애니메이션 */
+}
+
+/* 🌙 사진 선택 완료 텍스트 (다크 모드) */
+body.dark-mode .img-status-success {
+    /* 다크 모드의 어두운 배경(#333 등)에서는 너무 밝은 형광 초록보다 살짝 차분한 초록이 가독성이 좋습니다! */
+    color: #eee;
+}
+
+/* 🌟 서랍 모달 - 특수 요일 뱃지 기본색 통일 (라이트 모드) */
+.day-badge.badge-10day,
+.day-badge.badge-biweekly,
+.day-badge.badge-finished {
+    background: #f0f4ff;
+    /* 깔끔한 연한 회색 배경 */
+    color: #333;
+    /* 차분한 진회색 글씨 */
+}
+
+/* 🌙 서랍 모달 - 특수 요일 뱃지 기본색 통일 (다크 모드) */
+body.dark-mode .day-badge.badge-10day,
+body.dark-mode .day-badge.badge-biweekly,
+body.dark-mode .day-badge.badge-finished {
+    background: #1a233a;
+    /* 다크모드용 어두운 배경 */
+    color: #eee;
+    /* 다크모드용 밝은 회색 글씨 */
+}
+
+/* 🚨 새로고침 시 지갑 할인 뱃지 & 이벤트 알림바 깜빡임 원천 차단 (기본값 숨김) */
+#lezhin-sale-badge,
+#bomtoon-sale-badge,
+#ridi-sale-badge,
+#mrblue-sale-badge,
+#global-event-alert {
+    display: none;
+}
+
+/* =========================================
+   🌙 상단 다크모드 토글 스위치 (스크롤 독립 만세 완벽판!)
+========================================= */
+/* 🌟 스위치 전용 래퍼 (햄버거 버튼 옆에 고정) */
+.header .hd_wrap .theme-switch-wrapper {
+    position: absolute;
+    right: 52px;
+    /* 햄버거 버튼(약 38px) + 간격(14px) */
+    top: 18px;
+    z-index: 2200;
+    pointer-events: auto;
+    /* 마우스 클릭 무조건 허용! */
+}
+
+.header .hd_wrap .theme-switch-wrapper .header-theme-switch {
+    position: relative;
+    top: 9px;
+    left: -11px;
+    width: 60px;
+    min-width: 60px;
+    height: 30px;
+    background-color: #f1f2f3;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+body.dark-mode .header .hd_wrap .theme-switch-wrapper .header-theme-switch {
+    background-color: #2c2c2e;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.header .hd_wrap .theme-switch-wrapper .header-theme-switch svg {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    z-index: 2;
+    transition: opacity 0.3s ease, color 0.3s ease;
+    pointer-events: none;
+}
+
+.header .hd_wrap .theme-switch-wrapper .icon-sun {
+    left: 9px;
+}
+
+.header .hd_wrap .theme-switch-wrapper .icon-moon {
+    right: 9px;
+}
+
+body:not(.dark-mode) .header .hd_wrap .theme-switch-wrapper .icon-sun {
+    opacity: 1;
+    color: #333;
+}
+
+body:not(.dark-mode) .header .hd_wrap .theme-switch-wrapper .icon-moon {
+    opacity: 0;
+}
+
+body.dark-mode .header .hd_wrap .theme-switch-wrapper .icon-moon {
+    opacity: 1;
+    color: #fff;
+}
+
+body.dark-mode .header .hd_wrap .theme-switch-wrapper .icon-sun {
+    opacity: 0;
+}
+
+.header .hd_wrap .theme-switch-wrapper .header-theme-slider {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 26px;
+    height: 22px;
+    background-color: #fcfcfc;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s ease;
+    z-index: 1;
+    pointer-events: none;
+}
+
+body.dark-mode .header .hd_wrap .theme-switch-wrapper .header-theme-slider {
+    transform: translateX(26px);
+    background-color: #4a4a4c;
+}
+
+/* =========================================
+   📱 모바일 전용 좌표 (화면 폭 500px 이하)
+========================================= */
+@media screen and (max-width: 400px) {
+
+    /* 1. 스위치 박스 전체의 기준점을 오른쪽에서 왼쪽(로고 쪽)으로 변경 */
+    .header .hd_wrap .theme-switch-wrapper {
+        right: auto;
+        /* 우측 햄버거 버튼 기준점 해제 */
+        left: 213px;
+        /* 로고(MOBO) 바로 오른쪽 좌표! (폰에 맞춰 살짝 수정해보세요) */
+    }
+
+    /* 2. 모바일에서 화면 밖으로 날아가게 만드는 마이너스 좌표 초기화 */
+    .header .hd_wrap .theme-switch-wrapper .header-theme-switch {
+        left: 0;
+        /* -250px 마이너스 좌표 해제 */
+        top: 9px;
+        /* 로고와 수평이 맞도록 Y축 미세 조정 */
+    }
+}
+
+/* 🔄 하단 동기화 버튼 껍데기 박스 */
+.sync-btn-wrapper {
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    max-width: 468px;
+    /* 메인 콘텐츠 라인에 딱 맞춤! */
+    margin: 0 auto;
+    pointer-events: none;
+    z-index: 2000;
+}
+
+/* 🔄 하단 동기화 진짜 버튼 */
+.sync-btn {
+    position: absolute;
+    right: 14px;
+    bottom: 0;
+    pointer-events: auto;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #333;
+    transition: transform 0.15s ease-in-out, background-color 0.2s ease;
+}
+
+/* (옵션) 마우스 올렸을 때 & 터치했을 때 부드러운 반응 추가! */
+.sync-btn:hover {
+    background-color: #f8f9fa;
+}
+
+.sync-btn:active {
+    transform: scale(0.92);
+    /* 누르면 살짝 작아지면서 눌리는 느낌 팍! */
+}
+
+/* 📱 위에서 작성한 코드가 모바일(기본) 역할을 합니다! */
+
+/* ... (기존 동기화 버튼 CSS들) ... */
+
+/* 💻 태블릿 & PC 환경 (화면 넓이가 768px 이상일 때 발동!) */
+@media screen and (min-width: 768px) {
+
+    /* 1. 껍데기 박스를 넓은 본문 사이즈(800px)로 확장! */
+    .sync-btn-wrapper {
+        max-width: 468px;
+        bottom: 20px;
+        /* PC 화면에선 답답하지 않게 바닥에서 조금 더 띄움 */
+    }
+
+    /* 2. 마우스로 누르기 편하게 진짜 버튼 사이즈 키우기! */
+    .sync-btn {
+        width: 40px;
+        height: 40px;
+        right: 1px;
+        /* PC에선 여백도 살짝 더 여유롭게 */
+    }
+
+    /* 3. 버튼이 커졌으니 안에 있는 SVG 빙글빙글 아이콘도 같이 키우기! */
+    .sync-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+
+/* 🌙 다크모드 켜졌을 때 동기화 버튼 변신! */
+body.dark-mode .sync-btn {
+    background-color: #2c2c2e;
+    /* 다크모드 배경색에 맞춘 어두운 회색 */
+    border: 1px solid #444;
+    /* 테두리도 어둡게 */
+    color: #eee;
+    /* 빙글빙글 아이콘은 잘 보이게 밝은 색으로! */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    /* 다크모드에선 그림자를 살짝 더 진하게 눌러줍니다 */
+}
+
+/* 다크모드에서 마우스 올렸을 때 살짝 밝아지는 디테일 */
+body.dark-mode .sync-btn:hover {
+    background-color: #3a3a3c;
+}
+
+
+/* 📦 이사 진행 현황 바 */
+#migration-status {
+    position: fixed;
+    left: 10px;
+    bottom: 10px;
+    background: rgba(0, 0, 0, 0.85);
+    /* 약간 투명한 검정 */
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 12px;
+    font-size: 13px;
+    z-index: 9999;
+    /* 화면 맨 위에 띄우기 */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    /* 클릭 방해 금지 */
+    display: none;
+    /* 처음엔 숨겨두기 */
+}
+
+/* --- 📅 휴재 설정 영역 (라이트 모드 기본) --- */
+.break-setting-row {
+    display: none;
+    /* 기본 상태는 숨김 */
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.break-date-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 13px;
+    background-color: #fff;
+    color: #333;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.break-btn {
+    margin-bottom: 12px;
+    padding: 13px 10px;
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+    border-radius: 7px;
+    font-size: 12px;
+    color: #333;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s ease;
+}
+
+.break-btn:active {
+    background: #e0e0e0;
+}
+
+.break-btn-clear {
+    background: #fff;
+    color: #333;
+    /* 미정 버튼은 눈에 띄는 빨간색 */
+    font-weight: 600;
+}
+
+/* 미정 버튼 활성화 시 스타일 */
+.break-btn.active-btn-long-break {
+    border: 1px solid #3498db;
+    /* 파란색 테두리 */
+    color: #3498db;
+    background-color: #eaf2f8
+}
+
+/* --- 🌙 휴재 설정 영역 (다크 모드 대응) --- */
+body.dark-mode .break-date-input {
+    background-color: #2c2c2c;
+    border-color: #555;
+    color: #eee;
+    color-scheme: dark;
+    /* 브라우저 기본 달력 팝업창까지 다크모드로 변경해주는 꿀팁! */
+}
+
+body.dark-mode .break-btn {
+    background: #3a3a3a;
+    border-color: #555;
+    color: #eee;
+}
+
+body.dark-mode .break-btn:active {
+    background: #555;
+}
+
+body.dark-mode .break-btn-clear {
+    background: #2c2c2c;
+    color: #eee;
+    font-weight: 600;
+    /* 다크모드에서는 조금 더 화사한 핑크/코랄빛으로 변경 */
+}
+
+/* 🌙 [다크 모드] 바디 클래스까지 합쳐서 기존 다크모드 설정 우아하게 덮어쓰기! */
+body.dark-mode button.break-btn.active-btn.active-btn-long-break {
+    border: 1px solid #3498db;
+    color: #5dade2;
+    background-color: rgba(52, 152, 219, 0.15);
+}
+
+
+
+/* --- 🍞 토스트 팝업 (기본 라이트 모드) --- */
+.mobo-toast {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: rgba(45, 52, 54, 0.95);
+    /* 세련된 다크그레이 */
+    color: #fff;
+    text-align: center;
+    border-radius: 8px;
+    padding: 14px 20px;
+    position: fixed;
+    /* 화면 어디에 있든 고정! */
+    z-index: 9999;
+    /* 무조건 제일 위에! */
+    left: 50%;
+    bottom: 40px;
+    /* 화면 아래쪽에서 띄움 */
+    transform: translateX(-50%) translateY(20px);
+    /* 가운데 정렬 & 살짝 아래로 내려둠 */
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+}
+
+/* 토스트가 화면에 나타날 때 (JS로 이 클래스를 붙여줄 거예요) */
+.mobo-toast.show {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    /* 스르륵 제자리로 올라옴! */
+}
+
+/* --- 🌙 토스트 팝업 (다크 모드) --- */
+body.dark-mode .mobo-toast {
+    background-color: rgba(245, 246, 250, 0.95);
+    /* 다크모드에선 오히려 밝게 해서 대비 효과! */
+    color: #2d3436;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+
+
+.drawer-item-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    color: #333;
+    font-weight: normal;
+}
+
+
+/* 10일 연재 + 휴재 작품: 기존 한 줄 배치 유지 */
+.drawer-item.ten-day-break-row {
+    flex-wrap: nowrap;
+}
+
+/* 제목은 일부만 표시하고 ...으로 축약 */
+.drawer-item.ten-day-break-row .drawer-item-title {
+    flex: 1 1 auto;
+    min-width: 45px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+/* 공간이 부족하면 연재 주기 배지가 줄어듦 */
+.drawer-item.ten-day-break-row .drawer-cycle-badge {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 휴재 배지는 원래 오른쪽 위치 유지 */
+.drawer-item.ten-day-break-row .drawer-badge {
+    flex-shrink: 0;
+}
+
+/* [10일] 말머리는 한 줄 유지 */
+.drawer-item.ten-day-break-row>span:first-child {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+
+/* =========================================
+   정주행 계산기 / 빠른 차감 탭
+========================================= */
+
+.calc-mode-toggle {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    background: #f1f3f5;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.calc-mode-tab {
+    flex: 1;
+    min-width: 0;
+    padding: 8px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-weight: normal;
+    font-size: 13px;
+    color: #888;
+    cursor: pointer;
+}
+
+.calc-mode-tab.active {
+    background: #fff;
+    color: #333;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* 다크 모드 */
+body.dark-mode .calc-mode-toggle {
+    background: #1c1c1e;
+}
+
+body.dark-mode .calc-mode-tab {
+    color: #aaa;
+}
+
+body.dark-mode .calc-mode-tab.active {
+    background: #3a3a3c;
+    color: #fff;
+}
+
+/* 빠른 차감 입력창 라벨 */
+.calc-quick-label {
+    display: block;
+    font-size: 13px;
+    color: #666;
+}
+
+/* 빠른 차감 안내 문구 */
+.calc-quick-note {
+    font-size: 12px;
+    color: #888;
+    line-height: 1.5;
+    margin: 0 0 15px;
+}
+
+body.dark-mode .calc-quick-note {
+    color: #aaa;
+}
+
+/* 중복 차감 방지 */
+#quick-deduct-submit:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* 정주행 계산기 - 차감 지갑 영역 */
+.calc-wallet-wrap {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.calc-wallet-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.calc-wallet-label {
+    flex-shrink: 0;
+    font-size: 12px;
+    color: #777;
+    min-width: 54px;
+}
+
+.calc-wallet-select {
+    flex: 1;
+    margin: 0;
+    height: 36px;
+    padding: 0 10px;
+    font-size: 13px;
+}
+
+/* 예상 잔액 안내 */
+.calc-balance-notice {
+    margin: 6px 0 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #a06a00;
+    text-align: left;
+}
+
+body.dark-mode .calc-wallet-label {
+    color: #bbb;
+}
+
+body.dark-mode .calc-balance-notice {
+    color: #f0c36d;
+}
+
+
+/* ===== 정주행 계산기 결과 레이아웃 ===== */
+
+#calc-result-box {
+    padding: 12px;
+}
+
+/* 남은 화수 → 필요한 금액 */
+#calc-result-box .calc-result-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
+    align-items: center;
+    gap: 5px;
+    text-align: center;
+}
+
+#calc-result-box .calc-summary-item {
+    min-width: 0;
+}
+
+#calc-result-box .calc-summary-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: 400;
+    color: #858585;
+}
+
+#calc-result-box .calc-summary-value {
+    display: block;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #333;
+    white-space: nowrap;
+}
+
+#calc-result-box #calc-need-coin {
+    font-size: 17px;
+}
+
+#calc-result-box .calc-summary-arrow {
+    color: #aaa;
+    font-size: 18px;
+}
+
+/* 지갑 선택 */
+#calc-result-box .calc-deduct-info {
+    margin-top: 12px;
+}
+
+#calc-result-box .calc-wallet-wrap {
+    margin: 0;
+}
+
+#calc-result-box .calc-wallet-row {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+}
+
+#calc-result-box .calc-wallet-label {
+    min-width: 0;
+    font-size: 11px;
+    color: #777;
+    white-space: nowrap;
+}
+
+#calc-result-box .calc-wallet-select {
+    width: 100%;
+    min-width: 0;
+    height: 34px;
+    padding: 5px 8px;
+    margin: 0;
+    box-sizing: border-box;
+    font-size: 11px;
+}
+
+/* 예상 잔액 안내 */
+#calc-result-box .calc-balance-notice {
+    margin: 7px 0 0;
+    padding: 6px 5px;
+    border-radius: 6px;
+    background: #fff1e6;
+    color: #a76523;
+    font-size: 11px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+/* 차감 버튼과의 간격 */
+#calc-result-box #calc-deduct-btn {
+    margin-top: 10px;
+}
+
+/* 다크 모드 */
+body.dark-mode #calc-result-box .calc-summary-label,
+body.dark-mode #calc-result-box .calc-wallet-label {
+    color: #bbb;
+}
+
+body.dark-mode #calc-result-box .calc-summary-value {
+    color: #fff;
+}
+
+body.dark-mode #calc-result-box .calc-balance-notice {
+    background: #49372d;
+    color: #ffd09a !important;
+}
+
+
+
+/* =====================================
+   정주행 계산기 - 컴팩트 레이아웃
+===================================== */
+
+/* 1. 총 화수 + 현재 진도 */
+#calc-modal .calc-input-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+#calc-modal .calc-input-field {
+    min-width: 0;
+}
+
+#calc-modal .calc-input-field label {
+    display: block;
+    font-size: 12px;
+    color: #777;
+    margin-bottom: 5px;
+}
+
+#calc-modal .calc-input-field input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 9px;
+}
+
+/* 2. 계산 결과 */
+#calc-modal #calc-result-box {
+    padding: 14px;
+}
+
+#calc-modal .calc-result-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+}
+
+#calc-modal .calc-summary-item {
+    min-width: 0;
+    text-align: center;
+}
+
+#calc-modal .calc-summary-item:first-child {
+    border-right: 1px solid #dedfe2;
+}
+
+#calc-modal .calc-summary-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: 400;
+    color: #888;
+}
+
+#calc-modal .calc-summary-value {
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.35;
+    white-space: nowrap;
+    color: #333;
+}
+
+#calc-modal #calc-need-coin {
+    font-size: inherit;
+}
+
+/* 3. 지갑 선택 */
+#calc-modal .calc-deduct-info {
+    margin-top: 12px;
+}
+
+#calc-modal .calc-wallet-wrap {
+    margin: 0;
+}
+
+#calc-modal .calc-wallet-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 0;
+}
+
+#calc-modal .calc-wallet-label {
+    min-width: 0;
+    font-size: 11px;
+    color: #777;
+    white-space: nowrap;
+}
+
+#calc-modal .calc-wallet-select {
+    width: 100%;
+    min-width: 0;
+    height: 34px;
+    margin: 0;
+    padding: 5px 8px;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+/* 4. 예상 잔액 */
+#calc-modal .calc-balance-notice {
+    margin: 8px 0 0;
+    padding: 0;
+    background: transparent;
+    color: #ad713c;
+    font-size: 11px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+/* 5. 차감 버튼 */
+#calc-modal #calc-deduct-btn {
+    margin-top: 12px;
+}
+
+/* 6. 다크 모드 */
+body.dark-mode #calc-modal .calc-input-field label,
+body.dark-mode #calc-modal .calc-summary-label,
+body.dark-mode #calc-modal .calc-wallet-label {
+    color: #bbb;
+}
+
+body.dark-mode #calc-modal .calc-summary-value {
+    color: #fff;
+}
+
+body.dark-mode #calc-modal .calc-summary-item:first-child {
+    border-right-color: #555;
+}
+
+body.dark-mode #calc-modal .calc-balance-notice {
+    color: #e9b77f !important;
+}
+
+
+
+/* =====================================
+   작품 추가 / 정주행 계산기
+   작은 화면에서 모달 잘림 방지
+===================================== */
+
+#custom-modal,
+#calc-modal {
+    box-sizing: border-box;
+
+    /* 기존 브라우저 대응 */
+    height: 100vh;
+
+    /* 모바일 브라우저의 실제 표시 높이 대응 */
+    height: 100dvh;
+
+    padding:
+        max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+
+}
+
+/* 화면보다 모달이 길면 내부 스크롤 */
+#custom-modal>.modal-content,
+#calc-modal>.modal-content {
+    max-height: calc(100vh - 32px);
+
+    max-height: calc(100dvh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* =========================================
+   모보 복귀 모드 1차 UI
+========================================= */
+
+#mobo-return-banner {
+    width: 100%;
+    max-width: 468px;
+    margin: 10px auto 16px;
+    padding: 12px;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid #dfe3eb;
+    border-radius: 12px;
+    background: #fff;
+    color: #555;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+#mobo-return-banner>svg {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+    color: #686c9d;
+}
+
+#mobo-return-banner-text {
+    flex: 1;
+    min-width: 0;
+}
+
+#mobo-return-banner button {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+    border: 0;
+    background: transparent;
+    color: #686c9d;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#mobo-return-banner button svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* 복귀 모달: 왼쪽 정렬형 레이아웃 */
+#mobo-return-modal .mobo-return-content {
+    max-width: 340px;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+/* 아이콘 + 제목 가로 배치 */
+.mobo-return-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.mobo-return-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    margin: 0;
+    border-radius: 12px;
+    background: #eef0f8;
+    color: #686c9d;
+}
+
+.mobo-return-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.mobo-return-header-text {
+    flex: 1;
+    min-width: 0;
+}
+
+#mobo-return-title {
+    margin: 0 0 5px;
+    font-size: 18px;
+    text-align: left;
+}
+
+#mobo-return-message {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+}
+
+/* 본문 */
+.mobo-return-description {
+    margin: 0 0 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #777;
+    text-align: left;
+}
+
+/* 보조 안내 */
+.mobo-return-guide {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px;
+    margin: 0 0 16px;
+    border-radius: 8px;
+    background: #f6f7fa;
+    color: #777;
+    font-size: 11px;
+    line-height: 1.6;
+    text-align: left;
+}
+
+.mobo-return-guide svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* 하단 버튼 가로 정렬 */
+.mobo-return-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.mobo-return-actions button {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    margin: 0;
+    padding: 11px 5px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+body.dark-mode #mobo-return-banner {
+    background: #2c2c2e;
+    border-color: #414146;
+    color: #eee;
+}
+
+body.dark-mode .mobo-return-guide {
+    background: #3a3a3c;
+    color: #ddd;
+}
+
+body.dark-mode .mobo-return-description {
+    color: #bbb;
+}
+
+
+/* 작품 추가 모달 - 링크와 업로드 시간 나란히 */
+#single-add-section-1 .work-link-time-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 8px;
+    width: 100%;
+}
+
+#single-add-section-1 .work-link-time-row input {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    padding: 12px 10px;
+}
+
+/* 좁은 모바일에서도 입력창 간격 유지 */
+@media (max-width: 360px) {
+    #single-add-section-1 .work-link-time-row {
+        gap: 6px;
+    }
+
+    #single-add-section-1 .work-link-time-row input {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+}
+
+
+
+/* 격주 휴재 설정 - 2단 압축 레이아웃 */
+#break-setting-row.biweekly-break-mode {
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 7px;
+    width: 100%;
+    margin-top: 8px;
+    align-items: stretch;
+}
+
+/* 첫 줄 왼쪽: 복귀 날짜 선택 */
+#break-setting-row.biweekly-break-mode .break-date-input {
+    grid-column: 1 / span 4;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    margin: 0;
+    padding: 7px 8px;
+    font-size: 13px;
+    border-radius: 7px;
+    box-sizing: border-box;
+}
+
+/* 격주 버튼 공통 */
+#break-setting-row.biweekly-break-mode .break-btn {
+    min-width: 0;
+    width: 100%;
+    margin: 0;
+    padding: 7px 5px;
+    font-size: 12px;
+    white-space: normal;
+    word-break: keep-all;
+    text-align: center;
+    line-height: 1.3;
+    box-sizing: border-box;
+}
+
+/* 첫 줄 오른쪽: 미정 */
+#break-setting-row.biweekly-break-mode .break-btn-clear {
+    grid-column: 5 / span 2;
+    grid-row: 1;
+    min-height: 40px;
+    font-size: 13px;
+}
+
+/* 두 번째 줄 왼쪽: 다음 회차 복귀 */
+#break-setting-row.biweekly-break-mode #btn-break-1 {
+    grid-column: 1 / span 3;
+    grid-row: 2;
+    min-height: 55px;
+}
+
+/* 두 번째 줄 오른쪽: 한 회차 더 쉬기 */
+#break-setting-row.biweekly-break-mode #btn-break-2 {
+    grid-column: 4 / span 3;
+    grid-row: 2;
+    min-height: 55px;
+}
+
+/* 버튼 제목 */
+#break-setting-row.biweekly-break-mode .break-btn-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+/* 버튼 아래 작은 날짜 */
+#break-setting-row.biweekly-break-mode .break-btn-date {
+    display: block;
+    margin-top: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.25;
+    opacity: 0.8;
+}
+
+
+/* 작품 관리 - 연재중 전환 버튼: 기존 검은색 */
+#finished-cleanup-resume {
+    background: #252525;
+    color: #fff;
+    border: 1px solid #252525;
+    border-radius: 8px;
+    font-weight: 600;
+    min-height: 44px;
+}
+
+/* 작품 관리 - 삭제 버튼: 차분한 로즈레드 라인 */
+#finished-cleanup-delete {
+    background: transparent;
+    color: #B96F72;
+    border: 1px solid #B96F72;
+    border-radius: 8px;
+    font-weight: 600;
+    min-height: 44px;
+}
+
+/* 삭제 버튼 터치 피드백 */
+#finished-cleanup-delete:not(:disabled):active {
+    background: rgba(185, 111, 114, 0.08);
+}
+
+/* 비활성화 상태 */
+#finished-cleanup-resume:disabled,
+#finished-cleanup-delete:disabled {
+    cursor: not-allowed;
+}
+
+
+/* ========================================
+   작품 관리 버튼 - 다크모드
+======================================== */
+
+/* 연재중 전환: 기존 다크모드 검은색 유지 */
+body.dark-mode #finished-cleanup-resume {
+    background: #474747;
+    color: #FFFFFF;
+    border: 1px solid #474747;
+}
+
+/* 작품 삭제: 차분하고 부드러운 로즈레드 */
+body.dark-mode #finished-cleanup-delete {
+    background: transparent;
+    color: #D19498;
+    border: 1px solid #D19498;
+}
+
+/* 삭제 버튼 터치 피드백 */
+body.dark-mode #finished-cleanup-delete:not(:disabled):active {
+    background: rgba(209, 148, 152, 0.12);
+}
+
+/* 다크모드 비활성화 상태 */
+body.dark-mode #finished-cleanup-resume:disabled,
+body.dark-mode #finished-cleanup-delete:disabled {
+    cursor: not-allowed;
+}
+
+
+
+/* 작품 정리 모달 - 상태 뱃지 공통 */
+.cleanup-status-badge {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 3px 7px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+/* 라이트모드 */
+.cleanup-badge-long {
+    background: #F3E8C8;
+    color: #80622D;
+}
+
+.cleanup-badge-return {
+    background: #E7EDF7;
+    color: #566B8B;
+}
+
+.cleanup-badge-auto {
+    background: #EEEEEE;
+    color: #666666;
+}
+
+.cleanup-return-date {
+    font-size: 12px;
+    color: #888;
+    line-height: 1.35;
+}
+
+/* 다크모드 */
+body.dark-mode .cleanup-badge-long {
+    background: #453A27;
+    color: #E3C98B;
+}
+
+body.dark-mode .cleanup-badge-return {
+    background: #303D52;
+    color: #B7C9E7;
+}
+
+body.dark-mode .cleanup-badge-auto {
+    background: #414141;
+    color: #CECECE;
+}
+
+body.dark-mode .cleanup-return-date {
+    color: #AAAAAA;
+}
+
+.cleanup-select-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+
+/* 작품 관리 - 선택 도구 영역 */
+.cleanup-select-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* 장기휴재만 선택: 보조 버튼 */
+.cleanup-select-long-btn {
+    border: 1px solid #D8D8DE;
+    background: transparent;
+    color: #686C9D;
+    border-radius: 7px;
+    padding: 7px 10px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.cleanup-select-long-btn:active {
+    background: rgba(104, 108, 157, 0.08);
+}
+
+/* 다크모드 */
+body.dark-mode .cleanup-select-long-btn {
+    border-color: #55555E;
+    background: transparent;
+    color: #B8BBDD;
+}
+
+body.dark-mode .cleanup-select-long-btn:active {
+    background: rgba(184, 187, 221, 0.10);
+}
+
+
+
+/* 모든 작품 관리 모달보다 토스트를 위에 표시 */
+#mobo-toast,
+#toast-popup {
+    z-index: 10010;
+}
+
+
+/* ==========================
+   작품 관리 모달 - 독립 간격
+   ========================== */
+
+/* 모달 전체 gap 제거 */
+#finished-cleanup-modal .modal-content {
+    gap: 0;
+}
+
+/* 제목과 닫기 버튼 */
+.cleanup-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+#finished-cleanup-title {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Lucide 닫기 버튼 */
+.cleanup-modal-close {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: right;
+    flex-shrink: 0;
+}
+
+.cleanup-modal-close svg,
+.cleanup-modal-close i {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+/* 제목 → 안내 문구: 8px */
+#finished-cleanup-help {
+    margin: 4px 0 0;
+}
+
+/* 안내 문구 → 전체 선택 영역: 16px */
+#finished-cleanup-modal .cleanup-select-toolbar {
+    margin-top: 16px;
+    gap: 8px;
+}
+
+/* 전체 선택 영역 → 작품 목록: 8px */
+#finished-cleanup-list {
+    margin-top: 8px;
+}
+
+/* 작품 목록 → 선택 개수: 8px */
+#finished-cleanup-count {
+    margin-top: 8px;
+}
+
+/* 선택 개수 → 하단 버튼: 16px */
+#finished-cleanup-modal .modal-btns {
+    margin-top: 16px;
+    gap: 8px;
+}
+
+/* =========================================
+   정주행 계산기 - 상단 헤더
+========================================= */
+
+#calc-modal .calc-main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+#calc-modal #calc-modal-title {
+    margin: 0;
+    min-width: 0;
+    font-size: 17px;
+    font-weight: 700;
+    text-align: left;
+}
+
+#calc-modal .calc-cumulative-open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    flex-shrink: 0;
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid #d8d8dc;
+    border-radius: 20px;
+    background: transparent;
+    color: #666;
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+#calc-modal .calc-cumulative-open svg {
+    width: 15px;
+    height: 15px;
+}
+
+body.dark-mode #calc-modal .calc-cumulative-open {
+    border-color: #555;
+    color: #ddd;
+}
+
+
+/* =========================================
+   누적 계산 - 전용 화면
+========================================= */
+
+#mobo-cum-view {
+    min-width: 0;
+}
+
+.mobo-cum-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.mobo-cum-head h3 {
+    margin: 0;
+    font-size: 17px;
+    color: inherit;
+}
+
+.mobo-cum-back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 0;
+    border: none;
+    background: transparent;
+    color: #777;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.mobo-cum-back-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.mobo-cum-description,
+.mobo-cum-footnote,
+.mobo-cum-field-hint {
+    color: #888;
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.mobo-cum-description {
+    margin: 0 0 14px;
+    margin-top: 8px;
+}
+
+.mobo-cum-footnote {
+    margin: 14px 0 0;
+    text-align: center;
+}
+
+.mobo-cum-field-hint {
+    margin: -4px 0 12px;
+}
+
+
+/* 작품 그룹 */
+
+.mobo-cum-group {
+    margin-bottom: 14px;
+    padding: 12px;
+    border: 1px solid #e4e4e8;
+    border-radius: 10px;
+    background: #fafafa;
+}
+
+.mobo-cum-group-title {
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+}
+
+.mobo-cum-total {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.mobo-cum-back {
+    margin-top: 3px;
+    font-size: 12px;
+    color: #3a7c59;
+    overflow-wrap: anywhere;
+}
+
+
+/* 작품별 카드 */
+
+.mobo-cum-card {
+    padding: 11px 0;
+    border-top: 1px solid #e6e6e8;
+    margin-top: 8px;
+}
+
+.mobo-cum-card:first-of-type {
+    margin-top: 12px;
+}
+
+.mobo-cum-card.is-excluded {
+    opacity: 0.55;
+}
+
+.mobo-cum-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    overflow-wrap: anywhere;
+}
+
+.mobo-cum-card-desc {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #777;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.mobo-cum-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 9px;
+}
+
+.mobo-cum-mini {
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #555;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.mobo-cum-mini.danger {
+    color: #b45b5b;
+}
+
+.mobo-cum-empty,
+.mobo-cum-hint {
+    padding: 24px 12px;
+    margin: 0 0 12px;
+    border-radius: 8px;
+    background: #f5f5f7;
+    color: #888;
+    font-size: 12px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+
+/* 작품 추가 / 수정 폼 */
+
+.mobo-cum-editor-title {
+    margin: 0 0 15px;
+    font-size: 14px;
+    color: inherit;
+}
+
+.mobo-cum-field {
+    min-width: 0;
+    margin-bottom: 12px;
+}
+
+.mobo-cum-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 12px;
+    color: #777;
+}
+
+.mobo-cum-field input,
+.mobo-cum-field select {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 9px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #333;
+    font-size: 14px;
+}
+
+.mobo-cum-input-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.mobo-cum-check-label {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: inherit;
+    cursor: pointer;
+}
+
+.mobo-cum-check-label input {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.mobo-cum-preview {
+    margin: 10px 0 14px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #f1f3f5;
+    color: #444;
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+#mobo-cum-view button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+/* 누적 계산 다크 모드 */
+
+body.dark-mode .mobo-cum-group {
+    background: #29292b;
+    border-color: #48484a;
+}
+
+body.dark-mode .mobo-cum-group-title,
+body.dark-mode .mobo-cum-total,
+body.dark-mode .mobo-cum-card-title {
+    color: #f4f4f4;
+}
+
+body.dark-mode .mobo-cum-card {
+    border-top-color: #48484a;
+}
+
+body.dark-mode .mobo-cum-card-desc,
+body.dark-mode .mobo-cum-description,
+body.dark-mode .mobo-cum-footnote,
+body.dark-mode .mobo-cum-field-hint,
+body.dark-mode .mobo-cum-field label {
+    color: #aaa;
+}
+
+body.dark-mode .mobo-cum-mini {
+    background: #38383a;
+    border-color: #555;
+    color: #eee;
+}
+
+body.dark-mode .mobo-cum-mini.danger {
+    color: #ff9b9b;
+}
+
+body.dark-mode .mobo-cum-empty,
+body.dark-mode .mobo-cum-hint,
+body.dark-mode .mobo-cum-preview {
+    background: #343436;
+    color: #ddd;
+}
+
+body.dark-mode .mobo-cum-field input,
+body.dark-mode .mobo-cum-field select {
+    background: #29292b;
+    color: #fff;
+    border-color: #555;
+}
+
+/* =========================================
+   계산기 최종 상단 디자인
+========================================= */
+
+/* 상단에는 기존 탭만 표시 */
+#calc-modal .calc-main-header {
+    display: block;
+    margin-bottom: 14px;
+    width: 100%;
+    min-width: 0;
+}
+
+/* 기존 2분할 탭 스타일 유지 */
+#calc-modal .calc-main-header .calc-mode-toggle {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+/* 정주행 계산기 안의 누적 계산 링크 */
+#calc-modal .mobo-cum-entry {
+    display: flex;
+    justify-content: flex-end;
+    margin: -3px 0 12px;
+}
+
+/* 다른 입력 요소보다 가볍게 표현 */
+#calc-modal .mobo-cum-entry-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+
+    min-height: 28px;
+    padding: 2px 0;
+
+    border: none;
+    background: transparent;
+
+    color: #858585;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+
+    cursor: pointer;
+}
+
+#calc-modal .mobo-cum-entry-link svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+}
+
+#calc-modal .mobo-cum-entry-link:hover {
+    color: #444;
+}
+
+/* 다크 모드 */
+body.dark-mode #calc-modal .mobo-cum-entry-link {
+    color: #aaa;
+}
+
+body.dark-mode #calc-modal .mobo-cum-entry-link:hover {
+    color: #eee;
+}
+
+/* 작은 모바일 화면 대응 */
+@media (max-width: 360px) {
+    #calc-modal .mobo-cum-entry-link {
+        font-size: 10.5px;
+    }
+}
+
+/* =========================================
+   플랫폼 선택 + 누적 계산 버튼 최종 디자인
+========================================= */
+
+/* 두 요소를 같은 높이로 한 줄 배치 */
+#calc-modal .calc-platform-line {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 66px;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+/* 기존 플랫폼 선택창 */
+#calc-modal .calc-platform-line #calc-platform {
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+    margin: 0;
+    box-sizing: border-box;
+    font-size: 12px;
+}
+
+/* 누적 계산 버튼 */
+#calc-modal .calc-platform-line .mobo-cum-entry-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+
+    width: 66px;
+    min-width: 0;
+    height: 42px;
+    min-height: 42px;
+    box-sizing: border-box;
+
+    margin: 0;
+    padding: 4px;
+
+    border: 1px solid #dedee2;
+    border-radius: 8px;
+    background: transparent;
+
+    color: #777;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* 마우스를 올렸을 때 */
+#calc-modal .calc-platform-line .mobo-cum-entry-link:hover {
+    background: #292929;
+    border-color: #292929;
+    color: #fff;
+}
+
+/* 버튼을 누르는 순간 */
+#calc-modal .calc-platform-line .mobo-cum-entry-link:active {
+    background: #000;
+    border-color: #000;
+    color: #fff;
+}
+
+/* 키보드로 선택했을 때 */
+#calc-modal .calc-platform-line .mobo-cum-entry-link:focus-visible {
+    background: #292929;
+    border-color: #292929;
+    color: #fff;
+    outline: 2px solid #888;
+    outline-offset: 2px;
+}
+
+/* 색상 전환을 부드럽게 */
+#calc-modal .calc-platform-line .mobo-cum-entry-link {
+    transition: background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+/* 다크 모드에서도 동일하게 */
+body.dark-mode #calc-modal .calc-platform-line .mobo-cum-entry-link:hover,
+body.dark-mode #calc-modal .calc-platform-line .mobo-cum-entry-link:active,
+body.dark-mode #calc-modal .calc-platform-line .mobo-cum-entry-link:focus-visible {
+    background: #000;
+    border-color: #000;
+    color: #fff;
+}
+
+/* 각 글자를 한 줄씩 */
+#calc-modal .calc-platform-line .mobo-cum-entry-link span {
+    display: block;
+}
+
+/* 다크 모드 */
+body.dark-mode #calc-modal .calc-platform-line .mobo-cum-entry-link {
+    border-color: #555;
+    color: #ccc;
+}
+
+/* =========================================
+   정주행 계산 결과 - 누적 담기 버튼
+========================================= */
+
+/* 레진 / 봄툰: 지갑 선택 + 누적 담기 */
+#calc-modal #calc-result-box .mobo-cum-wallet-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 88px;
+    align-items: stretch;
+    gap: 7px;
+    min-width: 0;
+}
+
+#calc-modal #calc-result-box .mobo-cum-wallet-row #calc-deduct-wallet {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 38px;
+    margin: 0;
+    box-sizing: border-box;
+
+    padding: 0 5px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+
+/* 공통 누적 담기 버튼 */
+#calc-modal .mobo-cum-add-from-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 38px;
+    min-height: 38px;
+
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 4px;
+
+    border: 1px solid #dedee2;
+    border-radius: 8px;
+    background: transparent;
+
+    color: #555;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+#calc-modal .mobo-cum-add-from-result:hover:not(:disabled),
+#calc-modal .mobo-cum-add-from-result:active:not(:disabled) {
+    background: #292929;
+    border-color: #292929;
+    color: #fff;
+}
+
+#calc-modal .mobo-cum-add-from-result:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+
+/* 빨간 차감 버튼 영역 */
+#calc-modal #calc-result-box .mobo-cum-deduct-actions {
+    display: block;
+    min-width: 0;
+    margin-top: 12px;
+}
+
+/* 레진 / 봄툰에서는 빨간 버튼만 표시 */
+#calc-modal #mobo-cum-add-other {
+    display: none;
+}
+
+#calc-modal #calc-result-box .mobo-cum-deduct-actions #calc-deduct-btn {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 40px;
+    min-height: 40px;
+
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 6px;
+
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* 리디 / 미블: 빨간 버튼 + 누적 담기 */
+#calc-modal #calc-result-box .mobo-cum-deduct-actions.mobo-cum-paired {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 88px;
+    align-items: stretch;
+    gap: 7px;
+}
+
+#calc-modal #calc-result-box .mobo-cum-deduct-actions.mobo-cum-paired #calc-deduct-btn {
+    font-size: 12px;
+}
+
+#calc-modal #calc-result-box .mobo-cum-deduct-actions.mobo-cum-paired #mobo-cum-add-other {
+    display: flex;
+    height: 40px;
+    min-height: 40px;
+}
+
+
+/* 작은 화면: 너비를 한 번 더 확보 */
+@media (max-width: 360px) {
+
+    #calc-modal #calc-result-box .mobo-cum-wallet-row,
+    #calc-modal #calc-result-box .mobo-cum-deduct-actions.mobo-cum-paired {
+        grid-template-columns: minmax(0, 1fr) 84px;
+        gap: 6px;
+    }
+
+    #calc-modal #calc-result-box .mobo-cum-deduct-actions.mobo-cum-paired #calc-deduct-btn {
+        font-size: 11px;
+    }
+}
+
+
+/* 다크 모드 */
+body.dark-mode #calc-modal .mobo-cum-add-from-result {
+    border-color: #555;
+    color: #ddd;
+}
+
+body.dark-mode #calc-modal .mobo-cum-add-from-result:hover:not(:disabled),
+body.dark-mode #calc-modal .mobo-cum-add-from-result:active:not(:disabled) {
+    background: #000;
+    border-color: #000;
+    color: #fff;
+}
+
+/* =========================================
+   누적 계산 - 실제 지갑 차감 버튼
+========================================= */
+
+#calc-modal #mobo-cum-checkout {
+    display: block;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 42px;
+
+    box-sizing: border-box;
+    margin: 9px 0 0;
+    padding: 10px 8px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #e74c3c;
+    color: #fff;
+
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+#calc-modal #mobo-cum-checkout:hover:not(:disabled) {
+    background: #c0392b;
+}
+
+#calc-modal #mobo-cum-checkout:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+body.dark-mode #calc-modal #mobo-cum-checkout {
+    background: #d63031;
+    color: #fff;
+}
+
+body.dark-mode #calc-modal #mobo-cum-checkout:hover:not(:disabled) {
+    background: #b92427;
+}
+
+/* =========================================
+   누적 계산 - 작품 카드 한 줄 정렬
+========================================= */
+
+/* 작품 정보 왼쪽 / 버튼 오른쪽 */
+#calc-modal .mobo-cum-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+
+    min-width: 0;
+    padding: 10px 0;
+}
+
+/* 작품명과 금액 영역 */
+#calc-modal .mobo-cum-card-info {
+    min-width: 0;
+}
+
+/* 긴 작품명 줄바꿈 방지 */
+#calc-modal .mobo-cum-card-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 긴 금액 설명도 한 줄 유지 */
+#calc-modal .mobo-cum-card-desc {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+}
+
+/* 버튼 세 개 가로 정렬 */
+#calc-modal .mobo-cum-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 4px;
+    margin: 0;
+    min-width: 0;
+}
+
+/* 작은 버튼으로 통일 */
+#calc-modal .mobo-cum-mini {
+    flex-shrink: 0;
+    min-height: 30px;
+    padding: 5px 7px;
+
+    font-size: 11px;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* 아주 작은 스마트폰 대응 */
+@media (max-width: 360px) {
+    #calc-modal .mobo-cum-card {
+        gap: 5px;
+    }
+
+    #calc-modal .mobo-cum-actions {
+        gap: 3px;
+    }
+
+    #calc-modal .mobo-cum-mini {
+        padding: 5px;
+        font-size: 10px;
+    }
+}
+
+/* =========================================
+   누적 계산 - 구매 비용 / 코인백 가로 정렬
+========================================= */
+
+#calc-modal .mobo-cum-summary-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 10px;
+    margin: 8px 0 12px;
+}
+
+#calc-modal .mobo-cum-summary-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+#calc-modal .mobo-cum-summary-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: #888;
+    white-space: nowrap;
+}
+
+#calc-modal .mobo-cum-summary-value {
+    display: block;
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #333;
+    overflow-wrap: anywhere;
+}
+
+#calc-modal .mobo-cum-summary-value.is-cashback {
+    color: #3a7c59;
+}
+
+/* 다크 모드 */
+body.dark-mode #calc-modal .mobo-cum-summary-label {
+    color: #aaa;
+}
+
+body.dark-mode #calc-modal .mobo-cum-summary-value {
+    color: #fff;
+}
+
+body.dark-mode #calc-modal .mobo-cum-summary-value.is-cashback {
+    color: #81c7a0;
+}
+
+/* =========================================
+   누적 계산 - 작품명 입력 팝업
+========================================= */
+
+#mobo-cum-name-dialog {
+    box-sizing: border-box;
+    padding: 16px;
+}
+
+#mobo-cum-name-dialog .mobo-cum-name-content {
+    width: min(320px, 100%);
+    max-width: 320px;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 22px 20px;
+    border-radius: 14px;
+}
+
+#mobo-cum-name-heading {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+}
+
+#mobo-cum-name-dialog .mobo-cum-name-desc {
+    margin: 0 0 16px;
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+}
+
+#mobo-cum-name-input {
+    width: 100%;
+    height: 40px;
+    min-width: 0;
+    box-sizing: border-box;
+
+    padding: 0 12px;
+    border: 1px solid #dedee2;
+    border-radius: 8px;
+
+    background: #fff;
+    color: #333;
+    font-size: 13px;
+    outline: none;
+}
+
+#mobo-cum-name-input:focus {
+    border-color: #777;
+}
+
+#mobo-cum-name-dialog .mobo-cum-name-guide {
+    margin: 8px 0 16px;
+    color: #999;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+#mobo-cum-name-dialog .mobo-cum-name-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+#mobo-cum-name-dialog .mobo-cum-name-actions button {
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 8px;
+
+    border-radius: 8px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+#mobo-cum-name-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 다크 모드 */
+
+body.dark-mode #mobo-cum-name-input {
+    background: #29292b;
+    border-color: #555;
+    color: #fff;
+}
+
+body.dark-mode #mobo-cum-name-input:focus {
+    border-color: #aaa;
+}
+
+body.dark-mode #mobo-cum-name-dialog .mobo-cum-name-desc,
+body.dark-mode #mobo-cum-name-dialog .mobo-cum-name-guide {
+    color: #aaa;
+}
+
+/* =========================================
+   누적 계산 - 최종 컴팩트 디자인
+========================================= */
+
+/* 상단 헤더 */
+#calc-modal .mobo-cum-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+
+    width: 100%;
+    min-width: 0;
+    margin: 0 0 0;
+}
+
+/* 중앙 제목 */
+#calc-modal .mobo-cum-head h3 {
+    margin: 0;
+    justify-self: center;
+
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* 왼쪽 계산기로 버튼 */
+#calc-modal .mobo-cum-back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    justify-self: start;
+    gap: 4px;
+
+    width: auto;
+    min-width: 0;
+    height: 34px;
+
+    margin: 0;
+
+    border: none;
+    background: transparent;
+    color: #777;
+
+    font-size: 11px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* 오른쪽 닫기 */
+#calc-modal .mobo-cum-close-button {
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    justify-self: end;
+
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    margin: 0;
+
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #777;
+    cursor: pointer;
+}
+
+#calc-modal .mobo-cum-head svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* 하단 버튼 두 개 나란히 */
+#calc-modal #mobo-cum-bottom-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+
+    width: 100%;
+    min-width: 0;
+    margin-top: 14px;
+}
+
+/* 버튼 공통 크기 */
+#calc-modal #mobo-cum-bottom-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 42px;
+    min-height: 42px;
+
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 7px;
+
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* 버튼 아이콘 */
+#calc-modal #mobo-cum-bottom-actions svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+/* 왼쪽 목록 비우기 */
+#calc-modal #mobo-cum-bottom-actions #mobo-cum-clear {
+    border: 1px solid #dedee2;
+    background: transparent;
+    color: #666;
+    box-shadow: none;
+    text-decoration: none;
+}
+
+#calc-modal #mobo-cum-bottom-actions #mobo-cum-clear:hover:not(:disabled) {
+    background: #f1f1f3;
+    color: #333;
+}
+
+/* 오른쪽 지갑 차감 */
+#calc-modal #mobo-cum-bottom-actions #mobo-cum-checkout {
+    border: 1px solid #e74c3c;
+    background: #e74c3c;
+    color: #fff;
+}
+
+#calc-modal #mobo-cum-bottom-actions #mobo-cum-checkout:hover:not(:disabled) {
+    background: #c0392b;
+    border-color: #c0392b;
+}
+
+/* 비활성화 */
+#calc-modal #mobo-cum-bottom-actions button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* 다크 모드 */
+body.dark-mode #calc-modal #mobo-cum-bottom-actions #mobo-cum-clear {
+    border-color: #555;
+    background: transparent;
+    color: #ddd;
+}
+
+body.dark-mode #calc-modal #mobo-cum-bottom-actions #mobo-cum-checkout {
+    background: #d63031;
+    border-color: #d63031;
+    color: #fff;
+}
+
+body.dark-mode #calc-modal .mobo-cum-back-button,
+body.dark-mode #calc-modal .mobo-cum-close-button {
+    color: #ccc;
+}
+
+/* 작은 화면에서도 한 줄 유지 */
+@media (max-width: 360px) {
+    #calc-modal #mobo-cum-bottom-actions {
+        gap: 6px;
+    }
+
+    #calc-modal #mobo-cum-bottom-actions button {
+        gap: 4px;
+        padding: 0 5px;
+        font-size: 11px;
+    }
+}
+
+/* 누적 계산: 각 플랫폼의 마지막 작품 아래 여백 제거 */
+#calc-modal .mobo-cum-group>.mobo-cum-card:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+/* =========================================
+   누적 계산 - 플랫폼 접기 / 펼치기
+========================================= */
+
+/* 플랫폼 제목 + 화살표 */
+#calc-modal .mobo-cum-group-head {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+
+    width: 100%;
+    margin: 0 0 8px;
+}
+
+/* 기존 플랫폼 제목 */
+#calc-modal .mobo-cum-group-head .mobo-cum-group-title {
+    margin: 0;
+    min-width: 0;
+}
+
+/* 접기 / 펼치기 버튼 */
+#calc-modal .mobo-cum-fold-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    margin: -6px 0;
+
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #888;
+
+    cursor: pointer;
+}
+
+#calc-modal .mobo-cum-fold-button:hover {
+    background: #f1f1f3;
+    color: #333;
+}
+
+/* Lucide 화살표 */
+#calc-modal .mobo-cum-fold-button svg {
+    width: 16px;
+    height: 16px;
+
+    transition: transform 0.2s ease;
+}
+
+/* 펼쳐졌을 때 위쪽 화살표 */
+#calc-modal .mobo-cum-fold-button[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+}
+
+/* =========================================
+   플랫폼별 작품 목록 스크롤
+========================================= */
+
+#calc-modal .mobo-cum-work-list {
+    width: 100%;
+    min-width: 0;
+
+    /* 작품 약 3개 정도가 보이는 최대 높이 */
+    max-height: 190px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding-right: 3px;
+    box-sizing: border-box;
+
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+}
+
+/* 마지막 작품 아래 불필요한 여백 제거 */
+#calc-modal .mobo-cum-work-list>.mobo-cum-card:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+/* 다크 모드 */
+body.dark-mode #calc-modal .mobo-cum-fold-button {
+    color: #ccc;
+}
+
+body.dark-mode #calc-modal .mobo-cum-fold-button:hover {
+    background: #38383a;
+    color: #fff;
+}
+
+body.dark-mode #calc-modal .mobo-cum-work-list {
+    scrollbar-color: #666 transparent;
+}
+
+/* =========================================
+   누적 계산 - 부드러운 접기 / 펼치기
+========================================= */
+
+/* 애니메이션을 담당하는 바깥 영역 */
+#calc-modal .mobo-cum-work-list {
+    display: grid;
+    grid-template-rows: 0fr;
+
+    width: 100%;
+    min-height: 0;
+    max-height: none;
+
+    margin: 0;
+    padding: 0;
+
+    overflow: hidden;
+    opacity: 0;
+
+    transition:
+        grid-template-rows 0.28s ease,
+        opacity 0.22s ease;
+}
+
+/* 펼쳐진 상태 */
+#calc-modal .mobo-cum-work-list.is-open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+}
+
+/* 실제 작품 스크롤 영역 */
+#calc-modal .mobo-cum-work-scroll {
+    min-height: 0;
+    max-height: 190px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    box-sizing: border-box;
+    padding-right: 3px;
+
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+}
+
+/* 마지막 작품 아래 추가 여백 제거 */
+#calc-modal .mobo-cum-work-scroll>.mobo-cum-card:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+/* 다크 모드 스크롤 */
+body.dark-mode #calc-modal .mobo-cum-work-scroll {
+    scrollbar-color: #666 transparent;
+}
+
+/* 모션 최소화 설정을 사용하는 경우 */
+@media (prefers-reduced-motion: reduce) {
+
+    #calc-modal .mobo-cum-work-list,
+    #calc-modal .mobo-cum-fold-button svg {
+        transition: none;
+    }
+}
+
+/* =========================================
+   누적 계산 - 펼침 애니메이션 스크롤바 깜빡임 방지
+========================================= */
+
+/* 애니메이션 중에는 스크롤바 숨기기 */
+#calc-modal .mobo-cum-work-list .mobo-cum-work-scroll {
+    overflow-y: hidden;
+}
+
+/* 완전히 펼쳐진 뒤 스크롤 활성화 */
+#calc-modal .mobo-cum-work-list.is-open.is-scroll-ready .mobo-cum-work-scroll {
+    overflow-y: auto;
+}
+
+/* =========================================
+   누적 계산 - 모달 높이 제한 + 내부 스크롤
+========================================= */
+
+/* 누적 계산일 때만 모달 높이 제한 */
+#calc-modal.mobo-cum-contained>.modal-content {
+    display: flex;
+    flex-direction: column;
+
+    box-sizing: border-box;
+
+    /* 화면이 커도 모달은 최대 470px */
+    max-height: min(680px,
+            calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
+
+    /* 모달 전체가 스크롤되지 않도록 */
+    overflow: hidden;
+}
+
+/* 기존 정주행 / 빠른 차감 탭은 상단에 유지 */
+#calc-modal.mobo-cum-contained #calc-main-header {
+    flex: 0 0 auto;
+}
+
+/* 누적 계산 화면을 세로 영역으로 분리 */
+#calc-modal.mobo-cum-contained #mobo-cum-view {
+    display: flex !important;
+    flex-direction: column;
+
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* 누적 계산 제목은 고정 영역 */
+#calc-modal.mobo-cum-contained .mobo-cum-head {
+    flex: 0 0 auto;
+}
+
+/* 목록 화면의 세로 레이아웃 */
+#calc-modal.mobo-cum-contained #mobo-cum-list-screen {
+    flex: 1 1 auto;
+    flex-direction: column;
+
+    min-height: 0;
+}
+
+/* 안내 문구는 스크롤 대상에서 제외 */
+#calc-modal.mobo-cum-contained .mobo-cum-description {
+    flex: 0 0 auto;
+}
+
+/* =========================================
+   실제로 스크롤되는 플랫폼 목록
+========================================= */
+
+#calc-modal.mobo-cum-contained #mobo-cum-items {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding-right: 3px;
+
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+}
+
+/* 플랫폼 안쪽 스크롤이 끝나면
+   바깥 플랫폼 목록으로 스크롤 전달 */
+#calc-modal.mobo-cum-contained .mobo-cum-work-scroll {
+    overscroll-behavior-y: auto;
+}
+
+/* =========================================
+   하단 버튼은 스크롤되지 않도록 고정
+========================================= */
+
+#calc-modal.mobo-cum-contained #mobo-cum-bottom-actions {
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* 작품 수정 화면은 별도로 내부 스크롤 허용 */
+#calc-modal.mobo-cum-contained #mobo-cum-editor-screen {
+    flex: 1 1 auto;
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 다크 모드 스크롤바 */
+body.dark-mode #calc-modal.mobo-cum-contained #mobo-cum-items {
+    scrollbar-color: #666 transparent;
+}
+
+/* =========================================
+   누적 계산 - 플랫폼 목록 스크롤바 숨기기
+========================================= */
+
+/* 플랫폼 목록은 스크롤 가능하지만 스크롤바는 숨김 */
+#calc-modal.mobo-cum-contained #mobo-cum-items {
+    overflow-y: auto;
+
+    /* Firefox */
+    scrollbar-width: none;
+
+    /* 구형 Edge / IE */
+    -ms-overflow-style: none;
+}
+
+/* Chrome, Safari, 모바일 브라우저 */
+#calc-modal.mobo-cum-contained #mobo-cum-items::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+/* ======================================
+   연재일 미설정 작품 안내
+====================================== */
+
+/* 메인 안내 */
+#mobo-pending-schedule-banner {
+    width: 100%;
+    margin: 10px 0 14px;
+    box-sizing: border-box;
+}
+
+.mobo-pending-schedule-banner-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: #f5f7ff;
+    color: #344054;
+    border: 1px solid #dce3f5;
+    border-radius: 10px;
+    text-align: left;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.mobo-pending-schedule-banner-btn>svg:first-child {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+}
+
+.mobo-pending-schedule-banner-btn>svg:last-child {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+    opacity: 0.65;
+}
+
+.mobo-pending-schedule-banner-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.mobo-pending-schedule-banner-text strong {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mobo-pending-schedule-banner-text small {
+    font-size: 10px;
+    color: #7b8494;
+}
+
+
+/* 미설정 작품 목록 모달 */
+.mobo-pending-schedule-content {
+    width: 100%;
+    max-width: 380px;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.mobo-pending-schedule-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.mobo-pending-schedule-header h3 {
+    margin: 0;
+    font-size: 17px;
+}
+
+.mobo-pending-schedule-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    border: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.mobo-pending-schedule-close svg {
+    width: 19px;
+    height: 19px;
+}
+
+.mobo-pending-schedule-description {
+    font-size: 12px;
+    line-height: 1.6;
+    color: #7b8494;
+    margin: 12px 0 16px;
+}
+
+#mobo-pending-schedule-list {
+    max-height: 50dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mobo-pending-schedule-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 10px;
+    margin-bottom: 7px;
+    border: 1px solid #e6e8ee;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.mobo-pending-schedule-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mobo-pending-schedule-info strong {
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.mobo-pending-schedule-info small {
+    font-size: 11px;
+    color: #89919d;
+}
+
+.mobo-pending-schedule-edit {
+    padding: 6px 9px;
+    font-size: 11px;
+    border-radius: 6px;
+    background: #eef2ff;
+    color: #526aab;
+    flex-shrink: 0;
+}
+
+
+/* 다크모드 */
+body.dark-mode .mobo-pending-schedule-banner-btn {
+    background: #282c39;
+    border-color: #444b60;
+    color: #f1f3f8;
+}
+
+body.dark-mode .mobo-pending-schedule-banner-text small,
+body.dark-mode .mobo-pending-schedule-description,
+body.dark-mode .mobo-pending-schedule-info small {
+    color: #aeb6c6;
+}
+
+body.dark-mode .mobo-pending-schedule-item {
+    border-color: #4b4f5c;
+}
+
+body.dark-mode .mobo-pending-schedule-edit {
+    background: #343e58;
+    color: #cad7ff;
+}
+
+/* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
+a[x-apple-data-detectors] {
+    color: inherit !important;
+    text-decoration: none !important;
+    font-size: inherit !important;
+    font-family: inherit !important;
+    font-weight: inherit !important;
+    line-height: inherit !important;
+}
+
+/* 🌟 숫자 입력창(number)의 기본 화살표 숨기기 */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+    /* 파이어폭스용 */
+    appearance: textfield;
+}
+
+/* 아이폰 홈 화면(PWA) 키보드 증발 방지 방어막 */
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="date"],
+textarea {
+    -webkit-user-select: auto !important;
+    user-select: auto !important;
+}
