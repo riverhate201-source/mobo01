@@ -2143,6 +2143,170 @@
             }
         }
 
+        // ==========================================
+        // QA-046B | 출석 상태 Firebase 동기화
+        // 작품·지갑 데이터는 전송하지 않음
+        // ==========================================
+
+        let moboAttendanceSyncTimer = null;
+        let moboAttendanceSyncBusy = false;
+        let moboAttendanceSyncAgain = false;
+
+        function moboQueueAttendanceSync() {
+            clearTimeout(moboAttendanceSyncTimer);
+
+            moboAttendanceSyncTimer = setTimeout(() => {
+                moboAttendanceSyncTimer = null;
+                moboSyncAttendanceStatusToFirestore();
+            }, 500);
+        }
+
+        async function moboSyncAttendanceStatusToFirestore() {
+            if (moboAttendanceSyncBusy) {
+                moboAttendanceSyncAgain = true;
+                return;
+            }
+
+            const settings = moboGetNotificationSettings();
+
+            if (
+                !settings.enabled ||
+                !settings.attendance ||
+                !navigator.onLine ||
+                typeof firebase === 'undefined'
+            ) return;
+
+            // 오래된 탭에서는 서버 출석 상태를 덮어쓰지 않음
+            if (
+                typeof moboMainTabIsStale === 'function' &&
+                moboMainTabIsStale()
+            ) return;
+
+            // 출석 날짜는 반드시 한국의 실제 날짜 기준
+            const kst = getKSTDate();
+            const today = formatDate(kst);
+
+            // 기존 checkAttendanceReset() 저장 형식 유지
+            const localToday =
+                `${kst.getFullYear()}-${kst.getMonth() + 1}-${kst.getDate()}`;
+
+            const isToday =
+                localStorage.getItem('lastAttendDate') === localToday;
+
+            const current = {
+                date: today,
+                lezhin:
+                    isToday &&
+                    localStorage.getItem('lezhinAttend') === 'true',
+                bomtoon:
+                    isToday &&
+                    localStorage.getItem('bomtoonAttend') === 'true'
+            };
+
+            moboAttendanceSyncBusy = true;
+
+            try {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(moboFirebaseConfig);
+                }
+
+                const auth = firebase.auth();
+
+                const user = auth.currentUser ||
+                    (await auth.signInAnonymously()).user;
+
+                const db = firebase.firestore();
+
+                const ref = db
+                    .collection('pushSubscriptions')
+                    .doc(user.uid);
+
+                // 다른 탭의 출석 완료 기록을 보존하기 위해
+                // Firestore 트랜잭션으로 병합
+                await db.runTransaction(async transaction => {
+                    const snapshot = await transaction.get(ref);
+
+                    // 알림 해제된 문서를 다시 생성하지 않음
+                    if (!snapshot.exists) return;
+
+                    const sub = snapshot.data();
+
+                    if (
+                        sub.enabled !== true ||
+                        sub.attendance !== true
+                    ) return;
+
+                    const latestSettings =
+                        moboGetNotificationSettings();
+
+                    if (
+                        !latestSettings.enabled ||
+                        !latestSettings.attendance
+                    ) return;
+
+                    if (
+                        typeof moboMainTabIsStale === 'function' &&
+                        moboMainTabIsStale()
+                    ) return;
+
+                    const previous = sub.attendanceStatus || {};
+
+                    // 서버에 이미 더 새로운 날짜가 있으면 보존
+                    if (
+                        typeof previous.date === 'string' &&
+                        previous.date > today
+                    ) return;
+
+                    // 같은 날 완료한 출석은 다시 false로 변경하지 않음
+                    const merged = {
+                        date: today,
+
+                        lezhin:
+                            current.lezhin ||
+                            (
+                                previous.date === today &&
+                                previous.lezhin === true
+                            ),
+
+                        bomtoon:
+                            current.bomtoon ||
+                            (
+                                previous.date === today &&
+                                previous.bomtoon === true
+                            )
+                    };
+
+                    // 변경 사항이 없으면 불필요한 쓰기 생략
+                    if (
+                        previous.date === merged.date &&
+                        previous.lezhin === merged.lezhin &&
+                        previous.bomtoon === merged.bomtoon
+                    ) return;
+
+                    transaction.update(ref, {
+                        attendanceStatus: merged
+                    });
+                });
+
+                console.log('MoBo QA-046B · 출석 동기화 확인');
+
+            } catch (error) {
+                // 서버 동기화 오류가 기존 출석 기능을 막지 않음
+                console.warn(
+                    'MoBo 출석 동기화 실패:',
+                    error.code || error.message
+                );
+
+            } finally {
+                moboAttendanceSyncBusy = false;
+
+                if (moboAttendanceSyncAgain) {
+                    moboAttendanceSyncAgain = false;
+                    moboQueueAttendanceSync();
+                }
+            }
+        }
+
         // 전체 설정 ON/OFF에 따라 하위 항목 활성화
         function moboUpdateNotificationUI() {
             const enabled =
@@ -2283,6 +2447,15 @@
             // Firebase 서버와 설정 동기화
             try {
                 await moboSyncNotificationSettingsToFirestore(settings);
+
+                // QA-046B | 설정 저장 후 출석 상태 등록
+                if (
+                    settings.enabled &&
+                    settings.attendance &&
+                    typeof moboQueueAttendanceSync === 'function'
+                ) {
+                    moboQueueAttendanceSync();
+                }
 
                 // QA-044D-3D | 알림 ON 시 일정 자동 재등록
                 if (
@@ -3536,6 +3709,21 @@
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
                 moboQueueScheduleAutoSync();
+            }
+        });
+
+        // QA-046B | 앱 실행·네트워크 복구·복귀 시 출석 동기화
+        window.addEventListener('load', () => {
+            moboQueueAttendanceSync();
+        });
+
+        window.addEventListener('online', () => {
+            moboQueueAttendanceSync();
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                moboQueueAttendanceSync();
             }
         });
     </script>
