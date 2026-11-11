@@ -78,9 +78,11 @@ async function main() {
         },
 
             webpush: {
-            headers: {
-                TTL: '60'
-            },
+            // QA-045I | 백그라운드 푸시 전달 테스트
+headers: {
+    TTL: '600',
+    Urgency: 'high'
+},
 
             notification: {
                 icon: 'https://staging--mobo-demo.netlify.app/icon.png',
