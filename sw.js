@@ -16,11 +16,10 @@ self.addEventListener('push', () => {
 // QA-045H | 화면 활성 상태에서 생성한 알림 클릭 처리
 // Firebase 자동 생성 알림은 기존 Firebase SDK가 처리
 
-self.addEventListener('notificationclick', (event) => {
-    if (event.notification.tag !== 'mobo-qa-foreground') {
-        return;
-    }
 
+// QA-045H-2 | QA 알림 클릭 시 모보 실행
+// Firebase SDK import 전에 등록해야 함
+self.addEventListener('notificationclick', (event) => {
     event.stopImmediatePropagation();
     event.notification.close();
 
@@ -33,18 +32,40 @@ self.addEventListener('notificationclick', (event) => {
             includeUncontrolled: true
         });
 
-        const existingWindow = windows.find(client =>
-            client.url.startsWith(targetUrl)
-        );
+        const existingWindow = windows.find(client => {
+            try {
+                return new URL(client.url).origin ===
+                    new URL(targetUrl).origin;
+            } catch {
+                return false;
+            }
+        });
 
         if (existingWindow) {
-            await existingWindow.focus();
-            return;
+            try {
+                await existingWindow.focus();
+                console.log('✅ [MoBo QA] 기존 앱 활성화');
+                return;
+            } catch (error) {
+                console.warn(
+                    '기존 앱 활성화 실패, 새 창 시도',
+                    error
+                );
+            }
         }
 
-        await self.clients.openWindow(targetUrl);
+        const opened = await self.clients.openWindow(
+            targetUrl
+        );
+
+        if (!opened) {
+            console.warn(
+                '⚠️ [MoBo QA] 앱 창을 열지 못했어요.'
+            );
+        }
     })());
 });
+
 
 // Firebase SDK (compat 방식)
 importScripts(
@@ -66,7 +87,7 @@ firebase.initializeApp({
 const moboFirebaseMessaging = firebase.messaging();
 
 // 🌟 버전 숫자를 하나 올렸습니다! (적용을 위해)
-const CACHE_NAME = 'mobo-qa-cache-v7';
+const CACHE_NAME = 'mobo-qa-cache-v8';
 const DYNAMIC_CACHE = 'mobo-dynamic-v4'; // 🌟 외부 이미지/아이콘을 훔쳐(?) 담을 새로운 보조 창고!
 
 const urlsToCache = [
