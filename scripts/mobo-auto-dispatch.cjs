@@ -24,7 +24,11 @@ const TEST_UID = process.env.MOBO_AUTO_TEST_UID?.trim() || '';
 
 const PREVIEW_CLOCK = process.env.MOBO_PREVIEW_CLOCK || 'NOW';
 
-if (!['NOW', 'TODAY_20_05'].includes(PREVIEW_CLOCK)) {
+if (![
+    'NOW',
+    'TODAY_20_05',
+    'TODAY_22_35'
+].includes(PREVIEW_CLOCK)) {
     throw new Error('올바르지 않은 가상 시간 설정입니다.');
 }
 
@@ -121,15 +125,22 @@ async function main() {
     );
 
 
-    // PREVIEW에서만 오늘 오후 8시 5분을 가상으로 적용
+    // QA-046C-1 | PREVIEW 전용 가상 시각
     let now = Date.now();
 
-    if (MODE === 'PREVIEW' && PREVIEW_CLOCK === 'TODAY_20_05') {
+    if (MODE === 'PREVIEW' && PREVIEW_CLOCK !== 'NOW') {
         const todayKST = new Date(Date.now() + 9 * 3600000)
             .toISOString()
             .slice(0, 10);
 
-        now = Date.parse(`${todayKST}T20:05:00+09:00`);
+        const previewTime =
+            PREVIEW_CLOCK === 'TODAY_20_05'
+                ? '20:05'
+                : '22:35';
+
+        now = Date.parse(
+            `${todayKST}T${previewTime}:00+09:00`
+        );
     }
 
     console.log(
@@ -217,8 +228,106 @@ async function main() {
     console.log('실행 모드:', MODE);
     console.table(stats);
 
-    if (MODE === 'PREVIEW') {
+       if (MODE === 'PREVIEW') {
+
+        // QA-046C-1 | 미출석 알림 대상 계산
+        const todayKST = new Date(now + 9 * 3600000)
+            .toISOString()
+            .slice(0, 10);
+
+        const attendanceStats = {
+            attendanceEnabled: 0,
+            outsideTimeWindow: 0,
+            todayStatusMissing: 0,
+            allCompleted: 0,
+            dueNotifications: 0,
+            missingLezhin: 0,
+            missingBomtoon: 0
+        };
+
+        for (const doc of subscriptions.docs) {
+
+            // 지정된 테스트 기기만 확인
+            if (TEST_UID && doc.id !== TEST_UID) {
+                continue;
+            }
+
+            const sub = doc.data();
+
+            if (
+                sub.enabled !== true ||
+                sub.attendance !== true ||
+                sub.timezone !== 'Asia/Seoul' ||
+                typeof sub.token !== 'string' ||
+                sub.token.length < 20 ||
+                typeof sub.attendanceTime !== 'string' ||
+                !/^([01]\d|2[0-3]):[0-5]\d$/.test(
+                    sub.attendanceTime
+                )
+            ) {
+                continue;
+            }
+
+            attendanceStats.attendanceEnabled++;
+
+            const sendAt = Date.parse(
+                `${todayKST}T${sub.attendanceTime}:00+09:00`
+            );
+
+            const elapsed = now - sendAt;
+
+            // 설정 시각부터 20분 동안만 발송 후보
+            if (
+                !Number.isFinite(sendAt) ||
+                elapsed < 0 ||
+                elapsed >= WINDOW_MS
+            ) {
+                attendanceStats.outsideTimeWindow++;
+                continue;
+            }
+
+            const status = sub.attendanceStatus;
+
+            // 오늘 출석 상태가 확인된 경우만 테스트
+            if (
+                !status ||
+                status.date !== todayKST ||
+                typeof status.lezhin !== 'boolean' ||
+                typeof status.bomtoon !== 'boolean'
+            ) {
+                attendanceStats.todayStatusMissing++;
+                continue;
+            }
+
+            // 두 플랫폼 모두 출석했으면 알림 불필요
+            if (status.lezhin && status.bomtoon) {
+                attendanceStats.allCompleted++;
+                continue;
+            }
+
+            attendanceStats.dueNotifications++;
+
+            if (!status.lezhin) {
+                attendanceStats.missingLezhin++;
+            }
+
+            if (!status.bomtoon) {
+                attendanceStats.missingBomtoon++;
+            }
+        }
+
+        console.log(
+            'MoBo QA-046C-1 · 미출석 알림 미리보기'
+        );
+
+        console.log('출석 기준 날짜(KST):', todayKST);
+        console.table(attendanceStats);
+
         console.log('미리보기 완료');
+        console.log('실제 푸시 발송: 없음');
+        console.log('Firestore 데이터 변경: 없음');
+        return;
+    }
         console.log('실제 푸시 발송: 없음');
         console.log('Firestore 데이터 변경: 없음');
         return;
