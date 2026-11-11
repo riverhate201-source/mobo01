@@ -77,9 +77,18 @@ async function main() {
             body: '모보의 푸시 알림이 정상적으로 도착했어요!'
         },
 
-        webpush: {
+            webpush: {
             headers: {
                 TTL: '60'
+            },
+
+            notification: {
+                icon: 'https://staging--mobo-demo.netlify.app/icon.png',
+                badge: 'https://staging--mobo-demo.netlify.app/notification-badge.png'
+            },
+
+            fcmOptions: {
+                link: 'https://staging--mobo-demo.netlify.app/'
             }
         }
     };
