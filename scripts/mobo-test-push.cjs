@@ -115,10 +115,25 @@ async function main() {
     console.log('Firestore 데이터 변경: 없음');
 }
 
+
+// QA-045H-3 | 테스트 실패 원인 진단
+// 사전에 정의된 안전한 오류 메시지만 출력
+// UID, FCM 토큰, 서비스 계정 정보는 출력하지 않음
 main().catch(error => {
-    console.error(
-        'MoBo 테스트 실패:',
-        error.code || error.name || 'unknown-error'
-    );
+    const knownMessages = new Set([
+        '필수 GitHub Secret이 없어요.',
+        '올바르지 않은 실행 모드예요.',
+        'Firebase 프로젝트가 일치하지 않아요.',
+        '테스트 기기 등록 문서가 없어요.',
+        '테스트 기기의 알림이 활성화되지 않았어요.'
+    ]);
+
+    const reason = knownMessages.has(error?.message)
+        ? error.message
+        : (error?.code || error?.name || 'unknown-error');
+
+    console.error('❌ MoBo 테스트 실패:', reason);
+
     process.exitCode = 1;
 });
+
