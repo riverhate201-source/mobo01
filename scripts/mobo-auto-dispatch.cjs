@@ -328,10 +328,6 @@ async function main() {
         console.log('Firestore 데이터 변경: 없음');
         return;
     }
-        console.log('실제 푸시 발송: 없음');
-        console.log('Firestore 데이터 변경: 없음');
-        return;
-    }
 
     // LIVE 모드에서만 아래 코드 실행
     for (const item of candidates) {
