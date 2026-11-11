@@ -271,9 +271,18 @@ async function main() {
                         ? `확인할 연재 작품 ${item.count}개가 있어요!`
                         : `${item.count}개 플랫폼의 재화 소멸 예정 내역을 확인해 주세요.`
                 },
-                webpush: {
+                            webpush: {
                     headers: {
                         TTL: '120'
+                    },
+
+                    notification: {
+                        icon: 'https://staging--mobo-demo.netlify.app/icon.png',
+                        badge: 'https://staging--mobo-demo.netlify.app/notification-badge.png'
+                    },
+
+                    fcmOptions: {
+                        link: 'https://staging--mobo-demo.netlify.app/'
                     }
                 }
             };
