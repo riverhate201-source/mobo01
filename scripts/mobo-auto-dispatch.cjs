@@ -330,14 +330,14 @@ async function main() {
                 attendanceStats.missingLezhin++;
             }
 
-            if (result.missingBomtoon) {
+                        if (result.missingBomtoon) {
                 attendanceStats.missingBomtoon++;
             }
+        }
 
         console.log(
             'MoBo QA-046C-1 · 미출석 알림 미리보기'
         );
-
         console.log('출석 기준 날짜(KST):', todayKST);
         console.table(attendanceStats);
                 // ==========================================
