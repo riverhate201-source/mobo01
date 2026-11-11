@@ -1666,6 +1666,31 @@
                         style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:9px; border:1px solid #ddd; border-radius:8px;">
                 </div>
 
+                <!-- QA-046A | 미출석 알림 -->
+                <div style="padding:14px 0; border-bottom:1px solid rgba(128,128,128,.2);">
+
+                    <label style="display:flex; gap:10px; cursor:pointer;">
+                        <input type="checkbox" id="mobo-noti-attendance" onchange="moboUpdateNotificationUI()"
+                            style="width:18px; height:18px; accent-color:#686C9D;">
+
+                        <strong>미출석 알림</strong>
+                    </label>
+
+                    <p style="font-size:12px; opacity:.65; margin:7px 0 10px;">
+                        레진·봄툰 중 출석을 완료하지 않은 플랫폼이 있으면
+                        알려드려요. 자정 전까지 오늘의 출석을 확인할 수 있어요.
+                        (자동 발송 연결 준비 중)
+                    </p>
+
+                    <label for="mobo-noti-attendance-time" style="font-size:12px;">
+                        미출석 알림 시간
+                    </label>
+
+                    <input type="time" id="mobo-noti-attendance-time" value="22:30"
+                        style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:9px; border:1px solid #ddd; border-radius:8px;">
+
+                </div>
+
                 <!-- 재화 소멸 -->
                 <div style="padding:14px 0; border-bottom:1px solid rgba(128,128,128,.2);">
 
@@ -2062,6 +2087,9 @@
                 token: token,
 
                 enabled: true,
+                // QA-046A | 미출석 알림 설정
+                attendance: settings.attendance === true,
+                attendanceTime: settings.attendanceTime || '22:30',
                 serial: settings.serial === true,
                 expire: settings.expire === true,
                 update: settings.update === true,
@@ -2085,6 +2113,8 @@
         const MOBO_NOTI_DEFAULTS = {
             enabled: false,
             serial: true,
+            attendance: false,
+            attendanceTime: '22:30',
             expire: true,
             update: false,
             serialTime: '20:00',
@@ -2125,6 +2155,13 @@
             options.querySelectorAll('input, select').forEach(el => {
                 el.disabled = !enabled;
             });
+
+            // QA-046A | 미출석 OFF 시 시간 선택 비활성화
+            const attendanceEnabled =
+                document.getElementById('mobo-noti-attendance').checked;
+
+            document.getElementById('mobo-noti-attendance-time').disabled =
+                !enabled || !attendanceEnabled;
         }
 
         // 설정창 열기
@@ -2141,6 +2178,12 @@
             document.getElementById('mobo-noti-serial').checked =
                 settings.serial === true;
 
+            // QA-046A | 미출석 알림 설정 불러오기
+            document.getElementById('mobo-noti-attendance').checked =
+                settings.attendance === true;
+
+            document.getElementById('mobo-noti-attendance-time').value =
+                settings.attendanceTime || '22:30';
             document.getElementById('mobo-noti-expire').checked =
                 settings.expire === true;
 
@@ -2187,7 +2230,12 @@
 
                 serial:
                     document.getElementById('mobo-noti-serial').checked,
+                attendance:
+                    document.getElementById('mobo-noti-attendance').checked,
 
+                attendanceTime:
+                    document.getElementById('mobo-noti-attendance-time').value
+                    || '22:30',
                 expire:
                     document.getElementById('mobo-noti-expire').checked,
 
