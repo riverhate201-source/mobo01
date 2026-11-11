@@ -5491,6 +5491,11 @@ function checkAttendanceReset() {
     }
 
     updateAttendUI();
+
+    // QA-046B | 출석 날짜 변경 시 서버 상태 갱신
+    if (typeof moboQueueAttendanceSync === 'function') {
+        moboQueueAttendanceSync();
+    }
 }
 function updateAttendUI() { const lAttend = localStorage.getItem('lezhinAttend') === 'true'; const bAttend = localStorage.getItem('bomtoonAttend') === 'true'; const lBtn = document.getElementById('lezhin-attend-btn'); const bBtn = document.getElementById('bomtoon-attend-btn'); if (lAttend) { lBtn.classList.add('done'); lBtn.textContent = ' 출석완료'; } else { lBtn.classList.remove('done'); lBtn.textContent = '레진 출석 전'; } if (bAttend) { bBtn.classList.add('done'); bBtn.textContent = ' 출석완료'; } else { bBtn.classList.remove('done'); bBtn.textContent = '봄툰 출석 전'; } }
 
@@ -5519,6 +5524,11 @@ function checkAttendance(plt) {
     // 4. 화면 버튼을 '출석완료'로 바꾸고 통합 금고에 저장
     updateAttendUI();
     saveData();
+
+    // QA-046B | 출석 완료 후 서버에 상태 반영
+    if (typeof moboQueueAttendanceSync === 'function') {
+        moboQueueAttendanceSync();
+    }
 
     trackClick('attend_check', { 'platform': plt });
 }
