@@ -23,7 +23,13 @@ const TEST_UID = process.env.MOBO_AUTO_TEST_UID?.trim() || '';
 
 
 const PREVIEW_CLOCK = process.env.MOBO_PREVIEW_CLOCK || 'NOW';
+// QA-046C-3B-2 | LIVE 발송 종류 구분
+const NOTIFICATION_KIND =
+    process.env.MOBO_AUTO_KIND || 'SCHEDULE';
 
+if (!['SCHEDULE', 'ATTENDANCE'].includes(NOTIFICATION_KIND)) {
+    throw new Error('올바르지 않은 발송 종류입니다.');
+}
 if (![
     'NOW',
     'TODAY_20_05',
@@ -694,95 +700,115 @@ async function main() {
     }
 
     // LIVE 모드에서만 아래 코드 실행
-    for (const item of candidates) {
-        try {
-            // 발송 직전 구독·일정 상태 다시 확인
-            const [subDoc, scheduleDoc] = await Promise.all([
-                db.collection('pushSubscriptions')
-                    .doc(item.uid).get(),
-                db.collection('pushSchedules')
-                    .doc(item.uid).get()
-            ]);
 
-            const sub = subDoc.exists ? subDoc.data() : null;
-            const schedule = scheduleDoc.exists
-                ? scheduleDoc.data()
-                : null;
+    // LIVE 모드에서만 아래 코드 실행
 
-            if (
-                !validPair(sub, schedule) ||
-                !schedule.days.includes(item.entry) ||
-                sub[item.kind] !== true
-            ) {
-                stats.skippedAfterRecheck++;
-                continue;
-            }
+    // QA-046C-3B-2 | 미출석 알림 전용 발송
+    if (MODE === 'LIVE' && NOTIFICATION_KIND === 'ATTENDANCE') {
 
-            // 여러 실행 중 첫 번째만 처리 권한 확보
-            const claimed = await claimDeliveryOnce(
-                db, item.uid, item.date, item.kind
+        // LIVE는 기존 안전장치에 따라 테스트 UID만 사용
+        const ref = db.collection('pushSubscriptions')
+            .doc(TEST_UID);
+
+        // 발송 직전 실제 서버 상태 확인
+        const snapshot = await ref.get();
+
+        const candidate = moboGetAttendanceCandidate(
+            snapshot.exists ? snapshot.data() : null,
+            Date.now()
+        );
+
+        if (!candidate) {
+            console.log(
+                'QA-046C-3B-2: 미출석 알림 대상 없음 · 발송 0건'
             );
-
-            if (!claimed) {
-                stats.alreadyClaimed++;
-                continue;
-            }
-
-            const isSerial = item.kind === 'serial';
-
-            const message = {
-                token: sub.token,
-                notification: {
-                    title: isSerial
-                        ? 'MoBo 연재 알림 📚'
-                        : 'MoBo 재화 소멸 알림 ⏰',
-                    body: isSerial
-                        ? `확인할 연재 작품 ${item.count}개가 있어요!`
-                        : `${item.count}개 플랫폼의 재화 소멸 예정 내역을 확인해 주세요.`
-                },
-                            webpush: {
-                    headers: {
-                        TTL: '120'
-                    },
-
-                    notification: {
-                        icon: 'https://staging--mobo-demo.netlify.app/icon.png',
-                        badge: 'https://staging--mobo-demo.netlify.app/notification-badge.png'
-                    },
-
-                    fcmOptions: {
-                        link: 'https://staging--mobo-demo.netlify.app/'
-                    }
-                }
-            };
-
-            try {
-                await getMessaging().send(message);
-
-                await markDeliverySent(
-                    db, item.uid, item.date, item.kind
-                );
-
-                stats.acceptedByFCM++;
-
-            } catch (error) {
-                // 중복 발송 위험을 피하기 위해
-                // 실패한 claimed 기록은 자동 삭제하지 않음
-                stats.errors++;
-                console.error(
-                    '발송 또는 상태 기록 실패:',
-                    error.code || error.message
-                );
-            }
-
-        } catch (error) {
-            stats.errors++;
-            console.error(
-                '발송 대상 처리 실패:',
-                error.code || error.message
-            );
+            return;
         }
+
+        // 같은 기기·날짜·알림 종류 중복 차단
+        const claimed = await claimDeliveryOnce(
+            db,
+            TEST_UID,
+            candidate.date,
+            'attendance'
+        );
+
+        if (!claimed) {
+            console.log(
+                'QA-046C-3B-2: 이미 처리된 알림 · 중복 차단'
+            );
+            return;
+        }
+
+        // 중복 방지 기록을 만든 뒤에도 출석 상태 재확인
+        const latestSnapshot = await ref.get();
+        const latestSub = latestSnapshot.exists
+            ? latestSnapshot.data()
+            : null;
+
+        const latest = moboGetAttendanceCandidate(
+            latestSub,
+            Date.now()
+        );
+
+        if (!latest || latest.date !== candidate.date) {
+            console.log(
+                'QA-046C-3B-2: 상태 변경 감지 · 발송 취소'
+            );
+            return;
+        }
+
+        const missing = [];
+
+        if (latest.missingLezhin) missing.push('레진');
+        if (latest.missingBomtoon) missing.push('봄툰');
+
+        const message = {
+            token: latestSub.token,
+            notification: {
+                title: 'MoBo 미출석 알림 ⏰',
+                body:
+                    `모보에서 ${missing.join('·')} 출석 확인이 ` +
+                    '아직 남아 있어요. 자정 전에 확인해 주세요.'
+            },
+            webpush: {
+                headers: {
+                    TTL: '600',
+                    Urgency: 'high'
+                },
+                notification: {
+                    icon:
+                        'https://staging--mobo-demo.netlify.app/icon.png',
+                    badge:
+                        'https://staging--mobo-demo.netlify.app/notification-badge.png'
+                },
+                fcmOptions: {
+                    link:
+                        'https://staging--mobo-demo.netlify.app/'
+                }
+            }
+        };
+
+        // 실제 발송은 LIVE + ATTENDANCE + YES일 때만 도달
+        await getMessaging().send(message);
+
+        await markDeliverySent(
+            db,
+            TEST_UID,
+            latest.date,
+            'attendance'
+        );
+
+        console.log(
+            'QA-046C-3B-2: FCM 미출석 알림 발송 요청 성공'
+        );
+
+        return;
     }
+
+    // 기존 연재·재화 LIVE 발송 경로 유지
+    for (const item of candidates) {
+
 
     console.log('MoBo 자동 발송 처리 결과');
     console.table(stats);
