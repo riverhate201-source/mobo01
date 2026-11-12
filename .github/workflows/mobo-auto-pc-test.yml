@@ -181,6 +181,11 @@ jobs:
           node --check scripts/mobo-auto-run-lease.cjs
           node scripts/mobo-auto-run-lease.cjs
 
+      - name: Check full synthetic push pipeline integration (no remote calls)
+        run: |
+          node --check scripts/mobo-auto-pipeline-integration.cjs
+          node scripts/mobo-auto-pipeline-integration.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
