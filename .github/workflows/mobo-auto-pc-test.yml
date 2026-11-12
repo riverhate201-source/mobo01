@@ -18,6 +18,15 @@ on:
       - '.github/workflows/mobo-auto-pc-test.yml'
   workflow_dispatch:
     inputs:
+      execution_profile:
+        description: '일반 수동 QA / 외부 스케줄러 읽기 전용'
+        required: true
+        default: 'MANUAL'
+        type: choice
+        options:
+          - MANUAL
+          - EXTERNAL_PREVIEW
+
       target_device:
         description: '테스트할 기기'
         required: true
@@ -121,6 +130,11 @@ jobs:
           node --check scripts/mobo-scheduler-tick-check.cjs
           node scripts/mobo-scheduler-tick-check.cjs
 
+      - name: Check external preview trigger contract (memory only)
+        run: |
+          node --check scripts/mobo-auto-external-trigger.cjs
+          node scripts/mobo-auto-external-trigger.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
@@ -140,8 +154,29 @@ jobs:
           test "$GITHUB_EVENT_NAME" = "push"
           node scripts/mobo-auto-dispatch.cjs
 
+      # QA-046D-8 | 외부 workflow_dispatch는 강제 PREVIEW 경로만
+      # 외부 스케줄러와 GitHub API 인증은 아직 연결하지 않음
+      - name: External scheduler PREVIEW only (never sends push)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.execution_profile == 'EXTERNAL_PREVIEW' }}
+        env:
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
+          MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_QA_GALAXY_TEST_UID }}
+          MOBO_EXTERNAL_PROFILE: ${{ inputs.execution_profile }}
+          MOBO_EXTERNAL_TARGET: ${{ inputs.target_device }}
+          MOBO_EXTERNAL_CLOCK: ${{ inputs.preview_clock }}
+          MOBO_EXTERNAL_KIND: ${{ inputs.notification_kind }}
+          MOBO_EXTERNAL_MODE: ${{ inputs.run_mode }}
+          MOBO_EXTERNAL_CONFIRM: ${{ inputs.live_confirm }}
+          MOBO_AUTO_MODE: PREVIEW
+          MOBO_AUTO_KIND: SCHEDULE
+          MOBO_PREVIEW_CLOCK: NOW
+          MOBO_AUTO_LIVE_CONFIRM: 'NO'
+        run: |
+          node scripts/mobo-auto-external-trigger.cjs --check-invocation
+          node scripts/mobo-auto-dispatch.cjs
+
       - name: Run Galaxy automatic notification test
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_device == 'GALAXY' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.execution_profile != 'EXTERNAL_PREVIEW' && inputs.target_device == 'GALAXY' }}
         env:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
           MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_QA_GALAXY_TEST_UID }}
@@ -152,7 +187,7 @@ jobs:
         run: node scripts/mobo-auto-dispatch.cjs
 
       - name: Run PC automatic notification test
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.target_device == 'PC' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.execution_profile != 'EXTERNAL_PREVIEW' && inputs.target_device == 'PC' }}
         env:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
           MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_QA_TEST_UID }}
