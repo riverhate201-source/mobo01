@@ -130,6 +130,57 @@ function moboClassifyAttendance(status, date) {
         missingBomtoon
     };
 }
+
+
+/**
+ * QA-046C-3B-1
+ * 미출석 알림 발송 후보 계산
+ * Firebase 읽기/쓰기 및 푸시 발송 없음
+ */
+function moboGetAttendanceCandidate(sub, now) {
+    if (
+        !sub ||
+        sub.enabled !== true ||
+        sub.attendance !== true ||
+        sub.timezone !== 'Asia/Seoul' ||
+        typeof sub.token !== 'string' ||
+        sub.token.length < 20 ||
+        typeof sub.attendanceTime !== 'string' ||
+        !/^([01]\d|2[0-3]):[0-5]\d$/.test(
+            sub.attendanceTime
+        )
+    ) return null;
+
+    const date = new Date(now + 9 * 3600000)
+        .toISOString()
+        .slice(0, 10);
+
+    const sendAt = Date.parse(
+        `${date}T${sub.attendanceTime}:00+09:00`
+    );
+
+    // 발송 시각 이후 20분까지만 허용
+    if (
+        !Number.isFinite(sendAt) ||
+        now < sendAt ||
+        now - sendAt >= WINDOW_MS
+    ) return null;
+
+    const result = moboClassifyAttendance(
+        sub.attendanceStatus,
+        date
+    );
+
+    if (!result || !result.due) return null;
+
+    return {
+        date,
+        kind: 'attendance',
+        missingLezhin: result.missingLezhin,
+        missingBomtoon: result.missingBomtoon
+    };
+}
+
 async function main() {
     if (!['PREVIEW', 'LIVE'].includes(MODE)) {
         throw new Error('지원하지 않는 실행 모드입니다.');
@@ -510,7 +561,131 @@ async function main() {
         console.log(
             'QA-046C-3A · 날짜 판단 테스트 PASS'
         );   
+           
             
+
+        // ==========================================
+        // QA-046C-3B-1 | 발송 후보 함수 검증
+        // ==========================================
+
+        const testTime = time => Date.parse(
+            `${todayKST}T${time}:00+09:00`
+        );
+
+        const fakeSubscription = {
+            enabled: true,
+            attendance: true,
+            timezone: 'Asia/Seoul',
+            token: 'QA_TEST_TOKEN_123456789012345',
+            attendanceTime: '22:30',
+            attendanceStatus: {
+                date: todayKST,
+                lezhin: false,
+                bomtoon: true
+            }
+        };
+
+        // 레진만 미출석 → 발송 대상
+        const due = moboGetAttendanceCandidate(
+            fakeSubscription,
+            testTime('22:35')
+        );
+
+        assert.deepEqual(due, {
+            date: todayKST,
+            kind: 'attendance',
+            missingLezhin: true,
+            missingBomtoon: false
+        });
+
+        // 둘 다 출석 완료 → 발송하지 않음
+        assert.equal(
+            moboGetAttendanceCandidate(
+                {
+                    ...fakeSubscription,
+                    attendanceStatus: {
+                        date: todayKST,
+                        lezhin: true,
+                        bomtoon: true
+                    }
+                },
+                testTime('22:35')
+            ),
+            null
+        );
+
+        // 미출석 알림 OFF → 발송하지 않음
+        assert.equal(
+            moboGetAttendanceCandidate(
+                { ...fakeSubscription, attendance: false },
+                testTime('22:35')
+            ),
+            null
+        );
+
+        // 아직 설정 시간이 되지 않음
+        assert.equal(
+            moboGetAttendanceCandidate(
+                fakeSubscription,
+                testTime('22:29')
+            ),
+            null
+        );
+
+        // 20분 발송 허용 구간이 종료됨
+        assert.equal(
+            moboGetAttendanceCandidate(
+                fakeSubscription,
+                testTime('22:50')
+            ),
+            null
+        );
+
+        // 어제 출석 기록만 있어도 오늘 미출석으로 판단
+        const yesterdayDue = moboGetAttendanceCandidate(
+            {
+                ...fakeSubscription,
+                attendanceStatus: {
+                    date: yesterdayKST,
+                    lezhin: true,
+                    bomtoon: true
+                }
+            },
+            testTime('22:35')
+        );
+
+        assert.equal(yesterdayDue?.missingLezhin, true);
+        assert.equal(yesterdayDue?.missingBomtoon, true);
+
+        // 실제 Firebase 데이터에 대해 기존 PREVIEW와
+        // 새로운 발송 후보 계산의 결과가 일치해야 함
+        const candidatesFromNewEngine =
+            subscriptions.docs.filter(doc => {
+                if (TEST_UID && doc.id !== TEST_UID) {
+                    return false;
+                }
+
+                return moboGetAttendanceCandidate(
+                    doc.data(),
+                    now
+                ) !== null;
+            }).length;
+
+        assert.equal(
+            candidatesFromNewEngine,
+            attendanceStats.dueNotifications,
+            '미출석 후보 계산 결과 불일치'
+        );
+
+        console.log('PASS: 연재·출석 알림 유형 분리');
+        console.log('PASS: 출석 완료 사용자 제외');
+        console.log('PASS: 미출석 알림 OFF 제외');
+        console.log('PASS: 발송 시간 전후 차단');
+        console.log('PASS: 이전 날짜 출석 기록 처리');
+        console.log('PASS: 실제 서버 후보 계산 일치');
+        console.log(
+            'QA-046C-3B-1 · 발송 후보 계산 PASS'
+        );
 
         console.log('미리보기 완료');
         console.log('실제 푸시 발송: 없음');
