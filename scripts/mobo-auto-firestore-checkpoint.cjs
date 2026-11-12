@@ -6,7 +6,9 @@
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const { moboAssertScopedUID } = require('./mobo-auto-source-scope.cjs');
-const { moboCheckpointScope } = require('./mobo-auto-resume-checkpoint.cjs');
+const {
+    moboCheckpointScope, moboRunResumableBatch
+} = require('./mobo-auto-resume-checkpoint.cjs');
 
 const QA_PROJECT = 'mobo-qa-2026';
 const COLLECTION = 'qaPushBatchCheckpoints';
@@ -278,6 +280,87 @@ async function runSelfTest() {
     );
     assert.equal(fake.counts.transactions > 0, true);
     console.log('PASS: 저장 기록 변조·잘못된 scope 발견 시 중단');
+
+    // 저장 어댑터를 실제 중단·재개 배치 함수에 연결한 통합 모의 테스트.
+    const persistent = makeFakeFirestore();
+    const restartTick = tick + 5 * 60 * 1000;
+    const restartScope = moboCheckpointScope(date, 'serial', restartTick);
+    const scheduled = Array.from({length: 17}, (_, i) => ({
+        id: 'QaUser_' + String(i).padStart(6, '0')
+    }));
+    const sourceDB = {
+        collection(name) {
+            assert.equal(name, 'pushSchedules');
+            return {
+                orderBy(field) {
+                    assert.equal(field, '__name__');
+                    let start = null;
+                    const chain = {
+                        startAfter(id) {
+                            start = id;
+                            return chain;
+                        },
+                        limit(limit) {
+                            return {
+                                async get() {
+                                    const from = start === null
+                                        ? 0 : scheduled.findIndex(x => x.id > start);
+                                    return {docs: from === -1
+                                        ? [] : scheduled.slice(from, from + limit)};
+                                }
+                            };
+                        }
+                    };
+                    return chain;
+                }
+            };
+        }
+    };
+    const visits = new Map();
+    const accepted = new Set();
+    let interrupt = true;
+    const visit = async doc => {
+        visits.set(doc.id, (visits.get(doc.id) || 0) + 1);
+        if (doc.id === 'QaUser_000011' && interrupt) {
+            interrupt = false;
+            throw new Error('SIMULATED_SERVER_RESTART');
+        }
+        accepted.add(doc.id);
+    };
+    const batchParams = {
+        db: sourceDB, visit, date, kind: 'serial',
+        tickAt: restartTick,
+        batchOptions: {pageSize: 5, maxPages: 6, parallel: 1}
+    };
+    const beforeRestartStore =
+        moboCreateFirestoreCheckpointStore(persistent.db, options);
+    await assert.rejects(
+        moboRunResumableBatch({...batchParams, store: beforeRestartStore}),
+        /SIMULATED_SERVER_RESTART/
+    );
+    assert.equal(
+        (await beforeRestartStore.load(restartScope)).cursor,
+        'QaUser_000009'
+    );
+    const afterRestartStore =
+        moboCreateFirestoreCheckpointStore(persistent.db, options);
+    const recovered = await moboRunResumableBatch({
+        ...batchParams, store: afterRestartStore
+    });
+    assert.equal(recovered.completed, true);
+    assert.equal(accepted.size, 17);
+    assert.equal(visits.get('QaUser_000000'), 1);
+    assert.equal(visits.get('QaUser_000010'), 2);
+    assert.equal(visits.get('QaUser_000011'), 2);
+    assert.equal(
+        (await afterRestartStore.load(restartScope)).completed,
+        true
+    );
+    const skipped = await moboRunResumableBatch({
+        ...batchParams, store: beforeRestartStore
+    });
+    assert.equal(skipped.alreadyCompleted, true);
+    console.log('PASS: Firestore 모의 저장 어댑터 + 중단 복구 배치 통합');
 
     console.log('QA-046D-17 · Firestore checkpoint adapter PASS');
     console.log('실제 Firestore 연결 및 쓰기: 없음');
