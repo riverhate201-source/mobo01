@@ -161,6 +161,11 @@ jobs:
           node --check scripts/mobo-auto-source-scope.cjs
           node scripts/mobo-auto-source-scope.cjs
 
+      - name: Check bounded multiuser pages, concurrency and time budget (memory only)
+        run: |
+          node --check scripts/mobo-auto-multiuser-batch.cjs
+          node scripts/mobo-auto-multiuser-batch.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
