@@ -196,7 +196,7 @@ async function runSelfTest() {
     const otherKind = moboCheckpointScope(date, 'expire', tick);
     assert.notEqual(moboCheckpointDocId(scope), moboCheckpointDocId(otherKind));
     assert.equal(moboCheckpointDocId(scope).length, 64);
-    for (const invalid of ['xyz', 'mobo-qa-v1|bad', scope.replace('22:05', '22:07')]) {
+    for (const invalid of ['xyz', 'mobo-qa-v1|bad', scope.replace('13:05', '13:07')]) {
         assert.throws(() => moboCheckpointDocId(invalid), /scope|시간/);
     }
     console.log('PASS: scope 검증 및 SHA-256 문서 키 분리');
