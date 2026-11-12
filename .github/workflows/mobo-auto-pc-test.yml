@@ -25,7 +25,14 @@ on:
           - TODAY_20_05
           - TODAY_22_35
 
-
+      notification_kind:
+        description: '발송할 알림 종류'
+        required: true
+        default: 'SCHEDULE'
+        type: choice
+        options:
+          - SCHEDULE
+          - ATTENDANCE
       run_mode:
 
         description: '실행 모드'
@@ -82,6 +89,7 @@ jobs:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
           MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_QA_GALAXY_TEST_UID }}
           MOBO_AUTO_MODE: ${{ inputs.run_mode }}
+          MOBO_AUTO_KIND: ${{ inputs.notification_kind }}
           MOBO_PREVIEW_CLOCK: ${{ inputs.preview_clock }}          
           MOBO_AUTO_LIVE_CONFIRM: ${{ inputs.live_confirm }}
         run: node scripts/mobo-auto-dispatch.cjs
@@ -92,6 +100,7 @@ jobs:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
           MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_QA_TEST_UID }}
           MOBO_AUTO_MODE: ${{ inputs.run_mode }}
+          MOBO_AUTO_KIND: ${{ inputs.notification_kind }}
           MOBO_PREVIEW_CLOCK: ${{ inputs.preview_clock }}
           MOBO_AUTO_LIVE_CONFIRM: ${{ inputs.live_confirm }}
         run: node scripts/mobo-auto-dispatch.cjs
