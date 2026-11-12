@@ -23,6 +23,7 @@ on:
         options:
           - NOW
           - TODAY_20_05
+          - TODAY_22_05
           - TODAY_22_35
 
       notification_kind:
