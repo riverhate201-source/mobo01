@@ -86,6 +86,11 @@ jobs:
           node --check scripts/mobo-scheduler-clock.cjs
           node scripts/mobo-scheduler-clock.cjs
 
+      - name: Check 5-minute polling and duplicate claims (memory only)
+        run: |
+          node --check scripts/mobo-auto-cadence-test.cjs
+          node scripts/mobo-auto-cadence-test.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
