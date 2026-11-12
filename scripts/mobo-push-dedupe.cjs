@@ -90,6 +90,18 @@ async function markDeliverySent(db, uid, date, kind) {
     });
 }
 
+// QA-046D-12 | 발송 결과 불명확: 자동 재발송하지 않고 확인 대상 기록
+// 실제 FCM 오류 원문이나 기기 토큰은 저장하지 않음.
+async function markDeliveryNeedsReview(db, uid, date, kind) {
+    const id = makeDeliveryKey(uid, date, kind);
+
+    await db.collection(COLLECTION).doc(id).update({
+        status: 'needs_review',
+        reviewReason: 'FCM_SEND_RESULT_UNCERTAIN',
+        reviewAt: new Date().toISOString()
+    });
+}
+
 // ==========================================
 // QA-044E-3B-1 | 메모리 기반 자체 테스트
 // Firebase 접속 및 데이터 변경 없음
@@ -229,5 +241,6 @@ if (require.main === module) {
 module.exports = {
     makeDeliveryKey,
     claimDeliveryOnce,
-    markDeliverySent
+    markDeliverySent,
+    markDeliveryNeedsReview
 };
