@@ -14,6 +14,11 @@ const {
     moboClockDue
 } = require('./mobo-scheduler-clock.cjs');
 
+const {
+    moboCanSendSchedule,
+    moboAttendanceStillDue
+} = require('./mobo-live-guard.cjs');
+
 // ==========================================
 // MoBo QA-044E-3C
 // 자동 알림 대상 계산 + 중복 방지 + 발송
@@ -754,22 +759,8 @@ async function main() {
             return;
         }
 
-        // 같은 기기·날짜·알림 종류 중복 차단
-        const claimed = await claimDeliveryOnce(
-            db,
-            TEST_UID,
-            candidate.date,
-            'attendance'
-        );
-
-        if (!claimed) {
-            console.log(
-                'QA-046C-3B-2: 이미 처리된 알림 · 중복 차단'
-            );
-            return;
-        }
-
-        // 중복 방지 기록을 만든 뒤에도 출석 상태 재확인
+        // QA-046D-5 | 출석 상태를 먼저 재조회한 뒤 claim 생성
+        // 이미 출석 완료했다면 불필요한 중복 방지 기록을 남기지 않음
         const latestSnapshot = await ref.get();
         const latestSub = latestSnapshot.exists
             ? latestSnapshot.data()
@@ -780,9 +771,24 @@ async function main() {
             Date.now()
         );
 
-        if (!latest || latest.date !== candidate.date) {
+        if (!moboAttendanceStillDue(candidate, latest)) {
             console.log(
-                'QA-046C-3B-2: 상태 변경 감지 · 발송 취소'
+                'QA-046D-5: 최신 출석 상태 변경 · claim 없이 발송 취소'
+            );
+            return;
+        }
+
+        // 가장 최근까지 미출석일 때만 원자적으로 발송 권한 확보
+        const claimed = await claimDeliveryOnce(
+            db,
+            TEST_UID,
+            candidate.date,
+            'attendance'
+        );
+
+        if (!claimed) {
+            console.log(
+                'QA-046C-3B-2: 이미 처리된 알림 · 중복 차단'
             );
             return;
         }
@@ -853,10 +859,11 @@ async function main() {
                 ? scheduleDoc.data()
                 : null;
 
+            // QA-046D-5 | 실제 발송 직전에 설정과 발송 시간 재확인
+            // GitHub 실행이 늦어져 20분 범위를 벗어나면 보내지 않음
             if (
                 !validPair(sub, schedule) ||
-                !schedule.days.includes(item.entry) ||
-                sub[item.kind] !== true
+                !moboCanSendSchedule(item, sub, schedule, Date.now())
             ) {
                 stats.skippedAfterRecheck++;
                 continue;
