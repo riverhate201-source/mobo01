@@ -156,6 +156,11 @@ jobs:
           node --check scripts/mobo-auto-claim-audit.cjs
           node scripts/mobo-auto-claim-audit.cjs
 
+      - name: Check single-UID Firebase fetch scope (memory only)
+        run: |
+          node --check scripts/mobo-auto-source-scope.cjs
+          node scripts/mobo-auto-source-scope.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
