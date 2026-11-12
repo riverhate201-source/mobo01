@@ -101,6 +101,11 @@ jobs:
           node --check scripts/mobo-auto-cadence-test.cjs
           node scripts/mobo-auto-cadence-test.cjs
 
+      - name: Check LIVE safety guards (memory only)
+        run: |
+          node --check scripts/mobo-live-guard.cjs
+          node scripts/mobo-live-guard.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
