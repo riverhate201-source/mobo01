@@ -13,6 +13,7 @@ on:
       - 'scripts/mobo-scheduler-clock.cjs'
       - 'scripts/mobo-push-dedupe.cjs'
       - 'scripts/mobo-live-guard.cjs'
+      - 'scripts/mobo-dispatch-kind.cjs'
       - '.github/workflows/mobo-auto-pc-test.yml'
   workflow_dispatch:
     inputs:
@@ -44,6 +45,8 @@ on:
         type: choice
         options:
           - SCHEDULE
+          - SERIAL
+          - EXPIRE
           - ATTENDANCE
       run_mode:
 
@@ -106,6 +109,11 @@ jobs:
         run: |
           node --check scripts/mobo-live-guard.cjs
           node scripts/mobo-live-guard.cjs
+
+      - name: Check dispatch kind isolation (memory only)
+        run: |
+          node --check scripts/mobo-dispatch-kind.cjs
+          node scripts/mobo-dispatch-kind.cjs
 
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
