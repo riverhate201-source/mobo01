@@ -176,6 +176,11 @@ jobs:
           node --check scripts/mobo-auto-firestore-checkpoint.cjs
           node scripts/mobo-auto-firestore-checkpoint.cjs
 
+      - name: Check transactional lease ownership and concurrent batch (memory only)
+        run: |
+          node --check scripts/mobo-auto-run-lease.cjs
+          node scripts/mobo-auto-run-lease.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
