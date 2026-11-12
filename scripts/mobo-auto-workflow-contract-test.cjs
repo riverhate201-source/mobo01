@@ -85,15 +85,38 @@ function runSelfTest() {
     );
     console.log('PASS: external workflow forced PREVIEW and validates inputs first');
 
+    // QA-046D-10 | 외부 Actions 호출자가 MANUAL/LIVE로 우회하지 못함
+    const locked = readStep(
+        wf,
+        'Reject manual LIVE or YES confirmation (locked)',
+        'Run Galaxy automatic notification test'
+    );
+    containsLine(
+        locked,
+        "if: ${{ github.event_name == 'workflow_dispatch' && inputs.execution_profile == 'MANUAL' && (inputs.run_mode != 'PREVIEW' || inputs.live_confirm != 'NO') }}"
+    );
+    assert.ok(locked.includes('exit 1'), 'LIVE rejection must fail closed');
+
     const manual = wf.slice(
         wf.indexOf('      - name: Run Galaxy automatic notification test')
     );
     assert.equal(
-        (manual.match(/inputs\.execution_profile != 'EXTERNAL_PREVIEW'/g) || []).length,
+        (manual.match(/inputs\.execution_profile == 'MANUAL'/g) || []).length,
         2,
-        'Both manual device jobs must be excluded for external profile'
+        'Galaxy and PC must explicitly require MANUAL'
     );
-    console.log('PASS: external profile does not enter manual LIVE job');
+    assert.equal(
+        (manual.match(/inputs\.run_mode == 'PREVIEW'/g) || []).length,
+        2,
+        'Galaxy and PC must allow PREVIEW only'
+    );
+    assert.equal(
+        (manual.match(/inputs\.live_confirm == 'NO'/g) || []).length,
+        2,
+        'Galaxy and PC must reject YES'
+    );
+    assert.ok(!manual.includes("inputs.execution_profile != 'EXTERNAL_PREVIEW'"));
+    console.log('PASS: manual LIVE/YES fails closed; device previews remain');
 
     const payload = moboExternalPreviewPayload();
     assert.deepEqual(payload, {
