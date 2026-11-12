@@ -5,6 +5,10 @@ const { getMessaging } = require('firebase-admin/messaging');
 
 const { claimDeliveryOnce } = require('./mobo-push-dedupe.cjs');
 const { moboCompleteClaimedSend } = require('./mobo-auto-send-result.cjs');
+const {
+    moboAssertScopedUID,
+    moboReadScopedSources
+} = require('./mobo-auto-source-scope.cjs');
 
 const {
     moboKSTDate,
@@ -204,6 +208,10 @@ async function main() {
         throw new Error('지원하지 않는 실행 모드입니다.');
     }
 
+    // QA-046D-14 | PREVIEW와 LIVE 모두 단일 QA 기기만 허용.
+    // UID가 누락돼도 구독/일정 전체 컬렉션을 읽지 않는다.
+    moboAssertScopedUID(TEST_UID);
+
 
     if (MODE === 'LIVE') {
         // QA-046D-6 | 하나의 LIVE 실행에서 알림 종류 하나만 허용
@@ -237,10 +245,9 @@ async function main() {
 
     const db = getFirestore();
 
-    const [subscriptions, schedules] = await Promise.all([
-        db.collection('pushSubscriptions').get(),
-        db.collection('pushSchedules').get()
-    ]);
+    // QA-046D-14 | 전체 스캔 대신 지정 UID의 2개 문서만 읽기
+    const { subscriptions, schedules } =
+        await moboReadScopedSources(db, TEST_UID);
 
     const subscribers = new Map(
         subscriptions.docs.map(doc => [doc.id, doc.data()])
