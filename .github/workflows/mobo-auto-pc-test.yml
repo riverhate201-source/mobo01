@@ -146,6 +146,11 @@ jobs:
           node --check scripts/mobo-netlify-preview-adapter.cjs
           node scripts/mobo-netlify-preview-adapter.cjs
 
+      - name: Check uncertain FCM outcomes and persistent dedupe (memory only)
+        run: |
+          node --check scripts/mobo-auto-send-result.cjs
+          node scripts/mobo-auto-send-result.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
