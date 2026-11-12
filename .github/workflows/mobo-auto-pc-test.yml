@@ -135,6 +135,11 @@ jobs:
           node --check scripts/mobo-auto-external-trigger.cjs
           node scripts/mobo-auto-external-trigger.cjs
 
+      - name: Check external workflow / entrypoint contract (no network)
+        run: |
+          node --check scripts/mobo-auto-workflow-contract-test.cjs
+          node scripts/mobo-auto-workflow-contract-test.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
