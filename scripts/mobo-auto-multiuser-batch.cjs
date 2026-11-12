@@ -28,7 +28,11 @@ function moboValidateBatchOptions(opts = {}) {
     const budgetMs = positiveInteger(opts.budgetMs ?? 20000, SAFE_BUDGET_MS, 'budgetMs');
     const startAfter = opts.startAfter ?? null;
     if (startAfter !== null) moboAssertScopedUID(startAfter);
-    return { pageSize, maxPages, parallel, budgetMs, startAfter };
+    const onPageCommitted = opts.onPageCommitted;
+    if (onPageCommitted !== undefined && typeof onPageCommitted !== 'function') {
+        throw new Error('QA 배치 설정 오류: onPageCommitted');
+    }
+    return { pageSize, maxPages, parallel, budgetMs, startAfter, onPageCommitted };
 }
 
 // Firestore 서버 query 계약: 정렬된 문서 ID 기준으로 pageSize개만 조회.
@@ -114,9 +118,21 @@ async function moboRunBoundedBatch(db, visit, opts = {}, clock = Date.now) {
         );
         if (pageError !== null) throw pageError;
 
+        // QA-046D-16 | 페이지 내 모든 작업이 성공한 뒤에만
+        // 외부 체크포인트 저장 콜백 실행. 실패 시 다음 페이지로 진행 금지.
+        // 저장 계층(향후 Firestore)은 이 배치 함수 밖에서 주입.
+        const nextCursor = docs[docs.length - 1].id;
+        if (settings.onPageCommitted) {
+            await settings.onPageCommitted(Object.freeze({
+                cursor: nextCursor,
+                pageNumber: pages + 1,
+                examined: examined + docs.length
+            }));
+        }
+
         examined += docs.length;
         pages++;
-        cursor = docs[docs.length - 1].id;
+        cursor = nextCursor;
 
         if (docs.length < settings.pageSize) break;
 
