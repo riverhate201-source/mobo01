@@ -180,8 +180,17 @@ jobs:
           node scripts/mobo-auto-external-trigger.cjs --check-invocation
           node scripts/mobo-auto-dispatch.cjs
 
+      # QA-046D-10 | Actions:write 권한을 가진 외부 계정도
+      # 입력값만 바꿔 LIVE를 실행하지 못하도록 staging에서 LIVE 잠금
+      # 실제 기기 LIVE 시험은 별도 승인 및 환경 보호 설정 이후 복원
+      - name: Reject manual LIVE or YES confirmation (locked)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.execution_profile == 'MANUAL' && (inputs.run_mode != 'PREVIEW' || inputs.live_confirm != 'NO') }}
+        run: |
+          echo "::error::QA-046D-10: staging 수동 LIVE가 잠겨 있습니다. PREVIEW/NO만 허용합니다."
+          exit 1
+
       - name: Run Galaxy automatic notification test
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.execution_profile != 'EXTERNAL_PREVIEW' && inputs.target_device == 'GALAXY' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.execution_profile == 'MANUAL' && inputs.run_mode == 'PREVIEW' && inputs.live_confirm == 'NO' && inputs.target_device == 'GALAXY' }}
         env:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
           MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_QA_GALAXY_TEST_UID }}
@@ -192,7 +201,7 @@ jobs:
         run: node scripts/mobo-auto-dispatch.cjs
 
       - name: Run PC automatic notification test
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.execution_profile != 'EXTERNAL_PREVIEW' && inputs.target_device == 'PC' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.execution_profile == 'MANUAL' && inputs.run_mode == 'PREVIEW' && inputs.live_confirm == 'NO' && inputs.target_device == 'PC' }}
         env:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
           MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_QA_TEST_UID }}
