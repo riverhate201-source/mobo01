@@ -297,7 +297,8 @@ async function runSelfTest() {
         assert.equal(claims.has(makeDeliveryKey(UID(n), DAY, 'serial')), false);
     }
     assert.equal(sendingByUID.get(UID(14)), 1);
-    assert.equal(claimDuplicates, 0);
+    // 미확정 페이지 10번은 재방문하되 claim이 중복 요청을 막음.
+    assert.equal(claimDuplicates, 1);
     assert.ok(rejectedByLatestState >= 3);
     console.log('PASS: 사용자 설정 변경·토큰 누락 차단 및 FCM 미확정 수동검토');
     console.log('PASS: 정상 처리 20건·확인 필요 1건·중복 발송 0건 (모두 가상)');
@@ -308,7 +309,7 @@ async function runSelfTest() {
     const nextTick = await runTick(kst('22:10'));
     assert.equal(nextTick.result.completed, true);
     assert.equal(observedAttempts, 21);
-    assert.equal(claimDuplicates, 21);
+    assert.equal(claimDuplicates, 22);
     assert.equal(
         collections.get('qaPushBatchCheckpoints').size, 2
     );
@@ -319,7 +320,7 @@ async function runSelfTest() {
     const outsideWindow = await runTick(kst('22:20'));
     assert.equal(outsideWindow.result.completed, true);
     assert.equal(observedAttempts, 21);
-    assert.equal(claimDuplicates, 21);
+    assert.equal(claimDuplicates, 22);
     console.log('PASS: 20분 발송 가능 시간 종료 후 추가 요청 없음');
 
     assert.equal(
