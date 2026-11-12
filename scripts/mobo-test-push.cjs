@@ -14,7 +14,8 @@ async function main() {
     const secret = process.env.MOBO_FIREBASE_SERVICE_ACCOUNT;
     const uid = process.env.MOBO_TEST_UID?.trim();
     const mode = process.env.MOBO_SEND_MODE || 'DRY_RUN';
-
+    const messageKind =
+        process.env.MOBO_TEST_MESSAGE_KIND || 'STANDARD';
     if (!secret || !uid) {
         throw new Error('필수 GitHub Secret이 없어요.');
     }
@@ -22,6 +23,9 @@ async function main() {
     if (!['DRY_RUN', 'SEND_ONCE'].includes(mode)) {
         throw new Error('올바르지 않은 실행 모드예요.');
     }
+    if (!['STANDARD', 'ATTENDANCE_QA'].includes(messageKind)) {
+    throw new Error('올바르지 않은 테스트 알림 종류예요.');
+}
 
     const serviceAccount = JSON.parse(secret);
 
@@ -69,12 +73,20 @@ async function main() {
         fingerprint(subscription.token)
     );
 
+       // QA-046C-3C | 실제 출석 기록과 무관한 가상 알림
+    const attendanceQa = messageKind === 'ATTENDANCE_QA';
+
     const message = {
         token: subscription.token,
 
         notification: {
-            title: 'MoBo 테스트 알림 💗',
-            body: '모보의 푸시 알림이 정상적으로 도착했어요!'
+            title: attendanceQa
+                ? 'MoBo 미출석 알림 ⏰ [QA]'
+                : 'MoBo 테스트 알림 💗',
+
+            body: attendanceQa
+                ? '가상 테스트: 레진·봄툰 출석 확인이 남아 있어요. 실제 출석 기록과 무관합니다.'
+                : '모보의 푸시 알림이 정상적으로 도착했어요!'
         },
 
             webpush: {
@@ -100,6 +112,7 @@ headers: {
     console.log('MoBo QA-044E-2');
     console.log('대상: 지정된 테스트 기기 1대');
     console.log('실행 모드:', mode);
+    console.log('테스트 알림 종류:', messageKind);
 
     // 테스트 모드에서는 발송 없이 FCM 검증
     // 실제 발송 모드는 명시적 선택이 필요
@@ -125,6 +138,7 @@ main().catch(error => {
     const knownMessages = new Set([
         '필수 GitHub Secret이 없어요.',
         '올바르지 않은 실행 모드예요.',
+        '올바르지 않은 테스트 알림 종류예요.',
         'Firebase 프로젝트가 일치하지 않아요.',
         '테스트 기기 등록 문서가 없어요.',
         '테스트 기기의 알림이 활성화되지 않았어요.'
