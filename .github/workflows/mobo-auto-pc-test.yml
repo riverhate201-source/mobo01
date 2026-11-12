@@ -15,6 +15,7 @@ on:
       - 'scripts/mobo-live-guard.cjs'
       - 'scripts/mobo-dispatch-kind.cjs'
       - 'scripts/mobo-scheduler-tick-check.cjs'
+      - 'scripts/mobo-netlify-preview-adapter.cjs'
       - '.github/workflows/mobo-auto-pc-test.yml'
   workflow_dispatch:
     inputs:
@@ -139,6 +140,11 @@ jobs:
         run: |
           node --check scripts/mobo-auto-workflow-contract-test.cjs
           node scripts/mobo-auto-workflow-contract-test.cjs
+
+      - name: Check Netlify scheduled QA adapter (memory only)
+        run: |
+          node --check scripts/mobo-netlify-preview-adapter.cjs
+          node scripts/mobo-netlify-preview-adapter.cjs
 
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
