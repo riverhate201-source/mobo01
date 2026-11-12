@@ -8,6 +8,12 @@ const {
     markDeliverySent
 } = require('./mobo-push-dedupe.cjs');
 
+const {
+    moboKSTDate,
+    moboWebtoonDate,
+    moboClockDue
+} = require('./mobo-scheduler-clock.cjs');
+
 // ==========================================
 // MoBo QA-044E-3C
 // 자동 알림 대상 계산 + 중복 방지 + 발송
@@ -33,6 +39,7 @@ if (!['SCHEDULE', 'ATTENDANCE'].includes(NOTIFICATION_KIND)) {
 if (![
     'NOW',
     'TODAY_20_05',
+    'TODAY_22_05',
     'TODAY_22_35'
 ].includes(PREVIEW_CLOCK)) {
     throw new Error('올바르지 않은 가상 시간 설정입니다.');
@@ -157,20 +164,12 @@ function moboGetAttendanceCandidate(sub, now) {
         )
     ) return null;
 
-    const date = new Date(now + 9 * 3600000)
-        .toISOString()
-        .slice(0, 10);
+    const date = moboKSTDate(now);
 
-    const sendAt = Date.parse(
-        `${date}T${sub.attendanceTime}:00+09:00`
-    );
-
-    // 발송 시각 이후 20분까지만 허용
-    if (
-        !Number.isFinite(sendAt) ||
-        now < sendAt ||
-        now - sendAt >= WINDOW_MS
-    ) return null;
+    // QA-046D-2 | 자정 날짜 및 사용자 지정 시간 공통 판정
+    if (!moboClockDue(now, sub.attendanceTime, WINDOW_MS)) {
+        return null;
+    }
 
     const result = moboClassifyAttendance(
         sub.attendanceStatus,
@@ -185,6 +184,12 @@ function moboGetAttendanceCandidate(sub, now) {
         missingLezhin: result.missingLezhin,
         missingBomtoon: result.missingBomtoon
     };
+}
+
+// QA-046D-2 | 실제 날짜(재화·출석)와 저장된 발송 날짜 비교
+function moboScheduleEntryDue(date, clock, now) {
+    return date === moboKSTDate(now) &&
+        moboClockDue(now, clock, WINDOW_MS);
 }
 
 async function main() {
@@ -236,14 +241,14 @@ async function main() {
     let now = Date.now();
 
     if (MODE === 'PREVIEW' && PREVIEW_CLOCK !== 'NOW') {
-        const todayKST = new Date(Date.now() + 9 * 3600000)
-            .toISOString()
-            .slice(0, 10);
+        const todayKST = moboKSTDate(Date.now());
 
-        const previewTime =
-            PREVIEW_CLOCK === 'TODAY_20_05'
-                ? '20:05'
-                : '22:35';
+        const previewTimes = {
+            TODAY_20_05: '20:05',
+            TODAY_22_05: '22:05',
+            TODAY_22_35: '22:35'
+        };
+        const previewTime = previewTimes[PREVIEW_CLOCK];
 
         now = Date.parse(
             `${todayKST}T${previewTime}:00+09:00`
@@ -257,6 +262,9 @@ async function main() {
             .slice(0, 16)
             .replace('T', ' ')
     );
+
+    console.log('연재 기준 날짜(KST):', moboWebtoonDate(now));
+    console.log('실제 날짜(KST):', moboKSTDate(now));
 
     const candidates = [];
 
@@ -300,16 +308,9 @@ async function main() {
 
             if (!day) continue;
 
-            const sendAt = Date.parse(
-                `${day.date}T${sub.serialTime}:00+09:00`
-            );
-
-            if (!Number.isFinite(sendAt)) continue;
-
-            const elapsed = now - sendAt;
-
-            // 지정 시각부터 20분 이내인 후보만 선택
-            if (elapsed < 0 || elapsed >= WINDOW_MS) {
+            // QA-046D-2 | 일정에 저장된 실제 발송일만 판정
+            // 자정 이후 전날 발송 건을 다음 날로 넘기지 않음
+            if (!moboScheduleEntryDue(day.date, sub.serialTime, now)) {
                 continue;
             }
 
@@ -338,9 +339,7 @@ async function main() {
        if (MODE === 'PREVIEW') {
 
         // QA-046C-1 | 미출석 알림 대상 계산
-        const todayKST = new Date(now + 9 * 3600000)
-            .toISOString()
-            .slice(0, 10);
+        const todayKST = moboKSTDate(now);
 
         const attendanceStats = {
             attendanceEnabled: 0,
@@ -377,18 +376,8 @@ async function main() {
 
             attendanceStats.attendanceEnabled++;
 
-            const sendAt = Date.parse(
-                `${todayKST}T${sub.attendanceTime}:00+09:00`
-            );
-
-            const elapsed = now - sendAt;
-
-            // 설정 시각부터 20분 동안만 발송 후보
-            if (
-                !Number.isFinite(sendAt) ||
-                elapsed < 0 ||
-                elapsed >= WINDOW_MS
-            ) {
+            // QA-046D-2 | LIVE 후보와 동일한 시계 함수 사용
+            if (!moboClockDue(now, sub.attendanceTime, WINDOW_MS)) {
                 attendanceStats.outsideTimeWindow++;
                 continue;
             }
@@ -692,6 +681,46 @@ async function main() {
         console.log(
             'QA-046C-3B-1 · 발송 후보 계산 PASS'
         );
+
+        // QA-046D-2 | 실제 발송일·모보 요일·자정 경계 회귀 테스트
+        const clockKST = (date, time) =>
+            Date.parse(`${date}T${time}:00+09:00`);
+        const dayA = '2026-11-12';
+        const dayB = '2026-11-13';
+
+        assert.equal(
+            moboScheduleEntryDue(dayA, '20:00', clockKST(dayA, '20:05')),
+            true
+        );
+        assert.equal(
+            moboScheduleEntryDue(dayA, '22:00', clockKST(dayA, '22:05')),
+            true
+        );
+        assert.equal(
+            moboScheduleEntryDue(dayB, '22:00', clockKST(dayA, '22:05')),
+            false
+        );
+        assert.equal(
+            moboScheduleEntryDue(dayA, '22:00', clockKST(dayA, '22:35')),
+            false
+        );
+        assert.equal(
+            moboScheduleEntryDue(dayA, '23:55', clockKST(dayB, '00:05')),
+            false
+        );
+        assert.equal(
+            moboWebtoonDate(clockKST(dayA, '22:05')),
+            dayB
+        );
+        assert.equal(
+            moboKSTDate(clockKST(dayA, '22:05')),
+            dayA
+        );
+
+        console.log('PASS: 실제 발송일과 연재 요일 날짜 구분');
+        console.log('PASS: 기존 사용자 지정 연재 시간 유지');
+        console.log('PASS: 자정 이후 전날 알림 후보 차단');
+        console.log('QA-046D-2 · 공통 시계 연결 PASS');
 
         console.log('미리보기 완료');
         console.log('실제 푸시 발송: 없음');
