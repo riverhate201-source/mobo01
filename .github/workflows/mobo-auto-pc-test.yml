@@ -166,6 +166,11 @@ jobs:
           node --check scripts/mobo-auto-multiuser-batch.cjs
           node scripts/mobo-auto-multiuser-batch.cjs
 
+      - name: Check per-tick resume checkpoint and no duplicate claims (memory only)
+        run: |
+          node --check scripts/mobo-auto-resume-checkpoint.cjs
+          node scripts/mobo-auto-resume-checkpoint.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
