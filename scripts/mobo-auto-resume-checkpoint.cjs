@@ -220,8 +220,8 @@ async function runSelfTest() {
         27
     );
     assert.equal(
-        [...calls.values()].reduce((a,b) => a+b, 0), 28
-    ); // 실패한 12번만 재시도, 이전 완료 페이지 재방문 없음
+        [...calls.values()].reduce((a,b) => a+b, 0), 30
+    ); // 미확정 페이지 10~12번 재방문, 완료 페이지 0~9번 제외
     assert.equal((await store.load(scope)).completed, true);
     const beforeSkipReads = source.getReads();
     const skipped = await moboRunResumableBatch(opts);
