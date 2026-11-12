@@ -21,7 +21,14 @@ on:
         options:
           - DRY_RUN
           - SEND_ONCE
-
+      message_kind:
+        description: '테스트 알림 종류'
+        required: true
+        default: 'STANDARD'
+        type: choice
+        options:
+          - STANDARD
+          - ATTENDANCE_QA
 permissions:
   contents: read
 
@@ -40,6 +47,8 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Check test push syntax
+        run: node --check scripts/mobo-test-push.cjs
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
@@ -51,6 +60,7 @@ jobs:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
           MOBO_TEST_UID: ${{ secrets.MOBO_QA_TEST_UID }}
           MOBO_SEND_MODE: ${{ inputs.send_mode }}
+          MOBO_TEST_MESSAGE_KIND: ${{ inputs.message_kind }}
         run: node scripts/mobo-test-push.cjs
 
       # Galaxy 테스트
@@ -60,4 +70,5 @@ jobs:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
           MOBO_TEST_UID: ${{ secrets.MOBO_QA_GALAXY_TEST_UID }}
           MOBO_SEND_MODE: ${{ inputs.send_mode }}
+          MOBO_TEST_MESSAGE_KIND: ${{ inputs.message_kind }}
         run: node scripts/mobo-test-push.cjs
