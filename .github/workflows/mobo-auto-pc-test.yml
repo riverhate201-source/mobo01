@@ -186,6 +186,11 @@ jobs:
           node --check scripts/mobo-auto-pipeline-integration.cjs
           node scripts/mobo-auto-pipeline-integration.cjs
 
+      - name: Verify release gate and staging safety (static, fail closed)
+        run: |
+          node --check scripts/mobo-auto-release-gate.cjs
+          node scripts/mobo-auto-release-gate.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
