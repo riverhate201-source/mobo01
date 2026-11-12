@@ -93,7 +93,14 @@ async function moboRunResumableBatch({
         {
             ...batchOptions,
             startAfter: state.cursor,
-            onPageCommitted: ({cursor}) => store.commit(scope, cursor)
+            onPageCommitted: async ({cursor}) => {
+                const committed = await store.commit(scope, cursor);
+                // 다른 실행이 먼저 앞으로 진행한 경우라도 현재 작업이
+                // 완료된 것으로 착각하고 finish하지 않도록 중단
+                if (committed !== true) {
+                    throw new Error('QA 체크포인트 선행 실행 충돌: 재조회 필요');
+                }
+            }
         },
         clock
     );
