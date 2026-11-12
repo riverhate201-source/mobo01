@@ -89,13 +89,21 @@ async function moboRunBoundedBatch(db, visit, opts = {}, clock = Date.now) {
         // 고정된 worker 개수만 실행. Promise.all 모든 worker 종료 후
         // 성공한 경우에만 페이지 커서를 갱신.
         let next = 0;
+        let pageError = null;
         async function worker() {
-            while (next < docs.length) {
+            // 한 작업이 실패한 뒤에는 새 사용자 처리를 시작하지 않음.
+            // 이미 시작된 작업은 모두 종료된 후 오류를 반환.
+            while (next < docs.length && pageError === null) {
                 if (clock() >= deadline) {
-                    throw new Error('QA 배치 시간 초과: 페이지 미확정');
+                    pageError = new Error('QA 배치 시간 초과: 페이지 미확정');
+                    break;
                 }
                 const doc = docs[next++];
-                await visit(doc);
+                try {
+                    await visit(doc);
+                } catch (error) {
+                    pageError = error;
+                }
             }
         }
         await Promise.all(
@@ -104,6 +112,7 @@ async function moboRunBoundedBatch(db, visit, opts = {}, clock = Date.now) {
                 () => worker()
             )
         );
+        if (pageError !== null) throw pageError;
 
         examined += docs.length;
         pages++;
@@ -268,6 +277,35 @@ async function runSelfTest() {
         /QA_VISITOR_ERROR/
     );
     console.log('PASS: 페이지 작업 실패 시 커서 미확정·호출 실패 감지');
+
+    // 실패를 반환할 때 이미 시작된 병렬 작업이 남아있지 않아야 함.
+    const gate = fakeScheduleDB(10);
+    let inFlight = 0;
+    let peakInFlight = 0;
+    const failFast = await moboRunBoundedBatch(
+        gate.db,
+        async doc => {
+            inFlight++;
+            peakInFlight = Math.max(peakInFlight, inFlight);
+            try {
+                if (doc.id === 'QaUser_000000') {
+                    await Promise.resolve();
+                    throw new Error('SIMULATED_PAGE_FAILURE');
+                }
+                await new Promise(resolve => setImmediate(resolve));
+            } finally {
+                inFlight--;
+            }
+        },
+        {pageSize: 10, parallel: 3}
+    ).then(
+        () => null,
+        error => error
+    );
+    assert.match(failFast?.message ?? '', /SIMULATED_PAGE_FAILURE/);
+    assert.equal(inFlight, 0);
+    assert.ok(peakInFlight > 1);
+    console.log('PASS: 병렬 페이지 오류 후 진행 중 작업 전부 종료');
 
     // 남은 시간 내에 시작 못 하면 다음 페이지를 시도하지 않는다.
     let fakeTime = 0;
