@@ -256,7 +256,7 @@ async function runSelfTest() {
     assert.deepEqual(await runTick(kst('22:05')), {
         skipped: true, reason: 'LEASE_HELD'
     });
-    unblock();
+    allowFirst();
     await assert.rejects(
         first, /SIMULATED_PROCESS_INTERRUPTED_BEFORE_CLAIM/
     );
