@@ -84,10 +84,39 @@ function validPair(sub, schedule) {
 // QA-046C-2 | 출석 상태 공통 판단
 // ==========================================
 
+// ==========================================
+// QA-046C-3A | 출석 상태 및 날짜 판단
+// ==========================================
+
 function moboClassifyAttendance(status, date) {
     if (
         !status ||
-        status.date !== date ||
+        typeof status.date !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(status.date)
+    ) return null;
+
+    const parsed = new Date(
+        status.date + 'T00:00:00Z'
+    );
+
+    if (
+        !Number.isFinite(parsed.getTime()) ||
+        parsed.toISOString().slice(0, 10) !== status.date ||
+        status.date > date
+    ) return null;
+
+    // 마지막 출석 상태가 이전 날짜라면
+    // 오늘 출석을 완료하지 않은 것으로 판단
+    if (status.date < date) {
+        return {
+            due: true,
+            missingLezhin: true,
+            missingBomtoon: true
+        };
+    }
+
+    // 오늘의 기록은 두 플랫폼 상태를 확인
+    if (
         typeof status.lezhin !== 'boolean' ||
         typeof status.bomtoon !== 'boolean'
     ) return null;
@@ -427,6 +456,60 @@ async function main() {
 
         console.log('PASS: 출석 상태 누락은 후보 제외');
         console.log('QA-046C-2 · 전체 테스트 PASS');
+
+                // QA-046C-3A | 날짜 변경 테스트
+
+        const yesterdayKST = new Date(
+            Date.parse(todayKST + 'T00:00:00Z') -
+            86400000
+        ).toISOString().slice(0, 10);
+
+        const tomorrowKST = new Date(
+            Date.parse(todayKST + 'T00:00:00Z') +
+            86400000
+        ).toISOString().slice(0, 10);
+
+        // 어제 모두 출석했어도 오늘은 새 출석일
+        assert.deepEqual(
+            moboClassifyAttendance(
+                {
+                    date: yesterdayKST,
+                    lezhin: true,
+                    bomtoon: true
+                },
+                todayKST
+            ),
+            {
+                due: true,
+                missingLezhin: true,
+                missingBomtoon: true
+            }
+        );
+
+        console.log(
+            'PASS: 이전 날짜 출석 기록 → 오늘 미출석'
+        );
+
+        // 미래 날짜는 잘못된 알림을 피하기 위해 제외
+        assert.equal(
+            moboClassifyAttendance(
+                {
+                    date: tomorrowKST,
+                    lezhin: false,
+                    bomtoon: false
+                },
+                todayKST
+            ),
+            null
+        );
+
+        console.log(
+            'PASS: 미래 날짜 출석 기록 제외'
+        );
+
+        console.log(
+            'QA-046C-3A · 날짜 판단 테스트 PASS'
+        );   
             
 
         console.log('미리보기 완료');
