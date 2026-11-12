@@ -12,6 +12,7 @@ on:
       - 'scripts/mobo-auto-*.cjs'
       - 'scripts/mobo-scheduler-clock.cjs'
       - 'scripts/mobo-push-dedupe.cjs'
+      - 'scripts/mobo-live-guard.cjs'
       - '.github/workflows/mobo-auto-pc-test.yml'
   workflow_dispatch:
     inputs:
