@@ -807,7 +807,100 @@ async function main() {
     }
 
     // 기존 연재·재화 LIVE 발송 경로 유지
+    
+    // 기존 연재·재화 LIVE 발송 경로 유지
     for (const item of candidates) {
+        try {
+            // 발송 직전 구독·일정 상태 다시 확인
+            const [subDoc, scheduleDoc] = await Promise.all([
+                db.collection('pushSubscriptions')
+                    .doc(item.uid).get(),
+                db.collection('pushSchedules')
+                    .doc(item.uid).get()
+            ]);
+
+            const sub = subDoc.exists ? subDoc.data() : null;
+            const schedule = scheduleDoc.exists
+                ? scheduleDoc.data()
+                : null;
+
+            if (
+                !validPair(sub, schedule) ||
+                !schedule.days.includes(item.entry) ||
+                sub[item.kind] !== true
+            ) {
+                stats.skippedAfterRecheck++;
+                continue;
+            }
+
+            // 여러 실행 중 첫 번째만 처리 권한 확보
+            const claimed = await claimDeliveryOnce(
+                db, item.uid, item.date, item.kind
+            );
+
+            if (!claimed) {
+                stats.alreadyClaimed++;
+                continue;
+            }
+
+            const isSerial = item.kind === 'serial';
+
+            const message = {
+                token: sub.token,
+                notification: {
+                    title: isSerial
+                        ? 'MoBo 연재 알림 📚'
+                        : 'MoBo 재화 소멸 알림 ⏰',
+                    body: isSerial
+                        ? `확인할 연재 작품 ${item.count}개가 있어요!`
+                        : `${item.count}개 플랫폼의 재화 소멸 예정 내역을 확인해 주세요.`
+                },
+                webpush: {
+                    headers: {
+                        TTL: '120'
+                    },
+                    notification: {
+                        icon:
+                            'https://staging--mobo-demo.netlify.app/icon.png',
+                        badge:
+                            'https://staging--mobo-demo.netlify.app/notification-badge.png'
+                    },
+                    fcmOptions: {
+                        link:
+                            'https://staging--mobo-demo.netlify.app/'
+                    }
+                }
+            };
+
+            try {
+                await getMessaging().send(message);
+
+                await markDeliverySent(
+                    db, item.uid, item.date, item.kind
+                );
+
+                stats.acceptedByFCM++;
+
+            } catch (error) {
+                // 실패한 claimed 기록은 자동 삭제하지 않음
+                stats.errors++;
+
+                console.error(
+                    '발송 또는 상태 기록 실패:',
+                    error.code || error.message
+                );
+            }
+
+        } catch (error) {
+            stats.errors++;
+
+            console.error(
+                '발송 대상 처리 실패:',
+                error.code || error.message
+            );
+        }
+    }
+
 
 
     console.log('MoBo 자동 발송 처리 결과');
