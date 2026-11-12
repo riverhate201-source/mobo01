@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>모아보기mobo - QA</title>
+    <title>모아보기mobo-QA</title>
 
     <meta name="format-detection" content="telephone=no, date=no, email=no, address=no">
     <link rel="manifest" href="./manifest.json">
@@ -2101,7 +2101,7 @@
 
                 updatedAt:
                     firebase.firestore.FieldValue.serverTimestamp()
-            });
+            }, { merge: true });
 
             console.log(
                 'MoBo 알림 설정 Firestore 등록 완료'
