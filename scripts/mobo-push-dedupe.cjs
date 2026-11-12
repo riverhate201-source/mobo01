@@ -38,7 +38,7 @@ function makeDeliveryKey(uid, date, kind) {
         throw new Error('존재하지 않는 날짜예요.');
     }
 
-    if (!['serial', 'expire'].includes(kind)) {
+    if (!['serial', 'expire', 'attendance'].includes(kind)) {
         throw new Error('알림 종류가 올바르지 않아요.');
     }
 
@@ -179,6 +179,34 @@ async function runSelfTest() {
 
     assert.deepEqual(results.sort(), [false, true]);
 
+        // QA-046C-3A | 미출석 알림 중복 방지 테스트
+
+    assert.notEqual(
+        makeDeliveryKey(pc, date, 'serial'),
+        makeDeliveryKey(pc, date, 'attendance')
+    );
+
+    assert.equal(
+        await claimDeliveryOnce(
+            fakeDb, pc, date, 'attendance'
+        ),
+        true
+    );
+
+    assert.equal(
+        await claimDeliveryOnce(
+            fakeDb, pc, date, 'attendance'
+        ),
+        false
+    );
+
+    console.log(
+        'PASS: 미출석 알림 첫 실행 허용'
+    );
+
+    console.log(
+        'PASS: 같은 날짜 미출석 알림 중복 차단'
+    );
     console.log('MoBo QA-044E-3B · 중복 방지 자체 테스트');
     console.log('PASS: 동일 조건 키 일치');
     console.log('PASS: 다른 기기 구분');
