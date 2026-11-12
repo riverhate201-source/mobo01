@@ -79,10 +79,12 @@ jobs:
           node --check scripts/mobo-auto-dispatch.cjs
           node --check scripts/mobo-push-dedupe.cjs
           node scripts/mobo-push-dedupe.cjs
-            - name: Check MoBo scheduler clock
-          run: |
-            node --check scripts/mobo-scheduler-clock.cjs
-            node scripts/mobo-scheduler-clock.cjs
+
+      - name: Check MoBo scheduler clock
+        run: |
+          node --check scripts/mobo-scheduler-clock.cjs
+          node scripts/mobo-scheduler-clock.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
