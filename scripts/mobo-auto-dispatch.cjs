@@ -3,10 +3,8 @@ const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 
-const {
-    claimDeliveryOnce,
-    markDeliverySent
-} = require('./mobo-push-dedupe.cjs');
+const { claimDeliveryOnce } = require('./mobo-push-dedupe.cjs');
+const { moboCompleteClaimedSend } = require('./mobo-auto-send-result.cjs');
 
 const {
     moboKSTDate,
@@ -831,18 +829,18 @@ async function main() {
             }
         };
 
-        // 실제 발송은 LIVE + ATTENDANCE + YES일 때만 도달
-        await getMessaging().send(message);
-
-        await markDeliverySent(
+        // QA-046D-12 | FCM 응답과 발송 상태 기록 오류를 분리
+        // 발송 결과 불명확 시 claim을 유지하고 자동 재발송하지 않음
+        await moboCompleteClaimedSend({
             db,
-            TEST_UID,
-            latest.date,
-            'attendance'
-        );
+            uid: TEST_UID,
+            date: latest.date,
+            kind: 'attendance',
+            send: () => getMessaging().send(message)
+        });
 
         console.log(
-            'QA-046C-3B-2: FCM 미출석 알림 발송 요청 성공'
+            'QA-046D-12: FCM 미출석 알림 승인·기록 성공'
         );
 
         return;
@@ -920,20 +918,26 @@ async function main() {
             };
 
             try {
-                await getMessaging().send(message);
+                const outcome = await moboCompleteClaimedSend({
+                    db,
+                    uid: item.uid,
+                    date: item.date,
+                    kind: item.kind,
+                    send: () => getMessaging().send(message)
+                });
 
-                await markDeliverySent(
-                    db, item.uid, item.date, item.kind
-                );
-
-                stats.acceptedByFCM++;
+                if (outcome.fcmAccepted) stats.acceptedByFCM++;
 
             } catch (error) {
-                // 실패한 claimed 기록은 자동 삭제하지 않음
+                // FCM 승인이 확인됐지만 sent 기록이 실패했어도
+                // 성공 요청 수에는 포함. claim은 유지하고 자동 재발송하지 않음
+                if (error?.fcmAccepted === true) {
+                    stats.acceptedByFCM++;
+                }
                 stats.errors++;
 
                 console.error(
-                    '발송 또는 상태 기록 실패:',
+                    'FCM 결과 또는 기록 확인 필요:',
                     error.code || error.message
                 );
             }
