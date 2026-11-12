@@ -19,6 +19,12 @@ const {
     moboAttendanceStillDue
 } = require('./mobo-live-guard.cjs');
 
+const {
+    moboValidateKind,
+    moboAssertExplicitLiveKind,
+    moboIsSelectedScheduleItem
+} = require('./mobo-dispatch-kind.cjs');
+
 // ==========================================
 // MoBo QA-044E-3C
 // 자동 알림 대상 계산 + 중복 방지 + 발송
@@ -38,9 +44,7 @@ const PREVIEW_CLOCK = process.env.MOBO_PREVIEW_CLOCK || 'NOW';
 const NOTIFICATION_KIND =
     process.env.MOBO_AUTO_KIND || 'SCHEDULE';
 
-if (!['SCHEDULE', 'ATTENDANCE'].includes(NOTIFICATION_KIND)) {
-    throw new Error('올바르지 않은 발송 종류입니다.');
-}
+moboValidateKind(NOTIFICATION_KIND);
 if (![
     'NOW',
     'TODAY_20_05',
@@ -204,6 +208,9 @@ async function main() {
 
 
     if (MODE === 'LIVE') {
+        // QA-046D-6 | 하나의 LIVE 실행에서 알림 종류 하나만 허용
+        moboAssertExplicitLiveKind(MODE, NOTIFICATION_KIND);
+
         if (process.env.MOBO_AUTO_LIVE_CONFIRM !== 'YES') {
             throw new Error('LIVE 발송 확인 설정이 없습니다.');
         }
@@ -843,8 +850,12 @@ async function main() {
 
     // 기존 연재·재화 LIVE 발송 경로 유지
     
-    // 기존 연재·재화 LIVE 발송 경로 유지
+    // QA-046D-6 | 명시적으로 선택한 알림 종류만 LIVE 발송
     for (const item of candidates) {
+        if (!moboIsSelectedScheduleItem(item.kind, NOTIFICATION_KIND)) {
+            continue;
+        }
+
         try {
             // 발송 직전 구독·일정 상태 다시 확인
             const [subDoc, scheduleDoc] = await Promise.all([
