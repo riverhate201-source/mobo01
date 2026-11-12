@@ -151,9 +151,28 @@ jobs:
           node --check scripts/mobo-auto-send-result.cjs
           node scripts/mobo-auto-send-result.cjs
 
+      - name: Check delivery claim audit (memory only)
+        run: |
+          node --check scripts/mobo-auto-claim-audit.cjs
+          node scripts/mobo-auto-claim-audit.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
+
+      # QA-046D-13 | QA Galaxy claim records: today/yesterday, read only
+      # No UID/token/hashed claim key in logs. No writes, deletes or retry.
+      - name: Audit recent QA delivery claims (read only)
+        if: github.event_name == 'push'
+        env:
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
+          MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_QA_GALAXY_TEST_UID }}
+          MOBO_CLAIM_AUDIT_MODE: READ_ONLY
+          MOBO_AUTO_MODE: PREVIEW
+          MOBO_AUTO_LIVE_CONFIRM: 'NO'
+        run: |
+          test "$GITHUB_REF" = "refs/heads/staging"
+          node scripts/mobo-auto-claim-audit.cjs --qa-read
 
       # QA-046D-4 | GitHub staging push: enforced PREVIEW-only, QA Galaxy UID
       - name: Auto PREVIEW after staging QA commit (no push sent)
