@@ -30,13 +30,23 @@ function checkDeploymentStatus({
     }
 
     // 현재 staging 자동 QA 안전장치가 없어졌다면 CI 자체가 실패해야 한다.
+    const autoPreview = workflow.split(
+        '      - name: Auto PREVIEW after staging QA commit (no push sent)'
+    )[1]?.split('\n      - name:')[0] ?? '';
+    const qaAudit = workflow.split(
+        '      - name: Audit recent QA delivery claims (read only)'
+    )[1]?.split('\n      - name:')[0] ?? '';
     const guardResults = {
         stagingRef: ref === 'refs/heads/staging',
         stagingOnlyJob: workflow.includes(REQUIRED_STAGING_GUARDS[0]),
         readOnlyActionToken: workflow.includes(REQUIRED_STAGING_GUARDS[1]),
-        previewOnlyAutoJob: workflow.includes('if: github.event_name == \'push\'') &&
-            workflow.includes('MOBO_AUTO_MODE: PREVIEW') &&
-            workflow.includes("MOBO_AUTO_LIVE_CONFIRM: 'NO'"),
+        previewOnlyAutoJob: autoPreview.includes("if: github.event_name == 'push'") &&
+            autoPreview.includes('MOBO_AUTO_MODE: PREVIEW') &&
+            autoPreview.includes("MOBO_AUTO_LIVE_CONFIRM: 'NO'"),
+        readOnlyClaimAudit: qaAudit.includes("if: github.event_name == 'push'") &&
+            qaAudit.includes('MOBO_AUTO_MODE: PREVIEW') &&
+            qaAudit.includes("MOBO_AUTO_LIVE_CONFIRM: 'NO'"),
+        noLiteralLiveMode: !/MOBO_AUTO_MODE:\s*LIVE\s*$/m.test(workflow),
         manualLiveClosed: (
             (workflow.match(/inputs\.run_mode == 'PREVIEW'/g) || []).length >= 2 &&
             (workflow.match(/inputs\.live_confirm == 'NO'/g) || []).length >= 2 &&
