@@ -14,6 +14,7 @@ on:
       - 'scripts/mobo-push-dedupe.cjs'
       - 'scripts/mobo-live-guard.cjs'
       - 'scripts/mobo-dispatch-kind.cjs'
+      - 'scripts/mobo-scheduler-tick-check.cjs'
       - '.github/workflows/mobo-auto-pc-test.yml'
   workflow_dispatch:
     inputs:
@@ -114,6 +115,11 @@ jobs:
         run: |
           node --check scripts/mobo-dispatch-kind.cjs
           node scripts/mobo-dispatch-kind.cjs
+
+      - name: Check runner UTC KST cadence and delayed starts (memory only)
+        run: |
+          node --check scripts/mobo-scheduler-tick-check.cjs
+          node scripts/mobo-scheduler-tick-check.cjs
 
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
