@@ -246,6 +246,11 @@ jobs:
           node --check scripts/mobo-auto-qa-site-boundary.cjs
           node scripts/mobo-auto-qa-site-boundary.cjs
 
+      - name: Verify independent QA Netlify runtime identity (offline)
+        run: |
+          node --check scripts/mobo-auto-netlify-runtime-identity.cjs
+          node scripts/mobo-auto-netlify-runtime-identity.cjs
+
       - name: Check QA Netlify site setup readiness and safe staging config (offline)
         run: |
           node --check scripts/mobo-auto-site-setup-readiness.cjs
