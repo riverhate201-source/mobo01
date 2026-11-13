@@ -179,6 +179,7 @@ function fakeDB(env, waitFor=null) {
                             reads.push(name);
                             if (waitFor) await waitFor;
                             return {
+                                id:uid,
                                 exists:true,
                                 data:()=>name==='pushSchedules'?
                                     schedule:sub
