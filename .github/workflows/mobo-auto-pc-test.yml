@@ -226,6 +226,11 @@ jobs:
           node --check scripts/mobo-auto-legacy-migration-contract.cjs
           node scripts/mobo-auto-legacy-migration-contract.cjs
 
+      - name: Verify isolated Firestore write-probe contract (memory only)
+        run: |
+          node --check scripts/mobo-auto-write-probe-contract.cjs
+          node scripts/mobo-auto-write-probe-contract.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
