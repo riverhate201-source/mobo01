@@ -206,6 +206,11 @@ jobs:
           node --check scripts/mobo-auto-cross-instance-budget.cjs
           node scripts/mobo-auto-cross-instance-budget.cjs
 
+      - name: Check checkpoint transaction fencing vs expired owners (memory only)
+        run: |
+          node --check scripts/mobo-auto-fenced-checkpoint.cjs
+          node scripts/mobo-auto-fenced-checkpoint.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
