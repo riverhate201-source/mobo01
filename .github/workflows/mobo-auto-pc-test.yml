@@ -4,7 +4,7 @@ name: MoBo Push - Auto PC Test
 
 on:
   # QA-046D-4 | staging QA code commit -> automatic PREVIEW-only checks
-  # Not scheduled; no FCM send. QA-28 permits one isolated temporary write probe.
+  # Not a scheduled push. No FCM send or Firestore writes.
   push:
     branches:
       - staging
@@ -351,22 +351,4 @@ jobs:
           MOBO_PREVIEW_CLOCK: ${{ inputs.preview_clock }}
           MOBO_AUTO_LIVE_CONFIRM: ${{ inputs.live_confirm }}
         run: node scripts/mobo-auto-dispatch.cjs
-
-      # QA-046D-28 | EXPLICIT USER APPROVAL: one unique isolated QA probe.
-      # Executes only on this exact staging commit, first attempt, never cron.
-      # After verification this temporary step will be removed.
-      - name: Approved QA Firebase two-document write and cleanup (ONE SHOT)
-        if: >-
-          ${{ github.event_name == 'push' && github.run_attempt == 1 && github.event.head_commit.message == 'QA-046D-28: approved isolated QA Firebase write/delete once' }}
-        env:
-          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
-          MOBO_QA_WRITE_PROBE_MODE: ISOLATED_WRITE_ONCE
-          MOBO_QA_WRITE_PROBE_APPROVAL: QA-046D-28
-          MOBO_AUTO_MODE: PREVIEW
-          MOBO_AUTO_LIVE_CONFIRM: 'NO'
-        run: |
-          test "$GITHUB_REF" = "refs/heads/staging"
-          test "$GITHUB_RUN_ATTEMPT" = "1"
-          test "$(git log -1 --pretty=%s)" = "QA-046D-28: approved isolated QA Firebase write/delete once"
-          node scripts/mobo-auto-remote-write-once.cjs --approved-qa-write
 
