@@ -267,7 +267,7 @@ body.dark-mode .nav-content {
 
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    justify-content: right;
     flex-shrink: 0;
 }
 
