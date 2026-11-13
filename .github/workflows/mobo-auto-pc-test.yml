@@ -216,9 +216,35 @@ jobs:
           node --check scripts/mobo-auto-runtime-preflight.cjs
           node scripts/mobo-auto-runtime-preflight.cjs
 
+      - name: Check scoped Firestore read-only transaction contract (memory only)
+        run: |
+          node --check scripts/mobo-auto-readonly-transaction.cjs
+          node scripts/mobo-auto-readonly-transaction.cjs
+
+      - name: Check safe legacy manual workflow alternatives (memory only)
+        run: |
+          node --check scripts/mobo-auto-legacy-migration-contract.cjs
+          node scripts/mobo-auto-legacy-migration-contract.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
+
+      # QA-046D-26 | scoped QA Firestore read-only transaction; no writes
+      - name: Verify QA Firebase read-only transaction on four documents
+        if: github.event_name == 'push'
+        env:
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
+          MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_QA_GALAXY_TEST_UID }}
+          MOBO_NETLIFY_QA_PREVIEW: 'YES'
+          MOBO_AUTO_MODE: PREVIEW
+          MOBO_AUTO_KIND: SCHEDULE
+          MOBO_PREVIEW_CLOCK: NOW
+          MOBO_AUTO_LIVE_CONFIRM: 'NO'
+          MOBO_QA_TRANSACTION_MODE: READ_ONLY
+        run: |
+          test "$GITHUB_REF" = "refs/heads/staging"
+          node scripts/mobo-auto-readonly-transaction.cjs --qa-read
 
       # QA-046D-21 | Live QA Firebase read only, specifically one QA UID
       - name: Read scoped QA Firebase through server PREVIEW entrypoint
