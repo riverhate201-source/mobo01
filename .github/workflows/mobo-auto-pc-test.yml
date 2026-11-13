@@ -201,6 +201,11 @@ jobs:
           node --check scripts/mobo-auto-scheduled-preview-guard.cjs
           node scripts/mobo-auto-scheduled-preview-guard.cjs
 
+      - name: Check cross-instance lease takeover and bounded batch resume (memory only)
+        run: |
+          node --check scripts/mobo-auto-cross-instance-budget.cjs
+          node scripts/mobo-auto-cross-instance-budget.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
