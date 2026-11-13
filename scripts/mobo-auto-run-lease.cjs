@@ -194,7 +194,9 @@ async function moboWithRunLease(lease, scope, run, owner = crypto.randomUUID()) 
                 throw new Error('QA 실행 잠금 소유권 상실: 중단');
             }
         };
-        result = await run(verify);
+        // QA-046D-24 | 동일한 소유 토큰을 영속 체크포인트 트랜잭션에도 전달.
+        // 기존 단일 인자 콜백과 호환되는 선택적 두 번째 인자.
+        result = await run(verify, token);
         await verify();
     } catch (error) {
         failed = error;
