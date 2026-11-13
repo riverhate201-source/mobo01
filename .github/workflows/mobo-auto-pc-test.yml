@@ -211,6 +211,11 @@ jobs:
           node --check scripts/mobo-auto-fenced-checkpoint.cjs
           node scripts/mobo-auto-fenced-checkpoint.cjs
 
+      - name: Check QA runtime environment and legacy workflow risks (static)
+        run: |
+          node --check scripts/mobo-auto-runtime-preflight.cjs
+          node scripts/mobo-auto-runtime-preflight.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
