@@ -356,7 +356,8 @@ jobs:
       # Executes only on this exact staging commit, first attempt, never cron.
       # After verification this temporary step will be removed.
       - name: Approved QA Firebase two-document write and cleanup (ONE SHOT)
-        if: ${{ github.event_name == 'push' && github.run_attempt == 1 && github.event.head_commit.message == 'QA-046D-28: approved isolated QA Firebase write/delete once' }}
+        if: >-
+          ${{ github.event_name == 'push' && github.run_attempt == 1 && github.event.head_commit.message == 'QA-046D-28: approved isolated QA Firebase write/delete once' }}
         env:
           MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
           MOBO_QA_WRITE_PROBE_MODE: ISOLATED_WRITE_ONCE
