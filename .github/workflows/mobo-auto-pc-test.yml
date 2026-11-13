@@ -196,6 +196,11 @@ jobs:
           node --check scripts/mobo-auto-preview-runtime.cjs
           node scripts/mobo-auto-preview-runtime.cjs
 
+      - name: Check scheduled PREVIEW timing and overlapping invocations (memory only)
+        run: |
+          node --check scripts/mobo-auto-scheduled-preview-guard.cjs
+          node scripts/mobo-auto-scheduled-preview-guard.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
