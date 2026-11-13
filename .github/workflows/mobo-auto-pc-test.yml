@@ -191,9 +191,29 @@ jobs:
           node --check scripts/mobo-auto-release-gate.cjs
           node scripts/mobo-auto-release-gate.cjs
 
+      - name: Check scoped server-to-Netlify PREVIEW contract (memory only)
+        run: |
+          node --check scripts/mobo-auto-preview-runtime.cjs
+          node scripts/mobo-auto-preview-runtime.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
+
+      # QA-046D-21 | Live QA Firebase read only, specifically one QA UID
+      - name: Read scoped QA Firebase through server PREVIEW entrypoint
+        if: github.event_name == 'push'
+        env:
+          MOBO_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.MOBO_QA_FIREBASE_SERVICE_ACCOUNT }}
+          MOBO_AUTO_TEST_UID: ${{ secrets.MOBO_QA_GALAXY_TEST_UID }}
+          MOBO_NETLIFY_QA_PREVIEW: 'YES'
+          MOBO_AUTO_MODE: PREVIEW
+          MOBO_AUTO_KIND: SCHEDULE
+          MOBO_PREVIEW_CLOCK: NOW
+          MOBO_AUTO_LIVE_CONFIRM: 'NO'
+        run: |
+          test "$GITHUB_REF" = "refs/heads/staging"
+          node scripts/mobo-auto-preview-runtime.cjs --qa-read
 
       # QA-046D-13 | QA Galaxy claim records: today/yesterday, read only
       # No UID/token/hashed claim key in logs. No writes, deletes or retry.
