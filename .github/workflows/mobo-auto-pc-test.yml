@@ -251,6 +251,11 @@ jobs:
           node --check scripts/mobo-auto-netlify-runtime-identity.cjs
           node scripts/mobo-auto-netlify-runtime-identity.cjs
 
+      - name: Check reviewed QA Netlify five-minute read-only function contract (offline)
+        run: |
+          node --check scripts/mobo-auto-netlify-readonly-deploy-contract.cjs
+          node scripts/mobo-auto-netlify-readonly-deploy-contract.cjs
+
       - name: Check QA Netlify site setup readiness and safe staging config (offline)
         run: |
           node --check scripts/mobo-auto-site-setup-readiness.cjs

@@ -1,0 +1,10 @@
+{
+  "name": "mobo-qa-netlify-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Isolated QA-only scheduled Firestore read preview",
+  "dependencies": {
+    "firebase-admin": "13.10.0"
+  }
+}
