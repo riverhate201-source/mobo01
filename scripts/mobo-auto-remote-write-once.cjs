@@ -1,16 +1,12 @@
 'use strict';
 
-// QA-046D-28 | 승인된 단 한 번의 QA Firebase 쓰기 검증 진입점.
-// 기본 실행은 무원격 메모리 preflight. --approved-qa-write에서만 원격 호출.
-// qaSchedulerWriteProbes/<random UUID>/{leases,checkpoints}/<hashed tick>
-// 경로의 두 QA 실험 문서만 생성/삭제. 실제 앱 구독/일정/claim/FCM은 미접근.
+// QA-046D-28 | one-shot QA Firestore probe COMPLETED.
+// 승인된 1회 실행 및 문서 2개 삭제 검증 후, 이 경로는 영구 비활성.
+// 현재 파일은 memory-only verification; Firebase SDK를 import하지 않음.
 const assert = require('node:assert/strict');
-const crypto = require('node:crypto');
-const {moboCheckpointScope, moboRunResumableBatch} =
+const {moboCheckpointScope} =
     require('./mobo-auto-resume-checkpoint.cjs');
 const {moboKSTDate} = require('./mobo-scheduler-clock.cjs');
-const {moboRunIsolatedWriteProbe} =
-    require('./mobo-auto-write-probe-contract.cjs');
 
 const QA_PROJECT = 'mobo-qa-2026';
 const APPROVAL = 'QA-046D-28';
@@ -95,6 +91,7 @@ function runSelfTest() {
         );
     }
     assert.ok(APPROVED_COMMIT_SUBJECT.startsWith(APPROVAL));
+    assert.throws(moboRejectRepeatRemoteWrite, /재실행 금지/);
     const today = Date.parse('2026-11-13T00:01:00+09:00');
     const scope = moboProbeScopeAt(today);
     assert.ok(scope.includes('|2026-11-13|serial|'));
@@ -104,51 +101,20 @@ function runSelfTest() {
     console.log('QA-046D-28 · 원격 쓰기 사전 검증 PASS (메모리만)');
 }
 
-async function runApprovedQAWrite() {
-    // Must validate BEFORE loading Firebase Admin SDK or reading credentials
-    // into any output, including invalid-config errors.
-    const credentials = moboValidateApprovedQAWriteEnvironment(process.env);
-    const {initializeApp, cert} = require('firebase-admin/app');
-    const {getFirestore} = require('firebase-admin/firestore');
-    const app = initializeApp({
-        credential: cert(credentials),
-        projectId: QA_PROJECT
-    }, 'mobo-qa-28-isolated-write');
-    try {
-        const result = await moboRunIsolatedWriteProbe({
-            db: getFirestore(app),
-            projectId: QA_PROJECT,
-            runId: crypto.randomUUID(),
-            scope: moboProbeScopeAt(Date.now()),
-            writesEnabled: true
-        });
-        assert.equal(result.leaseTested, true);
-        assert.equal(result.fencedCheckpointTested, true);
-        assert.equal(result.deletedDocs, 2);
-        assert.equal(result.cleaned, true);
-        console.log('QA-046D-28 · QA Firebase 한정 실제 트랜잭션 PASS');
-        console.log('QA 실험 문서 생성: 2개 (잠금/체크포인트)');
-        console.log('QA 실험 문서 삭제 확인: 2개');
-        console.log('실서비스 사용자 문서 접근·FCM 발송·Netlify 배포: 없음');
-    } finally {
-        await app.delete();
-    }
+// The approved write has already run successfully once. Any subsequent
+// --approved-qa-write invocation is rejected without accessing Firebase.
+function moboRejectRepeatRemoteWrite() {
+    throw new Error('QA-046D-28 완료: 원격 쓰기 재실행 금지');
 }
 
 if (require.main === module) {
     if (process.argv.includes('--approved-qa-write')) {
-        runApprovedQAWrite().catch(error => {
-            const message = String(error?.message ?? '');
-            const cleanupProblem = message.includes('정리') ||
-                message.includes('cleanup') ||
-                error instanceof AggregateError;
-            console.error('QA-046D-28 실제 Firebase 검사 실패:',
-                cleanupProblem
-                    ? '실험 기록 정리 상태 확인 필요'
-                    : 'QA 실험 트랜잭션 오류 — 관련 기록 확인 필요');
-            console.log('오류 상황에서도 본 서비스 데이터/FCM 사용 없음');
+        try {
+            moboRejectRepeatRemoteWrite();
+        } catch {
+            console.error('QA-046D-28 완료: 원격 쓰기 재실행 차단');
             process.exitCode = 1;
-        });
+        }
     } else {
         try {
             runSelfTest();
