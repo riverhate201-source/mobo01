@@ -246,6 +246,11 @@ jobs:
           node --check scripts/mobo-auto-qa-site-boundary.cjs
           node scripts/mobo-auto-qa-site-boundary.cjs
 
+      - name: Check QA Netlify site setup readiness and safe staging config (offline)
+        run: |
+          node --check scripts/mobo-auto-site-setup-readiness.cjs
+          node scripts/mobo-auto-site-setup-readiness.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
