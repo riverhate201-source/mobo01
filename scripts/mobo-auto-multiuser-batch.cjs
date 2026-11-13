@@ -118,6 +118,12 @@ async function moboRunBoundedBatch(db, visit, opts = {}, clock = Date.now) {
         );
         if (pageError !== null) throw pageError;
 
+        // QA-046D-23 | 마지막 워커가 종료되는 순간에도 예산 재확인.
+        // 마지막 항목 처리 중 시간초과 시 완료된 페이지로 기록하면 안 됨.
+        if (clock() >= deadline) {
+            throw new Error('QA 배치 시간 초과: 페이지 미확정');
+        }
+
         // QA-046D-16 | 페이지 내 모든 작업이 성공한 뒤에만
         // 외부 체크포인트 저장 콜백 실행. 실패 시 다음 페이지로 진행 금지.
         // 저장 계층(향후 Firestore)은 이 배치 함수 밖에서 주입.
