@@ -97,12 +97,12 @@ headers: {
 },
 
             notification: {
-                icon: 'https://staging--mobo-demo.netlify.app/icon.png',
-                badge: 'https://staging--mobo-demo.netlify.app/notification-badge.png'
+                icon: 'https://mobo-push-qa.netlify.app/icon.png',
+                badge: 'https://mobo-push-qa.netlify.app/notification-badge.png'
             },
 
             fcmOptions: {
-                link: 'https://staging--mobo-demo.netlify.app/'
+                link: 'https://mobo-push-qa.netlify.app/'
             }
         }
     };
