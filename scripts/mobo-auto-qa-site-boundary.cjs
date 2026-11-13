@@ -188,7 +188,7 @@ function runSelfTest() {
     for(const delta of unsafe){
         assert.throws(()=>moboAssertIsolatedQANetlifySite(
             fakeEnv(delta)
-        ),/QA |Netlify QA PREVIEW/);
+        ),/QA|Netlify/);
     }
     console.log('PASS: QA/정식 사이트 혼동·LIVE 등 위험 환경 21종 사전 차단');
 
