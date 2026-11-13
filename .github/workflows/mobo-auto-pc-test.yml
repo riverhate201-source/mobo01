@@ -236,6 +236,11 @@ jobs:
           node --check scripts/mobo-auto-remote-write-once.cjs
           node scripts/mobo-auto-remote-write-once.cjs
 
+      - name: Check undeployed Netlify five-minute schedule handoff (memory only)
+        run: |
+          node --check scripts/mobo-auto-netlify-cutover-contract.cjs
+          node scripts/mobo-auto-netlify-cutover-contract.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
