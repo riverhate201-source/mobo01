@@ -806,7 +806,7 @@ body.dark-mode .filter-close-bottom-btn span {
     gap: 12px;
     overflow-x: auto;
     scrollbar-width: none;
-    padding: 24px 2px;
+    padding: 20px 2px;
     min-height: 180px;
     scroll-behavior: smooth;
 }
