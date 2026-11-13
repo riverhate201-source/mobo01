@@ -56,10 +56,13 @@ function moboCheckSafeScheduledPayload(payload, now) {
     }
     const parsed = Date.parse(raw);
     if (!Number.isSafeInteger(parsed) ||
-        new Date(parsed).toISOString() !==
-            new Date(raw).toISOString() ||
         parsed % FIVE_MINUTES_MS !== 0) {
         throw new Error('QA Netlify 예약 payload: 5분 경계 오류');
+    }
+    const canonical = new Date(parsed).toISOString();
+    if (raw !== canonical && raw !== canonical.replace('.000Z', 'Z')) {
+        // e.g. 2026-02-30 must not be normalized into a March tick.
+        throw new Error('QA Netlify 예약 payload: 유효하지 않은 날짜');
     }
     const context = moboNetlifyPreviewContext(now, raw);
     const decision = moboDecideScheduledPreview(context);
