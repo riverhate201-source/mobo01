@@ -8881,6 +8881,34 @@ function exportDataToFile() {
     // 기존 모보 백업 데이터는 그대로 유지
     const backupData = JSON.parse(d);
 
+
+    // QA: 플랫폼별 휴재·완결 숨김 설정도 백업에 포함
+    let savedHidePreferences = {};
+
+    try {
+        const value = JSON.parse(
+            localStorage.getItem('mobo_hide_works_plt') || '{}'
+        );
+
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+            savedHidePreferences = value;
+        }
+    } catch (error) {
+        alert('휴재·완결 숨김 설정을 읽을 수 없어 백업을 중단했어요.');
+        return;
+    }
+
+    backupData.moboHideWorks = Object.fromEntries(
+        ['lezhin', 'bomtoon', 'ridi', 'mrblue'].map(plt => [
+            plt, savedHidePreferences[plt] === true
+        ])
+    );
+
+    // 연재 플랫폼 자동 우선순위 설정도 백업
+    backupData.moboAutoPlatformPriority =
+        localStorage.getItem('moboAutoPlatformPriority') === 'true';
+
+
     backupData.moboCumulativeCalc = {
         version: 1,
         items: cumulativeItems
@@ -9097,10 +9125,29 @@ function isValidMoboBackup(data) {
         }
     }
 
+
+    // 새 백업의 플랫폼별 숨김 설정 검증
+    if (Object.prototype.hasOwnProperty.call(data, 'moboHideWorks')) {
+        const hidden = data.moboHideWorks;
+
+        if (!hidden || typeof hidden !== 'object' ||
+            Array.isArray(hidden) ||
+            !platforms.every(plt => typeof hidden[plt] === 'boolean')) {
+            return false;
+        }
+    }
+
+    // 연재 플랫폼 자동 우선순위 설정 검증
+    if (Object.prototype.hasOwnProperty.call(data, 'moboAutoPlatformPriority') &&
+        typeof data.moboAutoPlatformPriority !== 'boolean') {
+        return false;
+    }
+
     return true;
 }
 
 // 누적 계산 백업 구조 검사
+
 function isValidMoboCumBackup(data) {
     if (
         !data ||
@@ -9163,6 +9210,7 @@ function handleImport(event) {
 
     reader.onload = async function (e) {
         // 복원에 실패했을 때 되돌릴 기존 저장값
+
         const protectedKeys = [
             STORAGE_KEY,
             MOBO_CUM_KEY,
@@ -9171,8 +9219,11 @@ function handleImport(event) {
             'lastPartialDeductDate',
             'lezhinBonusExpire',
             MOBO_LAST_OPENED_KEY,
-            MOBO_RETURN_PENDING_KEY
+            MOBO_RETURN_PENDING_KEY,
+            'mobo_hide_works_plt',
+            'moboAutoPlatformPriority'
         ];
+
 
         const savedBeforeImport = new Map(
             protectedKeys.map(key => [
@@ -9275,6 +9326,25 @@ function handleImport(event) {
 
                 saveStarted = true;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(parsedData));
+
+
+                // 백업 파일의 플랫폼별 숨김 설정 복원
+                // 구버전 백업에 없으면 현재 설정 유지
+                if (Object.prototype.hasOwnProperty.call(parsedData, 'moboHideWorks')) {
+                    localStorage.setItem(
+                        'mobo_hide_works_plt',
+                        JSON.stringify(parsedData.moboHideWorks)
+                    );
+                }
+
+                // 연재 플랫폼 자동 우선순위 설정 복원
+                if (Object.prototype.hasOwnProperty.call(parsedData, 'moboAutoPlatformPriority')) {
+                    localStorage.setItem(
+                        'moboAutoPlatformPriority',
+                        String(parsedData.moboAutoPlatformPriority)
+                    );
+                }
+
 
                 // 새 백업에 누적 계산 목록이 있을 때만 복원
                 if (hasCumulativeBackup) {
