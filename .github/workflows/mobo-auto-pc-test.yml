@@ -241,6 +241,11 @@ jobs:
           node --check scripts/mobo-auto-netlify-cutover-contract.cjs
           node scripts/mobo-auto-netlify-cutover-contract.cjs
 
+      - name: Check independent QA Netlify site boundary (memory only)
+        run: |
+          node --check scripts/mobo-auto-qa-site-boundary.cjs
+          node scripts/mobo-auto-qa-site-boundary.cjs
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
