@@ -71,9 +71,13 @@ function validateCheckpointRecord(saved) {
 // 이 함수는 batch를 호출하지만 FCM/Firestore를 직접 호출하지 않는다.
 // 저장 오류가 발생하면 멈춘다. 부분 완료 작업은 영속 claim으로 중복 방지.
 async function moboRunResumableBatch({
-    db, visit, store, date, kind, tickAt, batchOptions = {}, clock = Date.now
+    db, visit, store, date, kind, tickAt, batchOptions = {}, clock = Date.now,
+    assertActive = async () => {}
 }) {
     const scope = moboCheckpointScope(date, kind, tickAt);
+    if (typeof visit !== 'function' || typeof assertActive !== 'function') {
+        throw new Error('QA 배치 작업/잠금 검증 콜백 오류');
+    }
     if (!store || typeof store.load !== 'function' ||
         typeof store.commit !== 'function' ||
         typeof store.finish !== 'function') {
@@ -83,23 +87,34 @@ async function moboRunResumableBatch({
         Object.hasOwn(batchOptions, 'onPageCommitted')) {
         throw new Error('QA 체크포인트 수동 커서 덮어쓰기 차단');
     }
+    // QA-046D-23 | 만료된 lease의 작업이 이어서 실행되는 것을 방지.
+    // 프로덕션에서는 체크포인트 쓰기와 fencing 비교를 같은 트랜잭션에
+    // 묶어야 하며, 이 검사는 그 원자적 검사를 대체하지 않음.
+    await assertActive();
     const state = validateCheckpointRecord(await store.load(scope));
     if (state.completed) {
         return { completed: true, alreadyCompleted: true, pages: 0 };
     }
 
     const result = await moboRunBoundedBatch(
-        db, visit,
+        db,
+        async doc => {
+            await assertActive();
+            await visit(doc);
+            await assertActive();
+        },
         {
             ...batchOptions,
             startAfter: state.cursor,
             onPageCommitted: async ({cursor}) => {
+                await assertActive();
                 const committed = await store.commit(scope, cursor);
                 // 다른 실행이 먼저 앞으로 진행한 경우라도 현재 작업이
                 // 완료된 것으로 착각하고 finish하지 않도록 중단
                 if (committed !== true) {
                     throw new Error('QA 체크포인트 선행 실행 충돌: 재조회 필요');
                 }
+                await assertActive();
             }
         },
         clock
@@ -107,7 +122,14 @@ async function moboRunResumableBatch({
 
     // 짧은 마지막 페이지 또는 빈 페이지까지 읽은 경우에만 tick 완료.
     // 저장 실패는 오류로 전파되어 다음 재시도에 진입하도록 한다.
-    if (result.completed) await store.finish(scope, result.cursor);
+    if (result.completed) {
+        await assertActive();
+        const saved = await store.finish(scope, result.cursor);
+        if (saved !== true) {
+            throw new Error('QA 체크포인트 완료 경쟁: 재조회 필요');
+        }
+        await assertActive();
+    }
     return {...result, alreadyCompleted: false};
 }
 
