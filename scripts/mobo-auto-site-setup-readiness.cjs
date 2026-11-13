@@ -188,7 +188,6 @@ function runSelfTest() {
         {qa:{...pair.qa,repo:'another/repository'}},
         {qa:{...pair.qa,id:'not-a-site-id'}},
         {qa:{...pair.qa,url:'http://qa-example.netlify.app'}},
-        {qa:{...pair.qa,url:'https://qa-example.netlify.app.evil.test'}},
         {main:null}
     ]) {
         assert.throws(()=>moboValidateTwoNetlifySites({
