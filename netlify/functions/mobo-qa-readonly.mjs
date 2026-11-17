@@ -11,6 +11,8 @@ const { moboProbeQASenderCredentialReadOnly } =
     require('../../scripts/mobo-auto-sender-credential-preflight.cjs');
 const { moboRunQAFcmDryRunOnNetlify } =
     require('../../scripts/mobo-qa-fcm-validate-only.cjs');
+const { moboRunOneShotGalaxyAttendanceOnNetlify } =
+    require('../../scripts/mobo-qa-attendance-one-shot.cjs');
 
 // Netlify executes only the QA site's published staging deployment.
 // This schedule invokes read-only PREVIEW. It never dispatches a push.
@@ -98,6 +100,17 @@ export default async function qaScheduledReadOnly(request) {
                 console.log('MoBo QA sender FCM validate-only', validation);
             } catch {
                 console.error('MoBo QA sender FCM validate-only FAILED (redacted)');
+            }
+        }
+        // QA-046D-41: only a specifically armed date+22:35 slot can send.
+        // Without BOTH opt-in settings this never initializes a sender.
+        if (env.MOBO_QA_ATTENDANCE_TRIAL &&
+            env.MOBO_QA_ATTENDANCE_TRIAL !== 'OFF') {
+            try {
+                const trial=await moboRunOneShotGalaxyAttendanceOnNetlify(env);
+                console.log('MoBo QA Galaxy attendance one-shot',trial);
+            } catch {
+                console.error('MoBo QA Galaxy attendance one-shot BLOCKED (redacted)');
             }
         }
     } catch {

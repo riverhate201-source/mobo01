@@ -32,6 +32,11 @@ function runSelfTest(){
     assert.ok(fn.includes('moboRunQAFcmDryRunOnNetlify(env)'));
     assert.ok(dryRun.includes('messaging.send(message, true)'));
     assert.ok(!dryRun.includes('messaging.send(message, false)'));
+    const oneShot=file('scripts/mobo-qa-attendance-one-shot.cjs');
+    assert.ok(fn.includes('moboRunOneShotGalaxyAttendanceOnNetlify(env)'));
+    assert.ok(oneShot.includes('MOBO_QA_TEST_SEND_CONFIRM'));
+    assert.ok(oneShot.includes('APPROVE\\|'));
+    assert.ok(oneShot.includes('moboQAGalaxySendOnce({'));
     const allowed=file('scripts/mobo-auto-site-setup-readiness.cjs');
     assert.ok(allowed.includes(
         "approvedQAFunction='netlify/functions/mobo-qa-readonly.mjs'"));

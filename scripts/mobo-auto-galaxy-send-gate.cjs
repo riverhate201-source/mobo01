@@ -409,6 +409,7 @@ async function runSelfTest() {
     assert.equal(deployed.includes('mobo-auto-galaxy-send-gate'),false);
     assert.equal(deployed.includes('getMessaging('),false);
     assert.equal(deployed.includes("MOBO_QA_SEND_ACTIVE"),false);
+    assert.ok(deployed.includes('moboRunOneShotGalaxyAttendanceOnNetlify(env)'));
     console.log('PASS: deployed five-minute Netlify function remains read-only');
     console.log('QA-046D-36 PASS: no real Firestore writes or FCM sends');
 }

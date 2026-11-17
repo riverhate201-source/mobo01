@@ -26,6 +26,12 @@ function audit(repoFiles,entry,workflow,send,preflight){
         "env.MOBO_QA_FCM_VALIDATE_ONLY === 'YES'") &&
         entry.includes('moboRunQAFcmDryRunOnNetlify(env)'),
         'FCM_VALIDATE_ONLY_GATE_MISSING');
+    // A scheduled sender route is allowed only behind the reviewed
+    // one-date/one-five-minute-slot, two-key QA Galaxy approval gate.
+    requireSafe(entry.includes('moboRunOneShotGalaxyAttendanceOnNetlify(env)') &&
+        entry.includes("env.MOBO_QA_ATTENDANCE_TRIAL !== 'OFF'") &&
+        !entry.includes('getMessaging('),
+        'UNREVIEWED_GALAXY_AUTOMATED_SENDER');
     requireSafe(entry.includes('moboCreateUndeployedQAScheduleHandler({'),
         'MISSING_READ_ONLY_PREVIEW');
     for(const forbidden of [

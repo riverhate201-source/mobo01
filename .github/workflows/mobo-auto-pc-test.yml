@@ -251,6 +251,11 @@ jobs:
           node --check scripts/mobo-auto-netlify-runtime-identity.cjs
           node scripts/mobo-auto-netlify-runtime-identity.cjs
 
+      - name: Verify one-slot QA Galaxy attendance send gate (memory only)
+        run: |
+          node --check scripts/mobo-qa-attendance-one-shot.cjs
+          node scripts/mobo-qa-attendance-one-shot.cjs
+
       - name: Verify QA FCM validate-only dry run (memory only)
         run: |
           node --check scripts/mobo-qa-fcm-validate-only.cjs
