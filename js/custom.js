@@ -537,6 +537,67 @@ function setAddMode(mode) {
 const MOBO_LAST_OPENED_KEY = 'moboReturnLastOpenedAt';
 const MOBO_RETURN_PENDING_KEY = 'moboReturnPendingDays';
 
+
+const MOBO_RETURN_LEGACY_CHECK_KEY = 'moboReturnLegacyCheckedV1';
+const MOBO_RETURN_LEGACY_SOURCE_KEY = 'moboReturnFromOldSettlement';
+
+// 구버전 사용자의 오래된 미정산 내역을 최초 한 번 확인
+function checkMoboLegacySettlementOnce() {
+    if (
+        localStorage.getItem(MOBO_RETURN_LEGACY_CHECK_KEY) === '1'
+    ) return;
+
+    const pending = Number(
+        localStorage.getItem(MOBO_RETURN_PENDING_KEY)
+    );
+
+    // 기존 복귀 안내가 없을 때만 호환성 검사
+    if (!Number.isSafeInteger(pending) || pending < 14) {
+        const last = localStorage.getItem('lastCheckDate');
+        const today = formatDate(getWebtoonDate());
+
+        if (
+            typeof last === 'string' &&
+            /^\d{4}-\d{2}-\d{2}$/.test(last)
+        ) {
+            const oldMs = Date.parse(last + 'T00:00:00Z');
+            const todayMs = Date.parse(today + 'T00:00:00Z');
+
+            if (
+                Number.isFinite(oldMs) &&
+                Number.isFinite(todayMs) &&
+                new Date(oldMs).toISOString().slice(0, 10) === last &&
+                oldMs <= todayMs
+            ) {
+                const days = Math.floor(
+                    (todayMs - oldMs) / 86400000
+                );
+
+                if (days >= 14) {
+                    localStorage.setItem(
+                        MOBO_RETURN_PENDING_KEY,
+                        String(days)
+                    );
+
+                    // 실제 미접속 기간이 아닌
+                    // 마지막 정산 기준일에서 계산한 기간
+                    localStorage.setItem(
+                        MOBO_RETURN_LEGACY_SOURCE_KEY,
+                        '1'
+                    );
+                }
+            }
+        }
+    }
+
+    // 다시 실행해도 오래된 정산을 반복 안내하지 않음
+    localStorage.setItem(
+        MOBO_RETURN_LEGACY_CHECK_KEY,
+        '1'
+    );
+}
+
+
 function checkMoboReturnVisit() {
     const now = Date.now();
 
@@ -555,13 +616,31 @@ function checkMoboReturnVisit() {
         );
     }
 
+
     // 14일 이상 미접속한 경우 복귀 안내 기록
     if (absentDays >= 14) {
-        localStorage.setItem(
-            MOBO_RETURN_PENDING_KEY,
-            String(absentDays)
+        const existingPending = Number(
+            localStorage.getItem(MOBO_RETURN_PENDING_KEY)
         );
+
+        if (
+            !Number.isSafeInteger(existingPending) ||
+            existingPending < 14
+        ) {
+            localStorage.setItem(
+                MOBO_RETURN_PENDING_KEY,
+                String(absentDays)
+            );
+
+            localStorage.removeItem(
+                MOBO_RETURN_LEGACY_SOURCE_KEY
+            );
+        }
     }
+
+    // 구버전 이용자의 미정산 기준일도 최초 한 번 확인
+    checkMoboLegacySettlementOnce();
+
 
     const pendingDays =
         Number(localStorage.getItem(MOBO_RETURN_PENDING_KEY));
@@ -577,8 +656,16 @@ function checkMoboReturnVisit() {
         return;
     }
 
-    bannerText.textContent =
-        `${pendingDays}일 만의 방문! 복귀 정리 안내를 확인해 보세요.`;
+
+    const isLegacySettlement =
+        localStorage.getItem(
+            MOBO_RETURN_LEGACY_SOURCE_KEY
+        ) === '1';
+
+    bannerText.textContent = isLegacySettlement
+        ? `마지막 정산 기준일로부터 ${pendingDays}일이 지났어요. 밀린 정산을 확인해 보세요.`
+        : `${pendingDays}일 만의 방문! 복귀 정리 안내를 확인해 보세요.`;
+
 
     banner.style.display = 'flex';
 
@@ -606,8 +693,16 @@ function openMoboReturnModal() {
     const needsSelectionGuide = days >= 20 && days < 30;
 
     // 복귀 기간 표시
-    message.textContent =
-        `${days}일 만에 모보에 돌아오셨네요!`;
+
+    const isLegacySettlement =
+        localStorage.getItem(
+            MOBO_RETURN_LEGACY_SOURCE_KEY
+        ) === '1';
+
+    message.textContent = isLegacySettlement
+        ? `마지막 정산 기준일로부터 ${days}일이 지났어요.`
+        : `${days}일 만에 모보에 돌아오셨네요!`;
+
 
     const title = document.getElementById('mobo-return-title');
     const description =
@@ -621,11 +716,15 @@ function openMoboReturnModal() {
             : '오랜만이에요!';
     }
 
+
     if (description) {
-        description.textContent = isLongReturn
-            ? '그동안 밀린 정산을 건너뛰고, 오늘부터 다시 시작할 수 있어요.'
-            : '오랜만에 돌아오셨네요. 기존 모보를 계속 이용해 보세요.';
+        description.textContent = isLegacySettlement
+            ? '이 안내는 실제 미접속 일수가 아니라 마지막 정산 기준일을 바탕으로 표시돼요.'
+            : isLongReturn
+                ? '그동안 밀린 정산을 건너뛰고, 오늘부터 다시 시작할 수 있어요.'
+                : '오랜만에 돌아오셨네요. 기존 모보를 계속 이용해 보세요.';
     }
+
 
     if (guide) {
         guide.textContent = isLongReturn
@@ -718,6 +817,7 @@ function closeMoboReturnModal() {
 // 이번 안내 숨기기: 복귀 안내 상태만 해제
 function dismissMoboReturnNotice() {
     localStorage.removeItem(MOBO_RETURN_PENDING_KEY);
+    localStorage.removeItem(MOBO_RETURN_LEGACY_SOURCE_KEY);
 
     document.getElementById('mobo-return-modal').style.display = 'none';
     document.getElementById('mobo-return-banner').style.display = 'none';
@@ -751,6 +851,7 @@ function skipMoboPastDeductions() {
     const keys = [
         'lastCheckDate',
         MOBO_RETURN_PENDING_KEY,
+        MOBO_RETURN_LEGACY_SOURCE_KEY,
         'currentWeekStr',
         'weeklySpent',
         'weeklySpentWon',
@@ -830,6 +931,7 @@ function skipMoboPastDeductions() {
         // 후속 정산 검사가 실행되도록 복귀 대기 상태 해제
         // 단, 아직 화면의 복귀 안내는 닫지 않음
         localStorage.removeItem(MOBO_RETURN_PENDING_KEY);
+        localStorage.removeItem(MOBO_RETURN_LEGACY_SOURCE_KEY);
 
         // 기존 주간 통계 및 연재 주차 갱신
         askForDeduction();
@@ -5704,7 +5806,11 @@ function saveData(silent = false) {
         lastPartialDeductDate: localStorage.getItem('lastPartialDeductDate'),
         lezhinBonusExpire: localStorage.getItem('lezhinBonusExpire'),
         moboReturnLastOpenedAt: localStorage.getItem(MOBO_LAST_OPENED_KEY),
-        moboReturnPendingDays: localStorage.getItem(MOBO_RETURN_PENDING_KEY)
+
+        moboReturnPendingDays: localStorage.getItem(MOBO_RETURN_PENDING_KEY),
+        moboReturnLegacyCheckedV1: localStorage.getItem(MOBO_RETURN_LEGACY_CHECK_KEY),
+        moboReturnFromOldSettlement: localStorage.getItem(MOBO_RETURN_LEGACY_SOURCE_KEY)
+
     };
 
     try {
@@ -9218,9 +9324,13 @@ function handleImport(event) {
             'lastCheckDate',
             'lastPartialDeductDate',
             'lezhinBonusExpire',
+
             MOBO_LAST_OPENED_KEY,
             MOBO_RETURN_PENDING_KEY,
+            MOBO_RETURN_LEGACY_CHECK_KEY,
+            MOBO_RETURN_LEGACY_SOURCE_KEY,
             'mobo_hide_works_plt',
+
             'moboAutoPlatformPriority'
         ];
 
@@ -9399,6 +9509,24 @@ function handleImport(event) {
                     Number(parsedData.moboReturnPendingDays) >= 14
                         ? parsedData.moboReturnPendingDays
                         : null);
+
+
+
+                restoreOptional(
+                    MOBO_RETURN_LEGACY_CHECK_KEY,
+                    parsedData.moboReturnLegacyCheckedV1 === '1'
+                        ? '1'
+                        : null
+                );
+
+                restoreOptional(
+                    MOBO_RETURN_LEGACY_SOURCE_KEY,
+                    parsedData.moboReturnFromOldSettlement === '1' &&
+                        Number(parsedData.moboReturnPendingDays) >= 14
+                        ? '1'
+                        : null
+                );
+
 
                 // 🚨 [유일하게 지워진 부분!] 파이어베이스 클라우드 업로드 함수 삭제 완료! 🚨
 
