@@ -314,10 +314,10 @@ async function runSelfTest() {
         cwd:root,encoding:'utf8',timeout:5000
     }).split(/\r?\n/).filter(Boolean);
     const status=moboCheckNoActiveNetlifySchedule(paths);
-    // The reviewed QA read-only scheduler now exists; release remains blocked.
-    assert.equal(status.safe,false);
-    assert.equal(status.count,1);
-    assert.ok(paths.includes('netlify/functions/mobo-qa-readonly.mjs'));
+    // Cost stop: no scheduled function remains in GitHub staging.
+    assert.equal(status.safe,true);
+    assert.equal(status.count,0);
+    assert.equal(paths.some(p=>p.startsWith('netlify/functions/')),false);
     assert.equal(status.release,'BLOCKED');
     for(const extra of [
         ['netlify/functions/qa-scheduled.mjs'],
@@ -327,10 +327,10 @@ async function runSelfTest() {
             [...paths,...extra]
         ).safe,false);
     }
-    console.log('PASS: QA 읽기 전용 예약 함수 1개 확인 및 예상 밖 신규 함수 감지');
+    console.log('PASS: Netlify 예약 함수 없음 / 예상 밖 신규 함수 감지');
 
     console.log('QA-046D-29 · Netlify 5분 예약 연결 계약 PASS');
-    console.log('QA 읽기 전용 예약 함수 등록. Firebase 쓰기·FCM·main 변경: 없음');
+    console.log('QA 예약 소스 제거. Firebase 쓰기·FCM·main 변경: 없음');
 }
 if(require.main===module) {
     runSelfTest().catch(error=>{

@@ -212,12 +212,8 @@ async function runSelfTest() {
         /FCM_FAKE_REJECTION/
     );
     const fs=require('node:fs'),path=require('node:path');
-    const host=fs.readFileSync(path.resolve(
-        __dirname,'../netlify/functions/mobo-qa-readonly.mjs'),'utf8');
-    assert.ok(host.includes("env.MOBO_QA_FCM_VALIDATE_ONLY === 'YES'"));
-    assert.ok(host.includes('moboRunQAFcmDryRunOnNetlify(env)'));
-    assert.equal(host.includes('getMessaging('),false);
-    assert.equal(host.includes('moboQAGalaxySendOnce('),false);
+    assert.equal(fs.existsSync(path.resolve(
+        __dirname,'../netlify/functions/mobo-qa-readonly.mjs')),false);
     assert.ok(fs.readFileSync(__filename,'utf8')
         .includes('messaging.send(message, true)'));
     console.log('PASS: deployed wrapper opt-in only, literal true validation');

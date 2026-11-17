@@ -8,38 +8,12 @@ const root=path.resolve(__dirname,'..');
 const src=p=>fs.readFileSync(path.join(root,p),'utf8');
 
 function audit(repoFiles,entry,workflow,send,preflight){
-    const requiredFunction='netlify/functions/mobo-qa-readonly.mjs';
     const netlify=repoFiles.filter(f=>
         f==='netlify.toml' || f.startsWith('netlify/functions/'));
     const reasons=[];
     const requireSafe=(pass,why)=>{if(!pass)reasons.push(why);};
-    requireSafe(netlify.length===1 && netlify[0]===requiredFunction,
-        'UNREVIEWED_NETLIFY_FUNCTION_OR_CONFIG');
-    requireSafe(entry.includes("schedule: '*/5 * * * *'"),
-        'MISSING_FIVE_MINUTE_SCHEDULE');
-    requireSafe(entry.includes('moboAssertQANetlifyReadOnlyConfig(env)'),
-        'MISSING_NETLIFY_QA_IDENTITY_GUARD');
-    requireSafe(entry.includes(
-        "env.MOBO_QA_SENDER_PREFLIGHT === 'AUTH_READ_ONLY'"),
-        'MISSING_EXPLICIT_AUTH_PROBE_OPT_IN');
-    requireSafe(entry.includes(
-        "env.MOBO_QA_FCM_VALIDATE_ONLY === 'YES'") &&
-        entry.includes('moboRunQAFcmDryRunOnNetlify(env)'),
-        'FCM_VALIDATE_ONLY_GATE_MISSING');
-    // A scheduled sender route is allowed only behind the reviewed
-    // one-date/one-five-minute-slot, two-key QA Galaxy approval gate.
-    requireSafe(entry.includes('moboRunOneShotGalaxyAttendanceOnNetlify(env)') &&
-        entry.includes("env.MOBO_QA_ATTENDANCE_TRIAL !== 'OFF'") &&
-        !entry.includes('getMessaging('),
-        'UNREVIEWED_GALAXY_AUTOMATED_SENDER');
-    requireSafe(entry.includes('moboCreateUndeployedQAScheduleHandler({'),
-        'MISSING_READ_ONLY_PREVIEW');
-    for(const forbidden of [
-        'getMessaging(', '.send(', '.sendEach(', '.create(', '.set(',
-        '.update(', '.delete(', 'moboQAGalaxySendOnce(',
-        'mobo-auto-galaxy-send-gate'
-    ])requireSafe(!entry.includes(forbidden),
-        'MUTATING_CODE_OR_FCM_IN_SCHEDULED_ENTRYPOINT');
+    requireSafe(netlify.length===0,'NETLIFY_FUNCTION_MUST_BE_REMOVED');
+    requireSafe(entry==='','NO_DEPLOYED_SCHEDULE_OR_ENTRYPOINT_ALLOWED');
     requireSafe(workflow.includes("if: github.ref == 'refs/heads/staging'"),
         'STAGING_BRANCH_GUARD_MISSING');
     requireSafe(workflow.includes("permissions:\n  contents: read"),
@@ -80,7 +54,7 @@ function runSelfTest(){
     const files=execFileSync('git',['ls-files'],{
         cwd:root,encoding:'utf8',timeout:5000
     }).split(/\r?\n/).filter(Boolean);
-    const entry=src('netlify/functions/mobo-qa-readonly.mjs');
+    const entry='';
     const workflow=src('.github/workflows/mobo-auto-pc-test.yml');
     const sender=src('scripts/mobo-auto-galaxy-send-gate.cjs');
     const preflight=src('scripts/mobo-auto-sender-credential-preflight.cjs');
@@ -89,7 +63,7 @@ function runSelfTest(){
     assert.equal(report.localChecksPass,true,JSON.stringify(report.reasons));
     assert.equal(report.release,'BLOCKED');
     assert.equal(report.actualAutomatedDelivery,'NOT_ENABLED');
-    console.log('PASS: staging only, exactly one read-only Netlify function');
+    console.log('PASS: no Netlify functions / cron deployed; billing-trigger removed');
     console.log('PASS: sender disabled without explicit one-Galaxy approval');
     console.log('PASS: current time rechecked before claim; QA-only links');
     console.log('PASS: sender IAM/Firebase write/FCM privileges NOT overstated');

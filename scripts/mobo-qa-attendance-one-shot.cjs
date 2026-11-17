@@ -222,15 +222,9 @@ async function runSelfTest(){
     console.log('PASS: one Galaxy attendance kind only; zero due => no delivery');
 
     const fs=require('node:fs'),path=require('node:path');
-    const entry=fs.readFileSync(path.resolve(__dirname,
-        '../netlify/functions/mobo-qa-readonly.mjs'),'utf8');
-    assert.ok(entry.includes(
-        "env.MOBO_QA_ATTENDANCE_TRIAL !== 'OFF'"));
-    assert.ok(entry.includes(
-        'moboRunOneShotGalaxyAttendanceOnNetlify(env)'));
-    assert.equal(entry.includes('getMessaging('),false);
-    assert.equal(entry.includes('.send('),false);
-    console.log('PASS: scheduled function invokes only explicit trial gate');
+    assert.equal(fs.existsSync(path.resolve(__dirname,
+        '../netlify/functions/mobo-qa-readonly.mjs')),false);
+    console.log('PASS: no deployed Netlify function; one-shot gate dormant');
     console.log('QA-046D-41 OFFLINE PASS: no FCM sends / remote Firestore writes');
 }
 if(require.main===module){

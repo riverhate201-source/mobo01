@@ -404,13 +404,9 @@ async function runSelfTest() {
 
     const fs=require('node:fs'),path=require('node:path');
     const root=path.resolve(__dirname,'..');
-    const deployed=fs.readFileSync(path.join(
-        root,'netlify/functions/mobo-qa-readonly.mjs'),'utf8');
-    assert.equal(deployed.includes('mobo-auto-galaxy-send-gate'),false);
-    assert.equal(deployed.includes('getMessaging('),false);
-    assert.equal(deployed.includes("MOBO_QA_SEND_ACTIVE"),false);
-    assert.ok(deployed.includes('moboRunOneShotGalaxyAttendanceOnNetlify(env)'));
-    console.log('PASS: deployed five-minute Netlify function remains read-only');
+    assert.equal(fs.existsSync(path.join(
+        root,'netlify/functions/mobo-qa-readonly.mjs')),false);
+    console.log('PASS: Netlify scheduled entrypoint removed; sender disabled');
     console.log('QA-046D-36 PASS: no real Firestore writes or FCM sends');
 }
 if (require.main===module) {

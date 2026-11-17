@@ -84,12 +84,9 @@ function moboReviewQARepoSetup({files, workflow, actualNetlifySites = null}) {
         if (!condition) problems.push(reason);
     };
     const activeNetlify=moboCheckNoActiveNetlifySchedule(files);
-    // The one reviewed QA-only read-only scheduler is an explicit exception.
-    // Any second Netlify function or netlify.toml still fails closed.
-    const approvedQAFunction='netlify/functions/mobo-qa-readonly.mjs';
+    // Cost-stop mode: ANY Netlify function or config fails closed.
     const unexpectedNetlify=files.filter(f=>
-        (f.startsWith('netlify/functions/') && f!==approvedQAFunction) ||
-        f==='netlify.toml'
+        f.startsWith('netlify/functions/') || f==='netlify.toml'
     );
     add(unexpectedNetlify.length===0,
         '예상하지 못한 Netlify 함수 또는 배포 설정 발견');
@@ -99,8 +96,7 @@ function moboReviewQARepoSetup({files, workflow, actualNetlifySites = null}) {
         /(?:^|\/)\.env(?:\..*)?$/.test(f) ||
         /(?:^|\/)\.netlify(?:\/|$)/.test(f) ||
         /(?:^|\/)(?:service-account|firebase-admin-key)[^/]*\.json$/i.test(f) ||
-        (/^netlify\/functions\//.test(f) &&
-            f!=='netlify/functions/mobo-qa-readonly.mjs')
+        /^netlify\/functions\//.test(f)
     );
     add(suspicious.length===0,'QA 저장소 내 민감 파일/배포 파일 점검 필요');
 
@@ -252,10 +248,10 @@ function runSelfTest() {
     assert.equal(current.codeSafety,'PASS',
         '저장소 준비 검사 실패: '+current.detectedProblems.join(', '));
     assert.equal(current.realNetlifyAccountVerified,false);
-    assert.equal(current.netlifyFunctionPresent,true);
+    assert.equal(current.netlifyFunctionPresent,false);
     assert.equal(current.release,'BLOCKED');
     console.log('PASS: 현재 GitHub staging의 배포/민감 파일·실행 범위 안전');
-    console.log('현재 상태: QA 읽기 전용 함수 등록 / 실제 Netlify 예약 실행 미검증 / LIVE BLOCKED');
+    console.log('현재 상태: QA 예약 함수 소스 제거 / Netlify 배포 반영 확인 필요 / LIVE BLOCKED');
     console.log('QA-046D-31 · Netlify QA site setup readiness PASS');
     console.log('실제 Netlify/Firebase/FCM 접속·쓰기·배포 없음');
 }

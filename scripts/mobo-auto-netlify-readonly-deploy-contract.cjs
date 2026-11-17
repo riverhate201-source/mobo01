@@ -1,53 +1,28 @@
 'use strict';
-// QA-046D-33 | static test of the ONLY permitted Netlify QA scheduler.
-// No Netlify execution, Firebase calls or live push.
+// QA-046D-42: emergency Netlify scheduled-function cost stop.
+// Static check only: no deployed Netlify functions or cron, no remote traffic.
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
+const {execFileSync}=require('node:child_process');
 const ROOT=path.resolve(__dirname,'..');
-const file=rel=>fs.readFileSync(path.join(ROOT,rel),'utf8');
-
 function runSelfTest(){
-    const fn=file('netlify/functions/mobo-qa-readonly.mjs');
-    const pkg=JSON.parse(file('package.json'));
-    assert.equal(pkg.private,true);
-    assert.equal(pkg.dependencies['firebase-admin'],'13.10.0');
-    for(const fragment of [
-        "schedule: '*/5 * * * *'",
-        'moboAssertQANetlifyReadOnlyConfig(env)',
-        'moboCheckSafeScheduledPayload(payload, Date.now())',
-        'moboCreateUndeployedQAScheduleHandler({',
-        'credential:cert(JSON.parse(env.MOBO_FIREBASE_SERVICE_ACCOUNT))',
-        "projectId:'mobo-qa-2026'",
-        "MOBO_AUTO_MODE:'PREVIEW'",
-        "MOBO_AUTO_LIVE_CONFIRM:'NO'",
-        "MOBO_QA_NETLIFY_APPROVAL:'NOT_DEPLOYED'"
-    ]) assert.ok(fn.includes(fragment),'QA schedule contract missing');
-    for(const forbidden of [
-        'getMessaging(', 'sendEach(', '.send(', '.set(', '.update(',
-        '.delete(', 'MOBO_AUTO_MODE:LIVE', "schedule: '* * * * *'"
-    ]) assert.equal(fn.includes(forbidden),false,'Unexpected LIVE/send/write code');
-    const dryRun=file('scripts/mobo-qa-fcm-validate-only.cjs');
-    assert.ok(fn.includes("env.MOBO_QA_FCM_VALIDATE_ONLY === 'YES'"));
-    assert.ok(fn.includes('moboRunQAFcmDryRunOnNetlify(env)'));
-    assert.ok(dryRun.includes('messaging.send(message, true)'));
-    assert.ok(!dryRun.includes('messaging.send(message, false)'));
-    const oneShot=file('scripts/mobo-qa-attendance-one-shot.cjs');
-    assert.ok(fn.includes('moboRunOneShotGalaxyAttendanceOnNetlify(env)'));
-    assert.ok(oneShot.includes('MOBO_QA_TEST_SEND_CONFIRM'));
-    assert.ok(oneShot.includes('APPROVE\\|'));
-    assert.ok(oneShot.includes('dispatch=moboQAGalaxySendOnce'));
-    assert.ok(oneShot.includes('await dispatch({'));
-    const allowed=file('scripts/mobo-auto-site-setup-readiness.cjs');
-    assert.ok(allowed.includes(
-        "approvedQAFunction='netlify/functions/mobo-qa-readonly.mjs'"));
-    assert.ok(allowed.includes("f==='netlify.toml'"));
-    const identity=file('scripts/mobo-auto-netlify-runtime-identity.cjs');
-    assert.ok(identity.includes('b1680059-2ea4-4120-9f29-62c4298f9ef7'));
-    assert.ok(identity.includes('mobo-qa-readonly@mobo-qa-2026.iam.gserviceaccount.com'));
-    console.log('PASS: QA 사이트·읽기 전용 서비스 계정·5분 cron 고정');
-    console.log('PASS: 예기치 않은 Netlify 함수/FCM/쓰기/LIVE 차단');
-    console.log('QA-046D-33 static PASS; 실제 Netlify 배포/5분 실행은 별도 확인 필요');
+    const paths=execFileSync('git',['ls-files'],{
+        cwd:ROOT,encoding:'utf8',timeout:5000
+    }).split(/\r?\n/).filter(Boolean);
+    const published=paths.filter(p=>p==='netlify.toml' ||
+        p.startsWith('netlify/functions/'));
+    assert.deepEqual(published,[]);
+    assert.equal(fs.existsSync(path.join(ROOT,
+        'netlify/functions/mobo-qa-readonly.mjs')),false);
+    assert.equal(fs.existsSync(path.join(ROOT,'netlify.toml')),false);
+    assert.equal(fs.existsSync(path.join(ROOT,
+        'scripts/mobo-auto-galaxy-send-gate.cjs')),true);
+    assert.equal(fs.existsSync(path.join(ROOT,
+        'scripts/mobo-qa-attendance-one-shot.cjs')),true);
+    console.log('PASS: no deployed Netlify scheduled functions');
+    console.log('PASS: QA sender modules retained but not auto-startable');
+    console.log('QA-046D-42 static PASS; confirm published Netlify deploy to stop billing');
 }
 if(require.main===module)runSelfTest();
 module.exports={runSelfTest};

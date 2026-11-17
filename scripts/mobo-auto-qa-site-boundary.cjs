@@ -204,9 +204,9 @@ function runSelfTest() {
     assert.equal(status.automatedScheduleActivated,false);
     assert.equal(status.deployAllowed,false);
     assert.equal(status.liveAllowed,false);
-    assert.ok(status.blockers.some(v=>v.includes('별도 검토')));
-    assert.ok(files.includes('netlify/functions/mobo-qa-readonly.mjs'));
-    console.log('PASS: QA 읽기 전용 예약 함수 등록 후에도 실제 실행/출시 승인 BLOCKED');
+    assert.ok(status.blockers.some(v=>v.includes('미배포')));
+    assert.equal(files.some(p=>p.startsWith('netlify/functions/')),false);
+    console.log('PASS: QA Netlify 예약 함수 제거, 실제 배포 확인 전 출시 BLOCKED');
 
     const missing=moboBuildQAIsolationReadiness({
         env:{},filePaths:files
@@ -225,7 +225,7 @@ function runSelfTest() {
     // Site ID cannot be authenticated by local process.env alone.
     console.log('QA-046D-30 · QA Netlify site boundary contract PASS');
     console.log('RELEASE BLOCKED: Netlify 실제 계정/site ID 별도 검증 전');
-    console.log('QA 예약 함수는 소스에 등록. 실제 배포 검증/FCM/Firestore 쓰기 없음');
+    console.log('QA 예약 함수 소스 제거. 실제 배포 검증/FCM/Firestore 쓰기 없음');
 }
 if (require.main === module) {
     try {
