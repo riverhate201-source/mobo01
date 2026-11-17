@@ -36,7 +36,8 @@ function runSelfTest(){
     assert.ok(fn.includes('moboRunOneShotGalaxyAttendanceOnNetlify(env)'));
     assert.ok(oneShot.includes('MOBO_QA_TEST_SEND_CONFIRM'));
     assert.ok(oneShot.includes('APPROVE\\|'));
-    assert.ok(oneShot.includes('moboQAGalaxySendOnce({'));
+    assert.ok(oneShot.includes('dispatch=moboQAGalaxySendOnce'));
+    assert.ok(oneShot.includes('await dispatch({'));
     const allowed=file('scripts/mobo-auto-site-setup-readiness.cjs');
     assert.ok(allowed.includes(
         "approvedQAFunction='netlify/functions/mobo-qa-readonly.mjs'"));
