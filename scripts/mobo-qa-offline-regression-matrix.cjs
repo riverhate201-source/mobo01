@@ -48,7 +48,7 @@ function runReturn({days,pending=null,previous=null}){
     const context={
         Date:FakeDate,localStorage,
         document:{getElementById:id=>elements.get(id)||null},
-        setTimeout:()=>0,alert:()=>{},
+        setTimeout:()=>0,checkAndShowAttendPopup:()=>{},alert:()=>{},
         askForDeduction:()=>{
             deductions++;
             elements.get('deduction-modal').style.display='flex';
