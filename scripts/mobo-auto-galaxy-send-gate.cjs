@@ -239,7 +239,7 @@ async function runSelfTest() {
                     return {
                         async get() {
                             visited.push(path);
-                            return {exists:data.has(path),data:()=>data.get(path)};
+                            return {id,exists:data.has(path),data:()=>data.get(path)};
                         },
                         async create(value) {
                             assert.equal(name,'pushDeliveryClaims');
