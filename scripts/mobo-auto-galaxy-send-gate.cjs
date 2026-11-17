@@ -174,8 +174,19 @@ async function moboQAGalaxySendOnce({env,db,send,clock=Date.now,kind}) {
         if (count < 1) return {status:'NO_LONGER_DUE',sent:0};
         extra = {count};
     }
+    // QA-046D-39: Firestore reads can be delayed. Do NOT claim/send using
+    // the clock sampled before the latest await. Recheck the actual time
+    // immediately before the atomic claim and cancel if the window expired.
+    const finalNow = clock();
+    const targetClock = kind === 'attendance'
+        ? sub.attendanceTime : sub.serialTime;
+    if (!Number.isSafeInteger(finalNow) ||
+        moboKSTDate(finalNow) !== initial.date ||
+        !moboClockDue(finalNow, targetClock, WINDOW_MS)) {
+        return {status:'WINDOW_EXPIRED_BEFORE_CLAIM',sent:0};
+    }
     const msg = moboBuildQAGalaxyMessage({token:sub.token,kind,...extra});
-    const date = moboKSTDate(justBeforeClaim);
+    const date = moboKSTDate(finalNow);
     // Atomic create: concurrent Netlify instances cannot both claim the
     // same uid+KST date+kind. Uncertain FCM outcomes never auto-retry.
     if (!await claimDeliveryOnce(db,uid,date,kind)) {
@@ -358,6 +369,38 @@ async function runSelfTest() {
     assert.equal(exp.sent,1);
     assert.equal(sends,4);
     console.log('PASS: serial/expire both due => independent kind/day claims');
+
+    // QA-046D-39 | A database delay may cross the 20-minute cutoff after
+    // the last subscription/schedule read. No claim should be created.
+    const laggedDb=fakeDB();
+    const laggedTimes=['22:35','22:35','22:35','22:51'];
+    let tick=0;
+    const lagged=await moboQAGalaxySendOnce({
+        ...opts,db:laggedDb,
+        clock:()=>kst(laggedTimes[Math.min(tick++,laggedTimes.length-1)])
+    });
+    assert.deepEqual(lagged,{
+        status:'WINDOW_EXPIRED_BEFORE_CLAIM',sent:0
+    });
+    assert.equal([...laggedDb.data.keys()].some(k=>k.startsWith(
+        'pushDeliveryClaims/')),false);
+    assert.equal(sends,4);
+    const laggedScheduleDb=fakeDB();
+    const laggedScheduleTimes=['22:05','22:05','22:05','22:21'];
+    let laggedScheduleTick=0;
+    const laggedSchedule=await moboQAGalaxySendOnce({
+        ...opts,db:laggedScheduleDb,kind:'serial',
+        env:{...env,MOBO_QA_SEND_KIND:'serial'},
+        clock:()=>kst(laggedScheduleTimes[Math.min(
+            laggedScheduleTick++,laggedScheduleTimes.length-1)])
+    });
+    assert.deepEqual(laggedSchedule,{
+        status:'WINDOW_EXPIRED_BEFORE_CLAIM',sent:0
+    });
+    assert.equal([...laggedScheduleDb.data.keys()].some(k=>k.startsWith(
+        'pushDeliveryClaims/')),false);
+    assert.equal(sends,4);
+    console.log('PASS: slow Firestore crossing window => zero FCM and zero claim');
 
     const fs=require('node:fs'),path=require('node:path');
     const root=path.resolve(__dirname,'..');
