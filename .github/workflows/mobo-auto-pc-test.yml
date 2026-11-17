@@ -251,6 +251,11 @@ jobs:
           node --check scripts/mobo-auto-netlify-runtime-identity.cjs
           node scripts/mobo-auto-netlify-runtime-identity.cjs
 
+      - name: Verify QA sender credential/OAuth preflight isolation (memory only)
+        run: |
+          node --check scripts/mobo-auto-sender-credential-preflight.cjs
+          node scripts/mobo-auto-sender-credential-preflight.cjs
+
       - name: Verify one-Galaxy QA auto-send safety gate (memory only; no FCM)
         run: |
           node --check scripts/mobo-auto-galaxy-send-gate.cjs

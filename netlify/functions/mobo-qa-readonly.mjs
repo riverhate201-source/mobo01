@@ -7,6 +7,8 @@ const { moboAssertQANetlifyReadOnlyConfig } =
     require('../../scripts/mobo-auto-netlify-runtime-identity.cjs');
 const { moboCheckSafeScheduledPayload, moboCreateUndeployedQAScheduleHandler } =
     require('../../scripts/mobo-auto-netlify-cutover-contract.cjs');
+const { moboProbeQASenderCredentialReadOnly } =
+    require('../../scripts/mobo-auto-sender-credential-preflight.cjs');
 
 // Netlify executes only the QA site's published staging deployment.
 // This schedule invokes read-only PREVIEW. It never dispatches a push.
@@ -60,6 +62,32 @@ export default async function qaScheduledReadOnly(request) {
         });
         const result = await handler({json:async () => payload});
         console.log('MoBo QA scheduled PREVIEW result', result);
+        // Optional AUTH-only QA check. No FCM, writes, or additional routes.
+        // Requires explicit Production-only flag, otherwise zero effect.
+        if (env.MOBO_QA_SENDER_PREFLIGHT === 'AUTH_READ_ONLY') {
+            try {
+                const diagnostic=await moboProbeQASenderCredentialReadOnly({
+                    env,
+                    credentialFactory:cert,
+                    dbFactory:(_sender,credential)=>{
+                        let senderApp=getApps().find(
+                            a => a.name === 'mobo-qa-sender-credential-preflight'
+                        );
+                        if (!senderApp) {
+                            senderApp=initializeApp({
+                                credential,projectId:'mobo-qa-2026'
+                            },'mobo-qa-sender-credential-preflight');
+                        }
+                        return getFirestore(senderApp);
+                    }
+                });
+                console.log('MoBo QA sender AUTH preflight', diagnostic);
+            } catch {
+                // Credential/token/UID contents are never printed.
+                // Do not fail or interrupt the original read-only QA schedule.
+                console.error('MoBo QA sender AUTH preflight FAILED (redacted)');
+            }
+        }
     } catch {
         // Never print Firebase credentials, FCM tokens, UIDs or raw responses.
         console.error('MoBo QA scheduled PREVIEW failed (redacted)');
