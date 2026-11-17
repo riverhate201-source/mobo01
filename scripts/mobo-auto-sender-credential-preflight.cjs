@@ -175,18 +175,17 @@ async function runSelfTest(){
     })),/QA_SENDER_SCOPED_DOCUMENTS_NOT_FOUND/);
     console.log('PASS: failed authentication and missing QA documents => blocked');
 
-    const deployed=require('node:fs').readFileSync(
-        require('node:path').resolve(__dirname,
-            '../netlify/functions/mobo-qa-readonly.mjs'),'utf8'
-    );
-    for(const forbidden of ['getMessaging(','.send(','.create(','.set(','.update(']){
-        assert.equal(deployed.includes(forbidden),false,
-            'No FCM/send/write is allowed in deployed scheduler');
-    }
-    assert.ok(deployed.includes("env.MOBO_QA_SENDER_PREFLIGHT === 'AUTH_READ_ONLY'"),
-        'Explicit preflight opt-in required');
-    console.log('PASS: Netlify 5-minute function stays read-only');
-    console.log('QA-046D-38 PASS: memory only; actual sender OAuth remains untested');
+    // QA-046D-43: expense-control rollback removed the Netlify entrypoint.
+    // No scheduled function can invoke this credential probe anymore.
+    const entry=require('node:path').resolve(__dirname,
+        '../netlify/functions/mobo-qa-readonly.mjs');
+    assert.equal(require('node:fs').existsSync(entry),false,
+        'Netlify scheduled credential preflight must remain disabled');
+    assert.equal(require('node:fs').existsSync(require('node:path').resolve(
+        __dirname,'../netlify.toml')),false,
+        'No Netlify cron/function may be restored implicitly');
+    console.log('PASS: sender preflight dormant, no scheduled Netlify entrypoint');
+    console.log('QA-046D-43 PASS: memory only; no remote OAuth/FCM/DB writes');
 }
 if(require.main===module){
     runSelfTest().catch(error=>{
