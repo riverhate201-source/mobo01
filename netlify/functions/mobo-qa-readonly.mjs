@@ -9,6 +9,8 @@ const { moboCheckSafeScheduledPayload, moboCreateUndeployedQAScheduleHandler } =
     require('../../scripts/mobo-auto-netlify-cutover-contract.cjs');
 const { moboProbeQASenderCredentialReadOnly } =
     require('../../scripts/mobo-auto-sender-credential-preflight.cjs');
+const { moboRunQAFcmDryRunOnNetlify } =
+    require('../../scripts/mobo-qa-fcm-validate-only.cjs');
 
 // Netlify executes only the QA site's published staging deployment.
 // This schedule invokes read-only PREVIEW. It never dispatches a push.
@@ -86,6 +88,16 @@ export default async function qaScheduledReadOnly(request) {
                 // Credential/token/UID contents are never printed.
                 // Do not fail or interrupt the original read-only QA schedule.
                 console.error('MoBo QA sender AUTH preflight FAILED (redacted)');
+            }
+        }
+        // QA-046D-40: optional FCM backend validation only.
+        // Requires explicit opt-in; does not deliver notifications or write DB.
+        if (env.MOBO_QA_FCM_VALIDATE_ONLY === 'YES') {
+            try {
+                const validation=await moboRunQAFcmDryRunOnNetlify(env);
+                console.log('MoBo QA sender FCM validate-only', validation);
+            } catch {
+                console.error('MoBo QA sender FCM validate-only FAILED (redacted)');
             }
         }
     } catch {

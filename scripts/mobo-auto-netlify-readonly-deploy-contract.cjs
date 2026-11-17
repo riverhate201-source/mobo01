@@ -27,6 +27,11 @@ function runSelfTest(){
         'getMessaging(', 'sendEach(', '.send(', '.set(', '.update(',
         '.delete(', 'MOBO_AUTO_MODE:LIVE', "schedule: '* * * * *'"
     ]) assert.equal(fn.includes(forbidden),false,'Unexpected LIVE/send/write code');
+    const dryRun=file('scripts/mobo-qa-fcm-validate-only.cjs');
+    assert.ok(fn.includes("env.MOBO_QA_FCM_VALIDATE_ONLY === 'YES'"));
+    assert.ok(fn.includes('moboRunQAFcmDryRunOnNetlify(env)'));
+    assert.ok(dryRun.includes('messaging.send(message, true)'));
+    assert.ok(!dryRun.includes('messaging.send(message, false)'));
     const allowed=file('scripts/mobo-auto-site-setup-readiness.cjs');
     assert.ok(allowed.includes(
         "approvedQAFunction='netlify/functions/mobo-qa-readonly.mjs'"));

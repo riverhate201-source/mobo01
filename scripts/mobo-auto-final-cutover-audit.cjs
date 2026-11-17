@@ -22,6 +22,10 @@ function audit(repoFiles,entry,workflow,send,preflight){
     requireSafe(entry.includes(
         "env.MOBO_QA_SENDER_PREFLIGHT === 'AUTH_READ_ONLY'"),
         'MISSING_EXPLICIT_AUTH_PROBE_OPT_IN');
+    requireSafe(entry.includes(
+        "env.MOBO_QA_FCM_VALIDATE_ONLY === 'YES'") &&
+        entry.includes('moboRunQAFcmDryRunOnNetlify(env)'),
+        'FCM_VALIDATE_ONLY_GATE_MISSING');
     requireSafe(entry.includes('moboCreateUndeployedQAScheduleHandler({'),
         'MISSING_READ_ONLY_PREVIEW');
     for(const forbidden of [

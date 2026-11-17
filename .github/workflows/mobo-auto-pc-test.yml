@@ -251,6 +251,11 @@ jobs:
           node --check scripts/mobo-auto-netlify-runtime-identity.cjs
           node scripts/mobo-auto-netlify-runtime-identity.cjs
 
+      - name: Verify QA FCM validate-only dry run (memory only)
+        run: |
+          node --check scripts/mobo-qa-fcm-validate-only.cjs
+          node scripts/mobo-qa-fcm-validate-only.cjs
+
       - name: Verify final QA galaxy cutover safety and ship-block audit (offline)
         run: |
           node --check scripts/mobo-auto-final-cutover-audit.cjs
