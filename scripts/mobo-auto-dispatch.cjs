@@ -825,13 +825,13 @@ async function main() {
                 },
                 notification: {
                     icon:
-                        'https://staging--mobo-demo.netlify.app/icon.png',
+                        'https://mobo-push-qa.netlify.app/icon.png',
                     badge:
-                        'https://staging--mobo-demo.netlify.app/notification-badge.png'
+                        'https://mobo-push-qa.netlify.app/notification-badge.png'
                 },
                 fcmOptions: {
                     link:
-                        'https://staging--mobo-demo.netlify.app/'
+                        'https://mobo-push-qa.netlify.app/'
                 }
             }
         };
@@ -913,13 +913,13 @@ async function main() {
                     },
                     notification: {
                         icon:
-                            'https://staging--mobo-demo.netlify.app/icon.png',
+                            'https://mobo-push-qa.netlify.app/icon.png',
                         badge:
-                            'https://staging--mobo-demo.netlify.app/notification-badge.png'
+                            'https://mobo-push-qa.netlify.app/notification-badge.png'
                     },
                     fcmOptions: {
                         link:
-                            'https://staging--mobo-demo.netlify.app/'
+                            'https://mobo-push-qa.netlify.app/'
                     }
                 }
             };

@@ -251,6 +251,11 @@ jobs:
           node --check scripts/mobo-auto-netlify-runtime-identity.cjs
           node scripts/mobo-auto-netlify-runtime-identity.cjs
 
+      - name: Verify one-Galaxy QA auto-send safety gate (memory only; no FCM)
+        run: |
+          node --check scripts/mobo-auto-galaxy-send-gate.cjs
+          node scripts/mobo-auto-galaxy-send-gate.cjs
+
       - name: Check reviewed QA Netlify five-minute read-only function contract (offline)
         run: |
           node --check scripts/mobo-auto-netlify-readonly-deploy-contract.cjs
