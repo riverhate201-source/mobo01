@@ -210,6 +210,11 @@ jobs:
           node --check scripts/mobo-auto-preview-runtime.cjs
           node scripts/mobo-auto-preview-runtime.cjs
 
+      - name: QA-046O fixed 22:00 / 22:30 time policy (offline)
+        run: |
+          node --check scripts/mobo-auto-fixed-time-policy.cjs
+          node scripts/mobo-auto-fixed-time-policy.cjs
+
       - name: QA-046N simulate 24h scheduled PREVIEW (offline, no cron)
         run: |
           node --check scripts/mobo-auto-qa046n-cadence-preview.cjs
