@@ -5,6 +5,7 @@ const { getMessaging } = require('firebase-admin/messaging');
 
 const { claimDeliveryOnce } = require('./mobo-push-dedupe.cjs');
 const { moboCompleteClaimedSend } = require('./mobo-auto-send-result.cjs');
+const { moboBuildSerialNotificationBody } = require('./mobo-auto-notification-text.cjs');
 const {
     moboAssertScopedUID,
     moboReadScopedSources
@@ -904,7 +905,9 @@ async function main() {
                         ? 'MoBo 연재 알림 📚'
                         : 'MoBo 재화 소멸 알림 ⏰',
                     body: isSerial
-                        ? `확인할 연재 작품 ${item.count}개가 있어요!`
+                        ? moboBuildSerialNotificationBody(
+                            item.count, item.date, sub, schedule
+                        )
                         : `${item.count}개 플랫폼의 재화 소멸 예정 내역을 확인해 주세요.`
                 },
                 webpush: {

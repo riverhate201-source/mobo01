@@ -112,6 +112,11 @@ jobs:
           node --check scripts/mobo-push-dedupe.cjs
           node scripts/mobo-push-dedupe.cjs
 
+      - name: Check opt-in serial notification titles (memory only)
+        run: |
+          node --check scripts/mobo-auto-notification-text.cjs
+          node scripts/mobo-auto-notification-text.cjs
+
       - name: Check MoBo scheduler clock
         run: |
           node --check scripts/mobo-scheduler-clock.cjs
