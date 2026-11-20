@@ -226,6 +226,12 @@ async function main() {
         // QA-046D-6 | 하나의 LIVE 실행에서 알림 종류 하나만 허용
         moboAssertExplicitLiveKind(MODE, NOTIFICATION_KIND);
 
+        // Fixed 22:00 slot combines two notifications: extra opt-in required.
+        if (NOTIFICATION_KIND === 'SERIAL_EXPIRE' &&
+            process.env.MOBO_QA_FIXED_SLOT_CONFIRM !== 'YES') {
+            throw new Error('QA 22시 통합 발송 추가 확인 설정이 없습니다.');
+        }
+
         if (process.env.MOBO_AUTO_LIVE_CONFIRM !== 'YES') {
             throw new Error('LIVE 발송 확인 설정이 없습니다.');
         }
@@ -994,7 +1000,12 @@ async function main() {
     console.log('자동 발송 작업 완료');
 }
 
-main().catch(error => {
-    console.error('QA-044E-3C 실패:', error.message);
-    process.exitCode = 1;
-});
+// Import-safe for the future scheduled entrypoint. The existing
+// GitHub CLI invocation (node scripts/mobo-auto-dispatch.cjs) is unchanged.
+if (require.main === module) {
+    main().catch(error => {
+        console.error('QA-044E-3C 실패:', error.message);
+        process.exitCode = 1;
+    });
+}
+module.exports = {runAutoDispatch: main};
