@@ -30,8 +30,22 @@ on:
           - STANDARD
           - ATTENDANCE_QA
           - SERIAL_TITLES_QA
+
+      confirm_serial_titles_send:
+        description: '작품명 SEND_ONCE 전용: 실제 갤럭시 1건 발송 승인'
+        required: true
+        default: 'NO'
+        type: choice
+        options:
+          - 'NO'
+          - 'YES'
 permissions:
   contents: read
+
+# QA 수동 테스트 동시 실행 방지 (각 실행당 최대 1회 발송)
+concurrency:
+  group: mobo-test-push-single-galaxy
+  cancel-in-progress: false
 
 jobs:
   test-notification:
@@ -50,6 +64,15 @@ jobs:
 
       - name: Check test push syntax
         run: node --check scripts/mobo-test-push.cjs
+      - name: Guard manually approved serial title delivery
+        if: ${{ inputs.message_kind == 'SERIAL_TITLES_QA' && inputs.send_mode == 'SEND_ONCE' }}
+        env:
+          APPROVAL: ${{ inputs.confirm_serial_titles_send }}
+          DEVICE: ${{ inputs.target_device }}
+        run: |
+          test "$APPROVAL" = 'YES'
+          test "$DEVICE" = 'GALAXY'
+
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
 
@@ -65,6 +88,8 @@ jobs:
           MOBO_TEST_UID: ${{ secrets.MOBO_QA_TEST_UID }}
           MOBO_SEND_MODE: ${{ inputs.send_mode }}
           MOBO_TEST_MESSAGE_KIND: ${{ inputs.message_kind }}
+          MOBO_TEST_DEVICE: ${{ inputs.target_device }}
+          MOBO_QA_TITLES_SEND_CONFIRM: ${{ inputs.confirm_serial_titles_send }}
         run: node scripts/mobo-test-push.cjs
 
       # Galaxy 테스트
@@ -75,4 +100,6 @@ jobs:
           MOBO_TEST_UID: ${{ secrets.MOBO_QA_GALAXY_TEST_UID }}
           MOBO_SEND_MODE: ${{ inputs.send_mode }}
           MOBO_TEST_MESSAGE_KIND: ${{ inputs.message_kind }}
+          MOBO_TEST_DEVICE: ${{ inputs.target_device }}
+          MOBO_QA_TITLES_SEND_CONFIRM: ${{ inputs.confirm_serial_titles_send }}
         run: node scripts/mobo-test-push.cjs
