@@ -210,6 +210,11 @@ jobs:
           node --check scripts/mobo-auto-preview-runtime.cjs
           node scripts/mobo-auto-preview-runtime.cjs
 
+      - name: QA-046N simulate 24h scheduled PREVIEW (offline, no cron)
+        run: |
+          node --check scripts/mobo-auto-qa046n-cadence-preview.cjs
+          node scripts/mobo-auto-qa046n-cadence-preview.cjs
+
       - name: Check scheduled PREVIEW timing and overlapping invocations (memory only)
         run: |
           node --check scripts/mobo-auto-scheduled-preview-guard.cjs
