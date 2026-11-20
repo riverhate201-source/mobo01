@@ -30,6 +30,10 @@ const {
 
 const { moboQAPushTargets, moboAssertQAPushTargets } =
     require('./mobo-qa-push-targets.cjs');
+const {moboSelectScopedQACredential} =
+    require('./mobo-auto-qa-sender-policy.cjs');
+const {moboAssertQANetlifyRuntimeIdentity} =
+    require('./mobo-auto-netlify-runtime-identity.cjs');
 const {
     FIXED_SERIAL_TIME,
     FIXED_ATTENDANCE_TIME,
@@ -240,29 +244,30 @@ async function main(kind = NOTIFICATION_KIND) {
         if (!/^[A-Za-z0-9_-]{8,128}$/.test(TEST_UID)) {
             throw new Error('허용된 테스트 기기 UID가 없습니다.');
         }
+        // LIVE can run only on the independent QA Netlify site.
+        moboAssertQANetlifyRuntimeIdentity(process.env);
+        if (process.env.MOBO_QA_FIXED_SEND_CONFIRM !== 'YES' ||
+            process.env.MOBO_QA_SCHEDULE_PROFILE !== 'QA_SINGLE_DEVICE_LIVE') {
+            throw new Error('QA 단일 갤럭시 LIVE 승인 설정 누락');
+        }
     }
 
-
-    const secret = process.env.MOBO_FIREBASE_SERVICE_ACCOUNT;
-
-    if (!secret) {
-        throw new Error('Firebase 인증 정보가 없습니다.');
-    }
-
-    const serviceAccount = JSON.parse(secret);
+    // PREVIEW keeps its read-only account; LIVE requires dedicated sender.
+    const serviceAccount = moboSelectScopedQACredential(process.env, MODE);
 
     if (serviceAccount.project_id !== 'mobo-qa-2026') {
         throw new Error('Firebase 프로젝트가 일치하지 않습니다.');
     }
 
-    // Netlify can reuse a warm function process; do not initialize twice.
-    if (getApps().length === 0) {
-        initializeApp({
+    // Keep QA sender separate from any previously initialized read-only app.
+    const appName = MODE === 'LIVE' ? 'mobo-qa-sender' : '[DEFAULT]';
+    let app = getApps().find(candidate => candidate.name === appName);
+    if (!app) {
+        app = initializeApp({
             credential: cert(serviceAccount)
-        });
+        }, appName);
     }
-
-    const db = getFirestore();
+    const db = getFirestore(app);
 
     // QA-046D-14 | 전체 스캔 대신 지정 UID의 2개 문서만 읽기
     const { subscriptions, schedules } =
@@ -872,7 +877,7 @@ async function main(kind = NOTIFICATION_KIND) {
             uid: TEST_UID,
             date: latest.date,
             kind: 'attendance',
-            send: () => getMessaging().send(message)
+            send: () => getMessaging(app).send(message)
         });
 
         console.log(
@@ -961,7 +966,7 @@ async function main(kind = NOTIFICATION_KIND) {
                     uid: item.uid,
                     date: item.date,
                     kind: item.kind,
-                    send: () => getMessaging().send(message)
+                    send: () => getMessaging(app).send(message)
                 });
 
                 if (outcome.fcmAccepted) stats.acceptedByFCM++;
