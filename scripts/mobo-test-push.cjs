@@ -14,7 +14,16 @@ const { moboBuildSerialNotificationBody } =
 // ==========================================
 
 
-// QA-046E-3 | 실데이터를 읽어 FCM dry-run에서만 검증할 작품명 본문 생성
+// QA-046E-3 | 실데이터를 읽어 FCM 검증 또는 명시적 수동 QA 발송에서 사용할 본문 생성
+// QA-046E-4 | 실제 수신 시험은 Galaxy + 명시적 YES만 허용.
+function moboAssertManualTitleSendGate(mode, kind, device, approval) {
+    if (kind === 'SERIAL_TITLES_QA' && mode === 'SEND_ONCE' &&
+        (device !== 'GALAXY' || approval !== 'YES')) {
+        throw new Error('작품명 실제 발송은 갤럭시 1대 승인시에만 가능해요.');
+    }
+    return true;
+}
+
 function moboBuildTitleDryRunBody(sub, schedule, now) {
     if (sub?.serialTitles !== true || sub?.serial !== true) {
         throw new Error('작품명 표시 설정을 먼저 켜야 해요.');
@@ -73,6 +82,15 @@ function moboRunTitleDryRunSelfTest() {
     assert.throws(()=>moboBuildTitleDryRunBody(
         sub,{days:[],serialTitlesByDate:{}},now),
         /예정 일정/);
+    assert.equal(moboAssertManualTitleSendGate(
+        'DRY_RUN','SERIAL_TITLES_QA','GALAXY','NO'),true);
+    assert.equal(moboAssertManualTitleSendGate(
+        'SEND_ONCE','SERIAL_TITLES_QA','GALAXY','YES'),true);
+    assert.throws(()=>moboAssertManualTitleSendGate(
+        'SEND_ONCE','SERIAL_TITLES_QA','GALAXY','NO'),/승인/);
+    assert.throws(()=>moboAssertManualTitleSendGate(
+        'SEND_ONCE','SERIAL_TITLES_QA','PC','YES'),/승인/);
+    console.log('QA-046E-4 PASS: Galaxy one-shot requires explicit YES; PC blocked');
     console.log('QA-046E-3 PASS: dry-run 3 titles, current date, OFF/empty blocked');
 }
 
@@ -92,9 +110,11 @@ async function main() {
     if (!['STANDARD', 'ATTENDANCE_QA', 'SERIAL_TITLES_QA'].includes(messageKind)) {
         throw new Error('올바르지 않은 테스트 알림 종류예요.');
     }
-    if (messageKind === 'SERIAL_TITLES_QA' && mode !== 'DRY_RUN') {
-        throw new Error('작품명 검증은 DRY_RUN에서만 허용해요.');
-    }
+    moboAssertManualTitleSendGate(
+        mode, messageKind,
+        process.env.MOBO_TEST_DEVICE,
+        process.env.MOBO_QA_TITLES_SEND_CONFIRM
+    );
 
     const serviceAccount = JSON.parse(secret);
 
@@ -229,7 +249,7 @@ if (process.argv.includes('--qa-serial-payload-self-test')) {
         'Firebase 프로젝트가 일치하지 않아요.',
         '테스트 기기 등록 문서가 없어요.',
         '테스트 기기의 알림이 활성화되지 않았어요.',
-        '작품명 검증은 DRY_RUN에서만 허용해요.',
+        '작품명 실제 발송은 갤럭시 1대 승인시에만 가능해요.',
         '작품명 검증용 일정 문서가 없어요.',
         '작품명 표시 설정을 먼저 켜야 해요.',
         '작품명 검증용 예정 일정이 없어요.',
