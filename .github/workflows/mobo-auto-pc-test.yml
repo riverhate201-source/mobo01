@@ -210,6 +210,11 @@ jobs:
           node --check scripts/mobo-auto-preview-runtime.cjs
           node scripts/mobo-auto-preview-runtime.cjs
 
+      - name: QA-046T fixed twice-daily Netlify handoff contract (offline)
+        run: |
+          node --check scripts/mobo-auto-fixed-scheduled-contract.cjs
+          node scripts/mobo-auto-fixed-scheduled-contract.cjs
+
       - name: QA-046O fixed 22:00 / 22:30 time policy (offline)
         run: |
           node --check scripts/mobo-auto-fixed-time-policy.cjs
