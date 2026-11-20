@@ -8319,9 +8319,12 @@ function getMinimumBreakReturnDate() {
     const today = getWebtoonDate();
     today.setHours(0, 0, 0, 0);
 
-    // 10일 연재: 다음 실제 연재일
+    // 10일 연재: 실제 한국 날짜 기준으로 다음 복귀 가능일 계산
     if (document.getElementById('chk-10day')?.checked) {
-        const next = getNextTenDayBreakDate(today, true);
+        const kstToday = getKSTDate();
+        kstToday.setHours(0, 0, 0, 0);
+
+        const next = getNextTenDayBreakDate(kstToday, false);
         return next ? formatDate(next) : '';
     }
 
@@ -12719,7 +12722,7 @@ function setBreakTenDay(mode, btnElement) {
     const wasEmpty = !dateInput.value;
 
     const base = wasEmpty
-        ? getNextTenDayBreakDate(getWebtoonDate(), true)
+        ? getNextTenDayBreakDate(getKSTDate(), true)
         : getBreakStartDate(dateInput, '');
 
     if (!base) {
