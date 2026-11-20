@@ -3462,8 +3462,14 @@
 
                     JSON.stringify(saved.days) ===
                     JSON.stringify(payload.days) &&
-                    JSON.stringify(saved.serialTitlesByDate || {}) ===
-                    JSON.stringify(payload.serialTitlesByDate || {}) &&
+                    JSON.stringify(
+                        Object.entries(saved.serialTitlesByDate || {})
+                            .sort(([a], [b]) => a.localeCompare(b))
+                    ) ===
+                    JSON.stringify(
+                        Object.entries(payload.serialTitlesByDate || {})
+                            .sort(([a], [b]) => a.localeCompare(b))
+                    ) &&
                     !!saved.updatedAt;
 
 
