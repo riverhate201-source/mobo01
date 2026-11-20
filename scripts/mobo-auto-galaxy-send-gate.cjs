@@ -16,6 +16,8 @@ const {claimDeliveryOnce} =
     require('./mobo-push-dedupe.cjs');
 const {moboCompleteClaimedSend} =
     require('./mobo-auto-send-result.cjs');
+const {moboBuildSerialNotificationBody} =
+    require('./mobo-auto-notification-text.cjs');
 
 const QA_ORIGIN = 'https://mobo-push-qa.netlify.app';
 const QA_SENDER = 'mobo-qa-sender@mobo-qa-2026.iam.gserviceaccount.com';
@@ -88,7 +90,7 @@ function scheduleStillDue(kind, sub, schedule, now) {
 }
 
 function moboBuildQAGalaxyMessage({token, kind, count=0,
-    missingLezhin=false, missingBomtoon=false}) {
+    missingLezhin=false, missingBomtoon=false, date, sub, schedule}) {
     if (!KINDS.includes(kind) || typeof token !== 'string' ||
         token.length < 20) throw new Error('QA_GALAXY_MESSAGE_INVALID');
     let title, body;
@@ -108,7 +110,7 @@ function moboBuildQAGalaxyMessage({token, kind, count=0,
         title = kind === 'serial' ? 'MoBo 연재 알림 📚 [QA]' :
             'MoBo 재화 소멸 알림 ⏰ [QA]';
         body = kind === 'serial' ?
-            '확인할 연재 작품 ' + count + '개가 있어요!' :
+            moboBuildSerialNotificationBody(count, date, sub, schedule) :
             count + '개 플랫폼의 재화 소멸 예정 내역을 확인해 주세요.';
     }
     return {
@@ -163,6 +165,7 @@ async function moboQAGalaxySendOnce({env,db,send,clock=Date.now,kind}) {
         return {status:'TIME_CHANGED',sent:0};
     }
     let extra = {};
+    let serialSchedule = null;
     if (kind === 'attendance') {
         const missing = attendanceStillDue(sub, justBeforeClaim);
         if (!missing) return {status:'NO_LONGER_DUE',sent:0};
@@ -173,6 +176,7 @@ async function moboQAGalaxySendOnce({env,db,send,clock=Date.now,kind}) {
         const count = scheduleStillDue(kind,sub,schedule,justBeforeClaim);
         if (count < 1) return {status:'NO_LONGER_DUE',sent:0};
         extra = {count};
+        if (kind === 'serial') serialSchedule = schedule;
     }
     // QA-046D-39: Firestore reads can be delayed. Do NOT claim/send using
     // the clock sampled before the latest await. Recheck the actual time
@@ -185,8 +189,10 @@ async function moboQAGalaxySendOnce({env,db,send,clock=Date.now,kind}) {
         !moboClockDue(finalNow, targetClock, WINDOW_MS)) {
         return {status:'WINDOW_EXPIRED_BEFORE_CLAIM',sent:0};
     }
-    const msg = moboBuildQAGalaxyMessage({token:sub.token,kind,...extra});
     const date = moboKSTDate(finalNow);
+    const msg = moboBuildQAGalaxyMessage({
+        token:sub.token,kind,date,sub,schedule:serialSchedule,...extra
+    });
     // Atomic create: concurrent Netlify instances cannot both claim the
     // same uid+KST date+kind. Uncertain FCM outcomes never auto-retry.
     if (!await claimDeliveryOnce(db,uid,date,kind)) {
@@ -369,6 +375,55 @@ async function runSelfTest() {
     assert.equal(exp.sent,1);
     assert.equal(sends,4);
     console.log('PASS: serial/expire both due => independent kind/day claims');
+
+    // QA-046E-2 | Real QA sender path uses existing opt-in formatter.
+    // Synthetic Firestore + fake sends only. Never contacts FCM.
+    const titledSchedule = {
+        ...baseSchedule,
+        days:[day+'~5~1'],
+        serialTitlesByDate:{
+            [day]:[
+                '레진 · 작품 A','봄툰 · 작품 B',
+                '리디 · 작품 C','네 번째 작품'
+            ],
+            '2026-11-18':['다른 날짜 작품']
+        }
+    };
+    const titleTestMessages = [];
+    const checkQASerial = async (sub,schedule=titledSchedule) => {
+        const outcome=await moboQAGalaxySendOnce({
+            env:{...env,MOBO_QA_SEND_KIND:'serial'},
+            db:fakeDB(sub,schedule),
+            kind:'serial',clock:()=>kst('22:05'),
+            send:async message=>titleTestMessages.push(message)
+        });
+        assert.deepEqual(outcome,{status:'FCM_ACCEPTED',sent:1});
+        return titleTestMessages.at(-1).notification.body;
+    };
+    const optInText=await checkQASerial({...baseSub,serialTitles:true});
+    assert.equal(
+        optInText,
+        '확인할 연재 작품 5개가 있어요!\n' +
+        '레진 · 작품 A\n봄툰 · 작품 B\n리디 · 작품 C\n' +
+        '외 2개 작품은 모보에서 확인해 주세요.'
+    );
+    assert.equal(optInText.includes('네 번째 작품'),false);
+    assert.equal(optInText.includes('다른 날짜 작품'),false);
+    const optOutText=await checkQASerial({...baseSub,serialTitles:false});
+    assert.equal(optOutText,'확인할 연재 작품 5개가 있어요!');
+    const legacyText=await checkQASerial(
+        {...baseSub,serialTitles:true},
+        {...baseSchedule,days:[day+'~5~1']}
+    );
+    assert.equal(legacyText,'확인할 연재 작품 5개가 있어요!');
+    assert.equal(
+        moboBuildQAGalaxyMessage({
+            token:baseSub.token,kind:'expire',count:1
+        }).notification.body,
+        '1개 플랫폼의 재화 소멸 예정 내역을 확인해 주세요.'
+    );
+    console.log('QA-046E-2 PASS: Galaxy opt-in 3 titles, OFF/legacy fallback');
+
 
     // QA-046D-39 | A database delay may cross the 20-minute cutoff after
     // the last subscription/schedule read. No claim should be created.
