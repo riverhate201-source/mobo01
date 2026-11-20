@@ -29,6 +29,7 @@ on:
         options:
           - STANDARD
           - ATTENDANCE_QA
+          - SERIAL_TITLES_QA
 permissions:
   contents: read
 
@@ -51,6 +52,9 @@ jobs:
         run: node --check scripts/mobo-test-push.cjs
       - name: Install Firebase Admin SDK
         run: npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
+
+      - name: Check serial title dry-run payload (offline, no FCM)
+        run: node scripts/mobo-test-push.cjs --qa-serial-payload-self-test
 
       
       # PC 테스트
