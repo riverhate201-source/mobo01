@@ -112,6 +112,9 @@ jobs:
           node --check scripts/mobo-push-dedupe.cjs
           node scripts/mobo-push-dedupe.cjs
 
+      - name: Check QA push link/icon/badge target (offline)
+        run: node scripts/mobo-qa-push-targets.cjs
+
       - name: Check opt-in serial notification titles (memory only)
         run: |
           node --check scripts/mobo-auto-notification-text.cjs
