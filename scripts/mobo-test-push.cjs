@@ -7,6 +7,11 @@ const assert = require('node:assert/strict');
 const { moboBuildSerialNotificationBody } =
     require('./mobo-auto-notification-text.cjs');
 
+const { moboQAPushTargets, moboAssertQAPushTargets } =
+    require('./mobo-qa-push-targets.cjs');
+const QA_PUSH_TARGETS = moboQAPushTargets();
+moboAssertQAPushTargets(QA_PUSH_TARGETS);
+
 // ==========================================
 // MoBo QA-044E-2 | 지정 기기 테스트 푸시
 // DRY_RUN: 실제 알림 발송 없음
@@ -202,12 +207,12 @@ headers: {
 },
 
             notification: {
-                icon: 'https://mobo-push-qa.netlify.app/icon.png',
-                badge: 'https://mobo-push-qa.netlify.app/notification-badge.png'
+                icon: QA_PUSH_TARGETS.icon,
+                badge: QA_PUSH_TARGETS.badge
             },
 
             fcmOptions: {
-                link: 'https://mobo-push-qa.netlify.app/'
+                link: QA_PUSH_TARGETS.link
             }
         }
     };
