@@ -8,6 +8,7 @@ const KINDS = Object.freeze([
     'SCHEDULE',  // PREVIEW 전용: 연재 + 재화 후보 조회
     'SERIAL',
     'EXPIRE',
+    'SERIAL_EXPIRE', // Fixed 22:00 QA slot, two explicitly named kinds
     'ATTENDANCE'
 ]);
 
@@ -24,7 +25,7 @@ function moboAssertExplicitLiveKind(mode, kind) {
     if (mode === 'LIVE' && kind === 'SCHEDULE') {
         throw new Error(
             'LIVE에서는 SCHEDULE 일괄 발송을 사용할 수 없습니다. ' +
-            'SERIAL, EXPIRE 또는 ATTENDANCE를 명시해야 합니다.'
+            'SERIAL, EXPIRE, SERIAL_EXPIRE 또는 ATTENDANCE를 명시해야 합니다.'
         );
     }
 }
@@ -37,7 +38,8 @@ function moboIsSelectedScheduleItem(itemKind, dispatchKind) {
 
     return dispatchKind === 'SCHEDULE' ||
         (dispatchKind === 'SERIAL' && itemKind === 'serial') ||
-        (dispatchKind === 'EXPIRE' && itemKind === 'expire');
+        (dispatchKind === 'EXPIRE' && itemKind === 'expire') ||
+        dispatchKind === 'SERIAL_EXPIRE';
 }
 
 function runSelfTest() {
@@ -48,6 +50,7 @@ function runSelfTest() {
     assert.deepEqual(selected('SCHEDULE'), ['serial', 'expire']);
     assert.deepEqual(selected('SERIAL'), ['serial']);
     assert.deepEqual(selected('EXPIRE'), ['expire']);
+    assert.deepEqual(selected('SERIAL_EXPIRE'), ['serial', 'expire']);
     assert.deepEqual(selected('ATTENDANCE'), []);
     console.log('PASS: 연재·재화·미출석 경로 분리');
 
@@ -60,7 +63,7 @@ function runSelfTest() {
     );
     console.log('PASS: SCHEDULE 일괄 LIVE 발송 차단');
 
-    for (const kind of ['SERIAL', 'EXPIRE', 'ATTENDANCE']) {
+    for (const kind of ['SERIAL', 'EXPIRE', 'SERIAL_EXPIRE', 'ATTENDANCE']) {
         assert.doesNotThrow(() =>
             moboAssertExplicitLiveKind('LIVE', kind)
         );
@@ -78,6 +81,7 @@ function runSelfTest() {
     assert.equal(moboIsSelectedScheduleItem('attendance', 'SERIAL'), false);
     assert.equal(moboIsSelectedScheduleItem('serial', 'EXPIRE'), false);
     assert.equal(moboIsSelectedScheduleItem('expire', 'SERIAL'), false);
+    assert.equal(moboIsSelectedScheduleItem('attendance', 'SERIAL_EXPIRE'), false);
     console.log('PASS: 다른 알림 종류 혼합 발송 차단');
 
     console.log('QA-046D-6 · 알림 종류별 LIVE 분리 PASS');
