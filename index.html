@@ -827,10 +827,12 @@
                             정주행 계산기
                         </button>
 
+
                         <button id="calc-mode-quick" class="calc-mode-tab" type="button" role="tab"
                             aria-selected="false" aria-controls="calc-quick-section" onclick="setCalcMode('quick')">
-                            빠른 차감
+                            빠른 차감 · 누적
                         </button>
+
 
                     </div>
 
@@ -905,7 +907,12 @@
                             </div>
                         </div>
 
-                        <button onclick="calculateCoins()" class="save-btn calc-btn-full calc-mb-15">얼마나 필요할까?</button>
+
+                        <button id="calc-calculate-btn" onclick="calculateCoins()"
+                            class="save-btn calc-btn-full calc-mb-15">
+                            얼마나 필요할까?
+                        </button>
+
 
                         <div id="calc-result-box" style="display: none;">
 
@@ -988,19 +995,26 @@
 
                         <!-- 플랫폼 선택 -->
                         <div style="margin-bottom: 15px;">
-                            <label class="calc-quick-label" for="quick-deduct-platform">
-                                플랫폼 선택
-                            </label>
 
+                            <div class="calc-platform-line calc-quick-platform-line">
 
-                            <select id="quick-deduct-platform" class="modal-select"
-                                style="font-weight: bold; margin-top: 5px;" onchange="updateQuickDeductLabel()">
+                                <select id="quick-deduct-platform" class="modal-select" style="font-weight: bold;"
+                                    onchange="updateQuickDeductLabel()">
 
-                                <option value="lezhin">레진코믹스 (코인)</option>
-                                <option value="bomtoon">봄툰 (코인)</option>
-                                <option value="ridi">리디 (캐시)</option>
-                                <option value="mrblue">미블 (머니)</option>
-                            </select>
+                                    <option value="lezhin">레진코믹스 (코인)</option>
+                                    <option value="bomtoon">봄툰 (코인)</option>
+                                    <option value="ridi">리디 (캐시)</option>
+                                    <option value="mrblue">미블 (머니)</option>
+                                </select>
+
+                                <button type="button" class="mobo-cum-entry-link" onclick="moboCumOpen('quick')"
+                                    aria-label="여러 작품 누적 계산 열기">
+                                    <span>여러작품</span>
+                                    <span>누적계산</span>
+                                </button>
+
+                            </div>
+
 
                         </div>
 
@@ -1031,15 +1045,19 @@
                                 style="margin-top: 5px; margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px;">
                         </div>
 
-                        <p class="calc-quick-note">
-                            작품 등록 없이도 바로 차감하고
-                            월말정산에 기록할 수 있어요.
-                        </p>
 
-                        <button id="quick-deduct-submit" type="button" onclick="quickDeductFromModal()"
-                            class="save-btn calc-btn-full">
-                            차감하고 기록하기
-                        </button>
+                        <div class="mobo-quick-actions">
+                            <button id="quick-deduct-submit" type="button" onclick="quickDeductFromModal()"
+                                class="save-btn">
+                                차감하고 기록하기
+                            </button>
+
+                            <button id="quick-cum-add" type="button" onclick="moboCumAddQuickAmount()"
+                                class="mobo-cum-add-from-result">
+                                + 누적 담기
+                            </button>
+                        </div>
+
 
                     </div>
                     <!-- 빠른 차감 화면 종료 -->
@@ -1063,7 +1081,6 @@
                         <button type="button" class="mobo-cum-back-button" onclick="moboCumBack()"
                             aria-label="정주행 계산기로 돌아가기">
                             <i data-lucide="arrow-left" aria-hidden="true"></i>
-                            <span>계산기로</span>
                         </button>
 
                         <h3 id="mobo-cum-page-title">누적 계산</h3>
@@ -1077,10 +1094,6 @@
 
                     <!-- 계산 목록 화면 -->
                     <div id="mobo-cum-list-screen">
-
-                        <p class="mobo-cum-description">
-                            사고 싶은 작품의 총 재화를 계산해 보세요.
-                        </p>
 
                         <div id="mobo-cum-items"></div>
 
@@ -1122,29 +1135,42 @@
                             </select>
                         </div>
 
-                        <div class="mobo-cum-input-row">
 
-                            <div class="mobo-cum-field">
-                                <label for="mobo-cum-total">작품 총 화수</label>
-                                <input type="number" id="mobo-cum-total" min="1" step="1" inputmode="numeric"
-                                    placeholder="예: 100" oninput="moboCumPreview()">
+                        <div id="mobo-cum-episode-fields">
+                            <div class="mobo-cum-input-row">
+
+
+                                <div class="mobo-cum-field">
+                                    <label for="mobo-cum-total">작품 총 화수</label>
+                                    <input type="number" id="mobo-cum-total" min="1" step="1" inputmode="numeric"
+                                        placeholder="예: 100" oninput="moboCumPreview()">
+                                </div>
+
+                                <div class="mobo-cum-field">
+                                    <label for="mobo-cum-current">내가 본 화수</label>
+                                    <input type="number" id="mobo-cum-current" min="0" step="1" inputmode="numeric"
+                                        placeholder="예: 5" oninput="moboCumPreview()">
+                                </div>
+
                             </div>
 
                             <div class="mobo-cum-field">
-                                <label for="mobo-cum-current">내가 본 화수</label>
-                                <input type="number" id="mobo-cum-current" min="0" step="1" inputmode="numeric"
-                                    placeholder="예: 5" oninput="moboCumPreview()">
+                                <label for="mobo-cum-price">1화당 가격</label>
+                                <input type="number" id="mobo-cum-price" min="0" step="1" inputmode="numeric"
+                                    placeholder="예: 3" oninput="moboCumPreview()">
                             </div>
 
+
                         </div>
 
-                        <div class="mobo-cum-field">
-                            <label for="mobo-cum-price">1화당 가격</label>
-                            <input type="number" id="mobo-cum-price" min="0" step="1" inputmode="numeric"
-                                placeholder="예: 3" oninput="moboCumPreview()">
+                        <div id="mobo-cum-direct-field" class="mobo-cum-field" style="display: none;">
+                            <label for="mobo-cum-direct-amount">필요한 재화 수량</label>
+                            <input type="number" id="mobo-cum-direct-amount" min="1" step="1" inputmode="numeric"
+                                placeholder="예: 75" oninput="moboCumPreview()">
                         </div>
 
-                        <label class="mobo-cum-check-label">
+                        <label class="mobo-cum-check-label" id="mobo-cum-back-label">
+
                             <input type="checkbox" id="mobo-cum-back-toggle" onchange="moboCumToggleBack()">
                             코인백 / 페이백 적용하기
                         </label>

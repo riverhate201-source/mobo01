@@ -1393,8 +1393,46 @@ function moboLimitCoinbackPercent(input, allowDecimal = false) {
 }
 
 // 계산값 검증 및 계산
+
 function moboCumCalculate(values) {
+    // 코인·캐시·머니 수량을 직접 입력한 항목
+    if (values?.mode === 'direct') {
+        const rawAmount = String(values.amount ?? '').trim();
+        const rawPercent = String(values.percent ?? '0').trim();
+
+        if (
+            !/^\d+$/.test(rawAmount) ||
+            !/^\d+(?:\.\d{1,2})?$/.test(rawPercent)
+        ) {
+            return null;
+        }
+
+        const amount = Number(rawAmount);
+        const percent = Number(rawPercent);
+        const numerator = amount * Math.round(percent * 100);
+
+        if (
+            !Number.isSafeInteger(amount) ||
+            amount < 1 ||
+            !Number.isFinite(percent) ||
+            percent < 0 ||
+            percent > 100 ||
+            !Number.isSafeInteger(numerator)
+        ) {
+            return null;
+        }
+
+        return {
+            mode: 'direct',
+            amount,
+            percent,
+            cashback: Math.floor(numerator / 10000)
+        };
+    }
+
+    // 기존 화수 기반 계산 방식 유지
     const int = value => {
+
         const raw = String(value ?? '').trim();
 
         return /^\d+$/.test(raw)
@@ -1883,6 +1921,7 @@ function moboCumCommitFromClassic(nameFromPopup = '') {
     // 실제 저장 성공 후에만 팝업 닫기
     moboCumCloseNameDialog();
 
+
     // 누적 담기 성공 후 일반 계산기 전체 초기화
     moboCumInvalidateClassic();
 
@@ -1892,6 +1931,15 @@ function moboCumCommitFromClassic(nameFromPopup = '') {
     // 화수·가격·코인백·결과창 초기화
     document.getElementById('calc-platform').value = 'coin';
     updateCalcLabels();
+
+    // 누적 담기 성공 후 계산 버튼 다시 표시
+    const calculateButton =
+        document.getElementById('calc-calculate-btn');
+
+    if (calculateButton) {
+        calculateButton.style.display = '';
+    }
+
 
     // 이전에 선택했던 지갑도 초기화
     const wallet = document.getElementById('calc-deduct-wallet');
@@ -2260,7 +2308,10 @@ function moboCumRender() {
             const desc = moboCumNode(
                 'div',
                 'mobo-cum-card-desc',
+
+                (item.mode === 'direct' ? '직접 입력 · ' : '') +
                 `${item.amount.toLocaleString()} ${unit}` +
+
                 ` · ${benefitLabel} +${item.cashback.toLocaleString()} ${unit}` +
                 (item.included ? '' : ' · 합계에서 제외')
             );
@@ -2561,6 +2612,7 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 });
 
+let moboCumReturnMode = 'calc';
 
 // 일반 계산기 화면으로 돌아가기
 function moboCumBack() {
@@ -2578,17 +2630,50 @@ function moboCumBack() {
         'mobo-cum-view'
     ).style.display = 'none';
 
-    // 정주행 계산기 탭 선택
-    setCalcMode('calc');
+
+    // 누적 계산을 열었던 탭으로 돌아가기
+    setCalcMode(moboCumReturnMode);
+
 
     moboCumScrollTop();
 }
 
 
 // 누적 계산 화면 열기
-function moboCumOpen() {
-    // 누적 계산도 정주행 계산기의 하위 기능
-    setCalcMode('calc');
+
+function moboCumOpen(sourceMode = 'calc') {
+    // 누적 계산을 연 탭을 기억
+    moboCumReturnMode =
+        sourceMode === 'quick' ? 'quick' : 'calc';
+
+    setCalcMode(moboCumReturnMode);
+
+
+    // 누적 계산을 열었던 탭에 따라 돌아가기 문구 변경
+    const backButton = document.querySelector(
+        '#mobo-cum-view .mobo-cum-back-button'
+    );
+
+    if (backButton) {
+        const isQuick = moboCumReturnMode === 'quick';
+
+        const backText = backButton.querySelector('span');
+
+        if (backText) {
+            backText.textContent = isQuick
+                ? '빠른 차감으로'
+                : '계산기로';
+        }
+
+        backButton.setAttribute(
+            'aria-label',
+            isQuick
+                ? '빠른 차감 탭으로 돌아가기'
+                : '정주행 계산기로 돌아가기'
+        );
+    }
+
+
 
     // 누적 계산에서만 높이 제한 + 내부 스크롤 적용
     document.getElementById('calc-modal')
@@ -2668,6 +2753,30 @@ function moboCumShowEditor(id = null) {
         ? JSON.stringify(item)
         : null;
 
+
+    // 직접 입력 항목과 화수 계산 항목의 수정 화면 구분
+    const isDirect = item?.mode === 'direct';
+
+    const editor =
+        document.getElementById('mobo-cum-editor-screen');
+
+    editor.dataset.inputMode =
+        isDirect ? 'direct' : 'episodes';
+
+    document.getElementById('mobo-cum-episode-fields')
+        .style.display = isDirect ? 'none' : 'block';
+
+    document.getElementById('mobo-cum-direct-field')
+        .style.display = isDirect ? 'block' : 'none';
+
+    document.getElementById('mobo-cum-direct-amount')
+        .value = isDirect ? item.amount : '';
+
+    // 직접 입력에서는 코인백 비율을 항상 표시
+    document.getElementById('mobo-cum-back-label')
+        .style.display = isDirect ? 'none' : 'flex';
+
+
     // 작업 유형에 따라 상단 제목 변경
     document.getElementById(
         'mobo-cum-page-title'
@@ -2706,9 +2815,13 @@ function moboCumShowEditor(id = null) {
         'mobo-cum-back-toggle'
     ).checked = (item?.percent ?? 0) > 0;
 
+
     document.getElementById(
         'mobo-cum-percent'
-    ).value = item?.percent || '100';
+    ).value = isDirect
+            ? String(item.percent)
+            : (item?.percent || '100');
+
 
     document.getElementById(
         'mobo-cum-editor-screen'
@@ -2725,9 +2838,16 @@ function moboCumShowEditor(id = null) {
 
 // 코인백 설정 보이기 / 숨기기
 function moboCumToggleBack() {
-    const on = document.getElementById(
-        'mobo-cum-back-toggle'
-    ).checked;
+
+    const isDirect =
+        document.getElementById('mobo-cum-editor-screen')
+            .dataset.inputMode === 'direct';
+
+    const on = isDirect ||
+        document.getElementById(
+            'mobo-cum-back-toggle'
+        ).checked;
+
 
     document.getElementById(
         'mobo-cum-back-area'
@@ -2751,6 +2871,27 @@ function moboCumDraft() {
     ) {
         return null;
     }
+
+
+    // 빠른 차감에서 누적 담기한 항목
+    if (document.getElementById('mobo-cum-editor-screen')
+        .dataset.inputMode === 'direct') {
+
+        const calculated = moboCumCalculate({
+            mode: 'direct',
+            amount: document.getElementById(
+                'mobo-cum-direct-amount'
+            ).value,
+            percent: document.getElementById(
+                'mobo-cum-percent'
+            ).value
+        });
+
+        return calculated
+            ? { platform, ...calculated }
+            : null;
+    }
+
 
     const values = {
         total: document.getElementById(
@@ -2802,17 +2943,34 @@ function moboCumPreview() {
     button.disabled = !draft;
 
     if (!draft) {
-        result.textContent =
-            '총 화수·진도·가격·코인백 비율을 확인해 주세요.';
+
+        const isDirect =
+            document.getElementById('mobo-cum-editor-screen')
+                .dataset.inputMode === 'direct';
+
+        result.textContent = isDirect
+            ? '재화 수량과 코인백 비율을 확인해 주세요.'
+            : '총 화수·진도·가격·코인백 비율을 확인해 주세요.';
+
 
         return;
     }
 
+
     const unit =
         MOBO_CUM_PLATFORMS[draft.platform][1];
 
+    if (draft.mode === 'direct') {
+        result.textContent =
+            `필요 ${draft.amount.toLocaleString()} ${unit}` +
+            ` · 예상 코인백 +${draft.cashback.toLocaleString()} ${unit}`;
+
+        return;
+    }
+
     result.textContent =
         `구매 ${draft.total - draft.current}화` +
+
         ` · 총 ${draft.amount.toLocaleString()} ${unit}` +
         ` · 구매 후 예상 코인백` +
         ` +${draft.cashback.toLocaleString()} ${unit}`;
@@ -2878,11 +3036,20 @@ function moboCumSaveEntry() {
     const duplicated = items.some(item =>
         item.id !== moboCumEditingId &&
         item.title === title &&
+
         item.platform === draft.platform &&
-        item.total === draft.total &&
-        item.current === draft.current &&
-        item.price === draft.price &&
-        item.percent === draft.percent
+        (
+            draft.mode === 'direct'
+                ? item.mode === 'direct' &&
+                item.amount === draft.amount &&
+                item.percent === draft.percent
+                : item.mode !== 'direct' &&
+                item.total === draft.total &&
+                item.current === draft.current &&
+                item.price === draft.price &&
+                item.percent === draft.percent
+        )
+
     );
 
     if (
@@ -3677,6 +3844,104 @@ function quickDeductFromModal() {
 }
 
 
+
+/* 빠른 차감 입력값 → 누적 계산에 담기 */
+function moboCumAddQuickAmount() {
+    if (quickDeductionInProgress) return;
+
+    const platform =
+        document.getElementById('quick-deduct-platform').value;
+
+    const amountInput =
+        document.getElementById('quick-deduct-amount');
+
+    const titleInput =
+        document.getElementById('quick-deduct-title');
+
+    const button =
+        document.getElementById('quick-cum-add');
+
+    if (button.disabled) return;
+
+    if (!Object.prototype.hasOwnProperty.call(
+        MOBO_CUM_PLATFORMS, platform
+    )) {
+        alert('플랫폼을 다시 선택해 주세요.');
+        return;
+    }
+
+    const calc = moboCumCalculate({
+        mode: 'direct',
+        amount: amountInput.value.trim(),
+        percent: 0
+    });
+
+    if (!calc) {
+        alert('필요한 재화를 1 이상의 정수로 입력해 주세요.');
+        return;
+    }
+
+    const items = moboCumRead();
+
+    if (items === null) {
+        alert('누적 목록을 읽지 못해 추가를 중단했어요.');
+        return;
+    }
+
+    if (items.length >= 200) {
+        alert('누적 목록은 최대 200개까지 저장할 수 있어요.');
+        return;
+    }
+
+    let title = titleInput.value.trim();
+
+    if (title.length > 80) {
+        alert('작품명은 최대 80자까지 입력할 수 있어요.');
+        return;
+    }
+
+    if (!title) {
+        const titles = new Set(items.map(item => item.title));
+        let number = 1;
+
+        while (titles.has(`작품 ${number}`)) {
+            number++;
+        }
+
+        title = `작품 ${number}`;
+    }
+
+    let id;
+
+    do {
+        id = `${Date.now().toString(36)}-` +
+            Math.random().toString(36).slice(2, 10);
+    } while (items.some(item => item.id === id));
+
+    button.disabled = true;
+
+    try {
+        const entry = {
+            id,
+            title,
+            platform,
+            ...calc,
+            included: true
+        };
+
+        if (!moboCumWrite([...items, entry])) return;
+
+        amountInput.value = '';
+        titleInput.value = '';
+
+        updateQuickDeductionPreview();
+        showToast('누적 계산에 추가했어요!');
+    } finally {
+        button.disabled = false;
+    }
+}
+
+
 function toggleCoinbackInput() {
     const isChecked = document.getElementById('calc-coinback-toggle').checked;
     document.getElementById('calc-coinback-area').style.display = isChecked ? 'block' : 'none';
@@ -3814,10 +4079,19 @@ function moboLimitCalcInteger(input) {
 
 
 // 이전 계산 결과 및 차감 금액 초기화
+
 function moboCalcClearResult() {
     moboCumInvalidateClassic();
 
+    const calculateButton =
+        document.getElementById('calc-calculate-btn');
+
+    if (calculateButton) {
+        calculateButton.style.display = '';
+    }
+
     currentCalcCoin = 0;
+
 
     const resultBox =
         document.getElementById('calc-result-box');
@@ -3959,8 +4233,18 @@ function calculateCoins() {
     // 기존 지갑 선택 기능 유지
     prepareCalcWalletChoice(plt);
 
+
     // 정상 계산 결과만 누적 담기 허용
     moboCumCaptureClassicResult();
+
+    // 계산이 성공했으면 계산 버튼 숨기기
+    const calculateButton =
+        document.getElementById('calc-calculate-btn');
+
+    if (calculateButton) {
+        calculateButton.style.display = 'none';
+    }
+
 }
 
 
