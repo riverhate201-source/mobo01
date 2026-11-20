@@ -225,6 +225,11 @@ jobs:
             console.log('QA-046X PASS: two entrypoints, not deployed');
           "
 
+      - name: QA-046Y separate Firebase QA sender selection (memory only)
+        run: |
+          node --check scripts/mobo-auto-qa-sender-policy.cjs
+          node scripts/mobo-auto-qa-sender-policy.cjs
+
       - name: QA-046W isolated single-device fixed-time runner (memory only)
         run: |
           node --check scripts/mobo-auto-fixed-qa-runtime.cjs
