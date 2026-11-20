@@ -9,6 +9,10 @@ permissions:
 
 jobs:
   firestore-dedupe-test:
+    # QA-046G: legacy test targets mobo-web-2026 and performs Firestore writes.
+    # Disabled until it is migrated to a reviewed QA-only, no-write workflow.
+    # Do not run old production-credential test against any Firebase project.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
