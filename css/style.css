@@ -3523,6 +3523,16 @@ body.dark-mode .calc-mode-tab.active {
     color: #666;
 }
 
+
+
+/* 빠른 차감 - 플랫폼 선택 및 사용 코인 여백 조정 */
+#calc-modal #quick-deduct-platform,
+#calc-modal #quick-deduct-amount {
+    margin-bottom: 0;
+}
+
+
+
 /* 빠른 차감 안내 문구 */
 .calc-quick-note {
     font-size: 12px;
