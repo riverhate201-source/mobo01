@@ -210,6 +210,21 @@ jobs:
           node --check scripts/mobo-auto-preview-runtime.cjs
           node scripts/mobo-auto-preview-runtime.cjs
 
+      - name: QA-046X verify undeployed Netlify entrypoints (offline)
+        run: |
+          node --check scripts/mobo-netlify-fixed-ready/mobo-qa-serial-expire.mjs
+          node --check scripts/mobo-netlify-fixed-ready/mobo-qa-attendance.mjs
+          node --input-type=module -e "
+            import assert from 'node:assert/strict';
+            const serial = await import('./scripts/mobo-netlify-fixed-ready/mobo-qa-serial-expire.mjs');
+            const attend = await import('./scripts/mobo-netlify-fixed-ready/mobo-qa-attendance.mjs');
+            assert.equal(serial.config.schedule, '0 13 * * *');
+            assert.equal(attend.config.schedule, '30 13 * * *');
+            assert.equal(typeof serial.default, 'function');
+            assert.equal(typeof attend.default, 'function');
+            console.log('QA-046X PASS: two entrypoints, not deployed');
+          "
+
       - name: QA-046W isolated single-device fixed-time runner (memory only)
         run: |
           node --check scripts/mobo-auto-fixed-qa-runtime.cjs
