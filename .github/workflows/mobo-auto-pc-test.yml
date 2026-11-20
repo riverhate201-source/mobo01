@@ -215,7 +215,7 @@ jobs:
           node --check scripts/mobo-auto-fixed-time-policy.cjs
           node scripts/mobo-auto-fixed-time-policy.cjs
 
-      - name: QA-046N simulate 24h scheduled PREVIEW (offline, no cron)
+      - name: QA-046N simulate 30 days of fixed 2 daily slots (offline)
         run: |
           node --check scripts/mobo-auto-qa046n-cadence-preview.cjs
           node scripts/mobo-auto-qa046n-cadence-preview.cjs
