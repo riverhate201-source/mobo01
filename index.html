@@ -1597,13 +1597,13 @@
                     도와드릴게요.
                 </p>
 
-                <div class="mobo-return-guide">
+                <!-- <div class="mobo-return-guide">
                     <i data-lucide="info" aria-hidden="true"></i>
                     <span>
                         복귀 정리 기능은 준비 중이에요.
                         이번 안내로 기존 기록이 변경되지는 않아요.
                     </span>
-                </div>
+                </div> -->
 
                 <div class="mobo-return-actions">
 
@@ -1652,157 +1652,149 @@
             <p id="mobo-noti-permission" style="font-size:12px; opacity:.7; margin-bottom:14px;">
             </p>
 
+
             <!-- 전체 알림 -->
-            <div style="padding:13px; border-radius:12px; background:rgba(128,128,128,.08); margin-bottom:15px;">
 
-                <label
-                    style="display:flex; align-items:center; justify-content:space-between; gap:12px; cursor:pointer;">
-                    <span>
-                        <strong>자동 알림 사용</strong>
-                        <small style="display:block; font-size:11px; opacity:.65; margin-top:4px;">
-                            자동 발송 기능 연결 후 적용돼요.
-                        </small>
-                    </span>
+            <!-- 전체 알림 -->
+            <section class="mobo-noti-group" aria-label="기본 설정">
+                <h4 class="mobo-noti-group-title">기본 설정</h4>
 
-                    <input type="checkbox" id="mobo-noti-enabled" onchange="moboUpdateNotificationUI()"
-                        style="width:20px; height:20px; margin-bottom: 0; accent-color:#686C9D;">
-                </label>
-            </div>
+                <div class="mobo-noti-row mobo-noti-main-row">
+                    <label for="mobo-noti-enabled" class="mobo-noti-copy">
+                        <strong>자동 알림</strong>
+                    </label>
+
+                    <input type="checkbox" id="mobo-noti-enabled" class="mobo-noti-toggle"
+                        onchange="moboUpdateNotificationUI()">
+                </div>
+            </section>
 
             <div id="mobo-noti-options">
 
-                <!-- 연재일 -->
-                <div style="padding:12px 0; border-bottom:1px solid rgba(128,128,128,.2);">
+                <!-- 작품 알림 -->
+                <section class="mobo-noti-group" aria-label="작품 알림">
+                    <h4 class="mobo-noti-group-title">작품 알림</h4>
 
-                    <label style="display:flex; gap:10px; cursor:pointer;">
-                        <input type="checkbox" id="mobo-noti-serial" onchange="moboUpdateNotificationUI()"
-                            style="width:18px; height:18px; accent-color:#686C9D;">
-                        <strong>연재일 알림</strong>
-                    </label>
-
-                    <p style="font-size:12px; opacity:.65; margin:7px 0 10px;">
-                        오늘 연재되는 작품을 알려드려요.
-                    </p>
-
-
-                    <!-- 연재 알림 작품명 표시: 기본 OFF -->
-                    <label style="display:flex; align-items:flex-start; gap:10px; margin:12px 0; cursor:pointer;">
-                        <input type="checkbox" id="mobo-noti-serial-titles"
-                            style="width:18px; height:18px; flex-shrink:0; accent-color:#686C9D;">
-
-                        <span>
-                            <strong style="font-size:13px;">
-                                알림에 작품명 표시 (최대 3개)
-                            </strong>
-
-                            <small style="display:block; font-size:11px; opacity:.65; margin-top:5px; line-height:1.5;">
-                                선택하면 최대 14일치 알림용 작품명이
-                                Firebase에 저장돼요.
-                                기기 잠금 화면에도 표시될 수 있어요.
+                    <div class="mobo-noti-row mobo-noti-main-row">
+                        <label for="mobo-noti-serial" class="mobo-noti-copy">
+                            <strong>연재일 알림</strong>
+                            <small class="mobo-noti-detail">
+                                매일 오후 10:00 · 작품명 최대 3개
                             </small>
-                        </span>
-                    </label>
+                        </label>
 
+                        <input type="checkbox" id="mobo-noti-serial" class="mobo-noti-toggle"
+                            onchange="moboUpdateNotificationUI()">
+                    </div>
 
-                    <label for="mobo-noti-serial-time" style="font-size:12px;">
-                        알림 시간
-                    </label>
+                    <input type="hidden" id="mobo-noti-serial-time" value="22:00">
 
-                    <input type="time" id="mobo-noti-serial-time" value="20:00"
-                        style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:9px; border:1px solid #ddd; border-radius:8px;">
-                </div>
+                    <!-- 작품명 표시 설정 -->
+                    <details class="mobo-noti-disclosure">
+                        <summary>
+                            <span>작품명 표시 설정</span>
+                            <i data-lucide="chevron-down" aria-hidden="true"></i>
+                        </summary>
 
-                <!-- QA-046A | 미출석 알림 -->
-                <div style="padding:14px 0; border-bottom:1px solid rgba(128,128,128,.2);">
+                        <div class="mobo-noti-row mobo-noti-child-row">
+                            <label for="mobo-noti-serial-titles" class="mobo-noti-copy">
+                                <strong>작품명 표시</strong>
+                                <small class="mobo-noti-detail">
+                                    잠금 화면에도 표시될 수 있어요.
+                                </small>
+                            </label>
 
-                    <label style="display:flex; gap:10px; cursor:pointer;">
-                        <input type="checkbox" id="mobo-noti-attendance" onchange="moboUpdateNotificationUI()"
-                            style="width:18px; height:18px; accent-color:#686C9D;">
+                            <input type="checkbox" id="mobo-noti-serial-titles" class="mobo-noti-toggle">
+                        </div>
+                    </details>
+                </section>
 
-                        <strong>미출석 알림</strong>
-                    </label>
+                <!-- 리마인더 -->
+                <section class="mobo-noti-group" aria-label="리마인더">
+                    <h4 class="mobo-noti-group-title">리마인더</h4>
 
-                    <p style="font-size:12px; opacity:.65; margin:7px 0 10px;">
-                        레진·봄툰 중 출석을 완료하지 않은 플랫폼이 있으면
-                        알려드려요. 자정 전까지 오늘의 출석을 확인할 수 있어요.
-                        (자동 발송 연결 준비 중)
-                    </p>
+                    <div class="mobo-noti-row mobo-noti-main-row">
+                        <label for="mobo-noti-attendance" class="mobo-noti-copy">
+                            <strong>미출석 알림</strong>
+                            <small class="mobo-noti-detail">
+                                매일 오후 10:30 · 레진 / 봄툰
+                            </small>
+                        </label>
 
-                    <label for="mobo-noti-attendance-time" style="font-size:12px;">
-                        미출석 알림 시간
-                    </label>
+                        <input type="checkbox" id="mobo-noti-attendance" class="mobo-noti-toggle"
+                            onchange="moboUpdateNotificationUI()">
+                    </div>
 
-                    <input type="time" id="mobo-noti-attendance-time" value="22:30"
-                        style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:9px; border:1px solid #ddd; border-radius:8px;">
+                    <input type="hidden" id="mobo-noti-attendance-time" value="22:30">
 
-                </div>
+                    <div class="mobo-noti-row mobo-noti-main-row">
+                        <label for="mobo-noti-expire" class="mobo-noti-copy">
+                            <strong>코인·캐시 소멸 알림</strong>
+                        </label>
 
-                <!-- 재화 소멸 -->
-                <div style="padding:14px 0; border-bottom:1px solid rgba(128,128,128,.2);">
+                        <input type="checkbox" id="mobo-noti-expire" class="mobo-noti-toggle"
+                            onchange="moboUpdateNotificationUI()">
+                    </div>
 
-                    <label style="display:flex;  gap:10px; cursor:pointer;">
-                        <input type="checkbox" id="mobo-noti-expire"
-                            style="width:18px; height:18px; accent-color:#686C9D;">
-                        <strong>코인·캐시 소멸 알림</strong>
-                    </label>
+                    <!-- 소멸 알림 하위 설정 -->
+                    <div class="mobo-noti-row mobo-noti-child-row mobo-noti-pick-row">
+                        <label for="mobo-noti-expire-days" class="mobo-noti-copy">
+                            알림 시점
+                        </label>
 
-                    <p style="font-size:12px; opacity:.65; margin:7px 0 10px;">
-                        소멸 예정 재화를 미리 알려드려요.
-                    </p>
+                        <select id="mobo-noti-expire-days" class="mobo-noti-select">
+                            <option value="1">1일 전</option>
+                            <option value="3">3일 전</option>
+                            <option value="7">7일 전</option>
+                        </select>
+                    </div>
+                </section>
 
-                    <label for="mobo-noti-expire-days" style="font-size:12px;">
-                        소멸 며칠 전에 알릴까요?
-                    </label>
+                <!-- 기타 설정 -->
+                <section class="mobo-noti-group" aria-label="기타 설정">
+                    <h4 class="mobo-noti-group-title">기타 설정</h4>
 
-                    <select id="mobo-noti-expire-days"
-                        style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:9px; border:1px solid #ddd; border-radius:8px;">
-                        <option value="1">1일 전</option>
-                        <option value="3">3일 전</option>
-                        <option value="7">7일 전</option>
-                    </select>
-                </div>
+                    <div class="mobo-noti-row mobo-noti-main-row">
+                        <label for="mobo-noti-update" class="mobo-noti-copy">
+                            <strong>모보 업데이트 알림</strong>
+                        </label>
 
-                <!-- 업데이트 -->
-                <div style="padding:14px 0;">
-
-                    <label style="display:flex;  gap:10px; cursor:pointer;">
-                        <input type="checkbox" id="mobo-noti-update"
-                            style="width:18px; height:18px; accent-color:#686C9D;">
-                        <strong>모보 업데이트 알림</strong>
-                    </label>
-
-                    <p style="font-size:12px; opacity:.65; margin:7px 0;">
-                        새로운 기능과 업데이트 소식을 알려드려요.
-                    </p>
-                </div>
+                        <input type="checkbox" id="mobo-noti-update" class="mobo-noti-toggle">
+                    </div>
+                </section>
 
             </div>
 
-            <p style="font-size:11px; line-height:1.6; opacity:.65; margin:12px 0;">
-                알림 설정을 저장하면 해당 기기의 알림 수신 정보가
-                Firebase 서버에도 등록돼요.
-                자동 발송 기능은 아직 준비 중이에요.
-            </p>
 
-            <button type="button" class="menu-item" onclick="moboPreviewTodayNotification()"
-                style="width:100%; text-align:center; margin-top:12px;">
-                오늘의 알림 미리보기
-            </button>
 
-            <button type="button" class="menu-item" onclick="moboPreviewNext14Days()"
-                style="width:100%; text-align:center; margin-top:8px;">
-                앞으로 14일 알림 미리보기
-            </button>
 
-            <button type="button" class="menu-item" onclick="moboPreviewServerScheduleData()"
-                style="width:100%; text-align:center; margin-top:8px;">
-                Firebase 저장 예정 데이터 확인 (테스트)
-            </button>
+            <details id="mobo-noti-qa-tools" style="margin-top:12px;">
+                <summary style="font-size:11px; opacity:.55; cursor:pointer;">
+                    QA 테스트 도구
+                </summary>
 
-            <button type="button" class="menu-item" onclick="moboSaveScheduleToFirestoreQA()"
-                style="width:100%; text-align:center; margin-top:8px;">
-                Firebase 일정 저장 테스트
-            </button>
+
+
+                <button type="button" class="menu-item" onclick="moboPreviewTodayNotification()"
+                    style="width:100%; text-align:center; margin-top:12px;">
+                    오늘의 알림 미리보기
+                </button>
+
+                <button type="button" class="menu-item" onclick="moboPreviewNext14Days()"
+                    style="width:100%; text-align:center; margin-top:8px;">
+                    앞으로 14일 알림 미리보기
+                </button>
+
+                <button type="button" class="menu-item" onclick="moboPreviewServerScheduleData()"
+                    style="width:100%; text-align:center; margin-top:8px;">
+                    Firebase 저장 예정 데이터 확인 (테스트)
+                </button>
+
+                <button type="button" class="menu-item" onclick="moboSaveScheduleToFirestoreQA()"
+                    style="width:100%; text-align:center; margin-top:8px;">
+                    Firebase 일정 저장 테스트
+                </button>
+            </details>
 
             <div style="display:flex; gap:8px; margin-top:16px;">
                 <button type="button" class="cancel-btn" onclick="moboCloseNotificationSettings()" style="flex:1;">
@@ -2160,12 +2152,12 @@
         const MOBO_NOTI_DEFAULTS = {
             enabled: false,
             serial: true,
-            serialTitles: false,
+            serialTitles: true,
             attendance: false,
             attendanceTime: '22:30',
             expire: true,
             update: false,
-            serialTime: '20:00',
+            serialTime: '22:00',
             expireDays: 1
         };
 
@@ -2180,10 +2172,18 @@
                     return { ...MOBO_NOTI_DEFAULTS };
                 }
 
+
+
                 return {
                     ...MOBO_NOTI_DEFAULTS,
-                    ...saved
+                    ...saved,
+                    // 기존 사용자의 작품명 숨김 선택은 유지
+                    serialTitles: saved.serialTitles === true,
+                    serialTime: '22:00',
+                    attendanceTime: '22:30'
                 };
+
+
 
             } catch (error) {
                 console.warn('알림 설정 읽기 실패:', error);
@@ -2362,7 +2362,7 @@
 
             const options = document.getElementById('mobo-noti-options');
 
-            options.style.opacity = enabled ? '1' : '0.45';
+            options.style.opacity = '1';
 
             options.querySelectorAll('input, select').forEach(el => {
                 el.disabled = !enabled;
@@ -2380,6 +2380,14 @@
 
             document.getElementById('mobo-noti-attendance-time').disabled =
                 !enabled || !attendanceEnabled;
+
+
+            const expireEnabled =
+                document.getElementById('mobo-noti-expire').checked;
+
+            document.getElementById('mobo-noti-expire-days').disabled =
+                !enabled || !expireEnabled;
+
         }
 
         // 설정창 열기
@@ -2412,7 +2420,7 @@
                 settings.update === true;
 
             document.getElementById('mobo-noti-serial-time').value =
-                settings.serialTime || '20:00';
+                settings.serialTime || '22:00';
 
             document.getElementById('mobo-noti-expire-days').value =
                 String(settings.expireDays || 1);
@@ -2470,9 +2478,11 @@
                 update:
                     document.getElementById('mobo-noti-update').checked,
 
+
                 serialTime:
                     document.getElementById('mobo-noti-serial-time').value
-                    || '20:00',
+                    || '22:00',
+
 
                 expireDays:
                     Number(
@@ -3652,18 +3662,103 @@
                     return;
                 }
 
-                const sub = subscription.data();
 
+                let sub = subscription.data();
+
+                // QA-046O | 고정 알림 시간 설정 확인
+                if (
+                    settings.serialTime !== '22:00' ||
+                    settings.attendanceTime !== '22:30' ||
+                    payload.serialTime !== '22:00'
+                ) {
+                    console.warn(
+                        'MoBo 고정 알림 시간 설정이 일치하지 않아요.'
+                    );
+                    return;
+                }
+
+                // 기존 사용자의 Firebase 알림 시간 확인
+                const needsFixedTimeMigration =
+                    sub.enabled === true &&
+                    (
+                        sub.serialTime !== '22:00' ||
+                        (
+                            settings.attendance === true &&
+                            sub.attendanceTime !== '22:30'
+                        )
+                    );
+
+                if (needsFixedTimeMigration) {
+
+                    // 기존에 알림을 허용한 기기에서만 자동 전환
+                    if (
+                        !('Notification' in window) ||
+                        Notification.permission !== 'granted'
+                    ) {
+                        console.info(
+                            'MoBo 고정 알림 전환 보류: 알림 권한 없음'
+                        );
+                        return;
+                    }
+
+                    // 오래된 탭은 Firebase 설정을 변경하지 않음
+                    if (
+                        typeof moboMainTabIsStale === 'function' &&
+                        moboMainTabIsStale()
+                    ) {
+                        return;
+                    }
+
+                    // Firebase 조회 중 로컬 설정이 바뀌었다면 중단
+                    const currentSettings = moboGetNotificationSettings();
+
+                    if (
+                        !currentSettings.enabled ||
+                        JSON.stringify(currentSettings) !==
+                        JSON.stringify(settings)
+                    ) {
+                        moboScheduleSyncAgain = true;
+                        return;
+                    }
+
+                    // 기존 구독을 새 고정 시간으로 갱신
+                    await moboSyncNotificationSettingsToFirestore(
+                        settings
+                    );
+
+                    // 서버에 반영됐는지 다시 확인
+                    const refreshedSubscription = await db
+                        .collection('pushSubscriptions')
+                        .doc(user.uid)
+                        .get({ source: 'server' });
+
+                    if (!refreshedSubscription.exists) {
+                        return;
+                    }
+
+                    sub = refreshedSubscription.data();
+
+                    console.info(
+                        'MoBo 고정 알림 설정 동기화 확인 완료'
+                    );
+                }
+
+                // 기존 안전 검사 유지
                 if (
                     sub.enabled !== true ||
                     sub.serialTime !== payload.serialTime ||
-                    sub.expireDays !== payload.expireDays
+                    sub.expireDays !== payload.expireDays ||
+                    (
+                        settings.attendance === true &&
+                        sub.attendanceTime !== '22:30'
+                    )
                 ) {
                     console.info(
                         'MoBo 자동 일정 동기화 보류: 서버 설정 불일치'
                     );
                     return;
                 }
+
 
                 // 2. 현재 서버 일정과 비교
                 const ref = db

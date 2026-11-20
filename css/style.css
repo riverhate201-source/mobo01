@@ -6037,7 +6037,7 @@ body.dark-mode .mobo-pending-schedule-edit {
     margin-top: 8px;
 }
 
-#calc-modal .mobo-quick-actions > button {
+#calc-modal .mobo-quick-actions>button {
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
@@ -6118,6 +6118,254 @@ body.dark-mode #calc-modal #quick-cum-add:active:not(:disabled) {
     border-color: #aaa;
     color: #fff;
 }
+
+/* QA-046P | 알림 설정 디자인 */
+
+#mobo-noti-modal .mobo-noti-master {
+    padding: 0 0 14px 0;
+    margin-bottom: 0;
+    background: transparent;
+    border-radius: 0;
+    border-bottom: 1px solid rgba(128, 128, 128, .16);
+}
+
+#mobo-noti-modal .mobo-noti-section {
+    padding: 18px 0;
+    border-bottom: 1px solid rgba(128, 128, 128, .16);
+}
+
+#mobo-noti-modal .mobo-noti-section-last {
+    border-bottom: none;
+    padding-bottom: 4px;
+}
+
+#mobo-noti-modal .mobo-noti-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+}
+
+#mobo-noti-modal .mobo-noti-master .mobo-noti-row {
+    align-items: center;
+}
+
+#mobo-noti-modal .mobo-noti-copy {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    line-height: 1.4;
+    color: inherit;
+    cursor: pointer;
+}
+
+#mobo-noti-modal .mobo-noti-copy strong {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+#mobo-noti-modal .mobo-noti-detail {
+    display: block;
+    margin-top: 5px;
+    font-size: 11px;
+    line-height: 1.45;
+    opacity: .6;
+}
+
+/* 하위 항목: 글씨만 16px 들여쓰기 */
+#mobo-noti-modal .mobo-noti-subrow {
+    margin-top: 16px;
+}
+
+#mobo-noti-modal .mobo-noti-subrow .mobo-noti-copy {
+    padding-left: 16px;
+    box-sizing: border-box;
+}
+
+#mobo-noti-modal .mobo-noti-subrow .mobo-noti-copy strong {
+    font-size: 12px;
+}
+
+/* 모든 토글 동일 규격 */
+#mobo-noti-modal input.mobo-noti-toggle {
+    appearance: none;
+    -webkit-appearance: none;
+    position: relative;
+    display: block;
+    flex: 0 0 42px;
+    width: 42px;
+    min-width: 42px;
+    height: 24px;
+    padding: 0;
+    margin: 0;
+    border: 1px solid rgba(0, 0, 0, .06);
+    border-radius: 999px;
+    background: #d5d5db;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: background .18s ease;
+}
+
+#mobo-noti-modal input.mobo-noti-toggle::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .15);
+    transition: transform .18s ease;
+}
+
+#mobo-noti-modal input.mobo-noti-toggle:checked {
+    background: #686C9D;
+}
+
+#mobo-noti-modal input.mobo-noti-toggle:checked::before {
+    transform: translateX(18px);
+}
+
+#mobo-noti-modal input.mobo-noti-toggle:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+#mobo-noti-modal input.mobo-noti-toggle:focus-visible {
+    outline: 2px solid #686C9D;
+    outline-offset: 3px;
+}
+
+/* 소멸 알림의 하위 드롭다운 */
+#mobo-noti-modal .mobo-noti-expire-row {
+    align-items: center;
+}
+
+#mobo-noti-modal .mobo-noti-expire-row .mobo-noti-copy {
+    font-size: 12px;
+    opacity: .75;
+}
+
+#mobo-noti-modal .mobo-noti-select {
+    flex: 0 0 110px;
+    width: 110px;
+    min-width: 110px;
+    min-height: 37px;
+    margin: 0;
+    padding: 8px;
+    border: 1px solid rgba(128, 128, 128, .25);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .85);
+    color: #333;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+#mobo-noti-modal .mobo-noti-select:disabled {
+    opacity: .45;
+}
+
+
+/* QA-046Q | 그룹형 알림 설정 */
+
+#mobo-noti-modal .mobo-noti-group {
+    margin-top: 16px;
+}
+
+/* 그룹 제목과 구분선 */
+#mobo-noti-modal .mobo-noti-group-title {
+    margin: 0 0 3px;
+    padding: 0 0 8px;
+    border-bottom: 1.5px solid rgba(55, 55, 65, .35);
+    color: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+/* 기본 항목 */
+#mobo-noti-modal .mobo-noti-group .mobo-noti-main-row {
+    padding: 12px 0;
+    align-items: center;
+}
+
+/* 하위 항목 */
+#mobo-noti-modal .mobo-noti-group .mobo-noti-child-row {
+    padding: 9px 0 10px;
+    align-items: center;
+}
+
+/* 하위 텍스트만 16px 들여쓰기 */
+#mobo-noti-modal .mobo-noti-group .mobo-noti-child-row .mobo-noti-copy {
+    padding-left: 16px;
+    box-sizing: border-box;
+    font-size: 12px;
+}
+
+#mobo-noti-modal .mobo-noti-group .mobo-noti-child-row .mobo-noti-copy strong {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* 보조 설명 */
+#mobo-noti-modal .mobo-noti-group .mobo-noti-detail {
+    margin-top: 4px;
+    font-size: 11px;
+    line-height: 1.45;
+    opacity: .7;
+}
+
+/* 작품명 표시 접기/펼치기 */
+#mobo-noti-modal .mobo-noti-disclosure {
+    padding-bottom: 2px;
+}
+
+#mobo-noti-modal .mobo-noti-disclosure > summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0 8px 16px;
+    color: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    list-style: none;
+}
+
+#mobo-noti-modal .mobo-noti-disclosure > summary::-webkit-details-marker {
+    display: none;
+}
+
+#mobo-noti-modal .mobo-noti-disclosure > summary i,
+#mobo-noti-modal .mobo-noti-disclosure > summary svg {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    opacity: .6;
+    transition: transform .15s ease;
+}
+
+#mobo-noti-modal .mobo-noti-disclosure[open] > summary i,
+#mobo-noti-modal .mobo-noti-disclosure[open] > summary svg {
+    transform: rotate(180deg);
+}
+
+/* 소멸 알림 시점 */
+#mobo-noti-modal .mobo-noti-pick-row {
+    margin-top: -4px;
+}
+
+/* 모든 토글의 규격 및 오른쪽 정렬 통일 */
+#mobo-noti-modal .mobo-noti-group input.mobo-noti-toggle {
+    flex: 0 0 42px;
+    width: 42px;
+    min-width: 42px;
+    height: 24px;
+    margin: 0;
+}
+
 
 
 /* 애플(iOS/iPadOS) 강제 파란색 링크(데이터 탐지) 영구 박멸! */
