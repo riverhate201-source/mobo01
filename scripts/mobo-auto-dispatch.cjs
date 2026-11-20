@@ -28,6 +28,11 @@ const {
     moboIsSelectedScheduleItem
 } = require('./mobo-dispatch-kind.cjs');
 
+const { moboQAPushTargets, moboAssertQAPushTargets } =
+    require('./mobo-qa-push-targets.cjs');
+const QA_PUSH_TARGETS = moboQAPushTargets();
+moboAssertQAPushTargets(QA_PUSH_TARGETS);
+
 // ==========================================
 // MoBo QA-044E-3C
 // 자동 알림 대상 계산 + 중복 방지 + 발송
@@ -826,13 +831,13 @@ async function main() {
                 },
                 notification: {
                     icon:
-                        'https://mobo-push-qa.netlify.app/icon.png',
+                        QA_PUSH_TARGETS.icon,
                     badge:
-                        'https://mobo-push-qa.netlify.app/notification-badge.png'
+                        QA_PUSH_TARGETS.badge
                 },
                 fcmOptions: {
                     link:
-                        'https://mobo-push-qa.netlify.app/'
+                        QA_PUSH_TARGETS.link
                 }
             }
         };
@@ -916,13 +921,13 @@ async function main() {
                     },
                     notification: {
                         icon:
-                            'https://mobo-push-qa.netlify.app/icon.png',
+                            QA_PUSH_TARGETS.icon,
                         badge:
-                            'https://mobo-push-qa.netlify.app/notification-badge.png'
+                            QA_PUSH_TARGETS.badge
                     },
                     fcmOptions: {
                         link:
-                            'https://mobo-push-qa.netlify.app/'
+                            QA_PUSH_TARGETS.link
                     }
                 }
             };
