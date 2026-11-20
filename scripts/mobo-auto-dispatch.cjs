@@ -1,5 +1,5 @@
 
-const { initializeApp, cert } = require('firebase-admin/app');
+const { initializeApp, cert, getApps } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 
@@ -212,7 +212,8 @@ function moboScheduleEntryDue(date, clock, now) {
         moboFixedSlotDue('serial', now);
 }
 
-async function main() {
+async function main(kind = NOTIFICATION_KIND) {
+    moboValidateKind(kind);
     if (!['PREVIEW', 'LIVE'].includes(MODE)) {
         throw new Error('지원하지 않는 실행 모드입니다.');
     }
@@ -224,10 +225,10 @@ async function main() {
 
     if (MODE === 'LIVE') {
         // QA-046D-6 | 하나의 LIVE 실행에서 알림 종류 하나만 허용
-        moboAssertExplicitLiveKind(MODE, NOTIFICATION_KIND);
+        moboAssertExplicitLiveKind(MODE, kind);
 
         // Fixed 22:00 slot combines two notifications: extra opt-in required.
-        if (NOTIFICATION_KIND === 'SERIAL_EXPIRE' &&
+        if (kind === 'SERIAL_EXPIRE' &&
             process.env.MOBO_QA_FIXED_SLOT_CONFIRM !== 'YES') {
             throw new Error('QA 22시 통합 발송 추가 확인 설정이 없습니다.');
         }
@@ -254,9 +255,12 @@ async function main() {
         throw new Error('Firebase 프로젝트가 일치하지 않습니다.');
     }
 
-    initializeApp({
-        credential: cert(serviceAccount)
-    });
+    // Netlify can reuse a warm function process; do not initialize twice.
+    if (getApps().length === 0) {
+        initializeApp({
+            credential: cert(serviceAccount)
+        });
+    }
 
     const db = getFirestore();
 
@@ -775,7 +779,7 @@ async function main() {
     // LIVE 모드에서만 아래 코드 실행
 
     // QA-046C-3B-2 | 미출석 알림 전용 발송
-    if (MODE === 'LIVE' && NOTIFICATION_KIND === 'ATTENDANCE') {
+    if (MODE === 'LIVE' && kind === 'ATTENDANCE') {
 
         // LIVE는 기존 안전장치에 따라 테스트 UID만 사용
         const ref = db.collection('pushSubscriptions')
@@ -882,7 +886,7 @@ async function main() {
     
     // QA-046D-6 | 명시적으로 선택한 알림 종류만 LIVE 발송
     for (const item of candidates) {
-        if (!moboIsSelectedScheduleItem(item.kind, NOTIFICATION_KIND)) {
+        if (!moboIsSelectedScheduleItem(item.kind, kind)) {
             continue;
         }
 
