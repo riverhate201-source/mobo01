@@ -47,6 +47,9 @@ function runReturn({days,pending=null,previous=null}){
     const FakeDate=class extends Date{static now(){return now;}};
     const context={
         Date:FakeDate,localStorage,
+        // Real frontend depends on these date helpers from custom.js.
+        getWebtoonDate:()=>new FakeDate(now),
+        formatDate:d=>d.toISOString().slice(0,10),
         document:{getElementById:id=>elements.get(id)||null},
         setTimeout:()=>0,checkAndShowAttendPopup:()=>{},alert:()=>{},
         askForDeduction:()=>{
@@ -85,9 +88,26 @@ async function verifyReturn(){
         }
         assert.equal(x.deductions,0);
         assert.ok([...x.values.keys()].every(k=>[
-            'moboReturnLastOpenedAt','moboReturnPendingDays'].includes(k)));
+            'moboReturnLastOpenedAt','moboReturnPendingDays',
+            'moboReturnLegacyCheckedV1','moboReturnFromOldSettlement'].includes(k)));
     }
     console.log('PASS: actual return UI day 1/13/14/19/20/29/30/31/60');
+
+    // Older PWA installations have lastCheckDate but no last-opened timestamp.
+    const legacy=runReturn({days:0});
+    legacy.localStorage.removeItem('moboReturnLastOpenedAt');
+    legacy.localStorage.setItem('lastCheckDate','2026-10-18');
+    legacy.funcs.checkMoboReturnVisit();
+    assert.equal(legacy.localStorage.getItem('moboReturnPendingDays'),'30');
+    assert.equal(legacy.localStorage.getItem('moboReturnFromOldSettlement'),'1');
+    assert.equal(legacy.elements.get('mobo-return-modal').style.display,'flex');
+    assert.match(legacy.elements.get('mobo-return-message').textContent,
+        /마지막 정산 기준일로부터 30일/);
+    legacy.funcs.dismissMoboReturnNotice();
+    legacy.funcs.checkMoboReturnVisit();
+    assert.equal(legacy.localStorage.getItem('moboReturnPendingDays'),null);
+    assert.equal(legacy.deductions,0);
+    console.log('PASS: legacy 30-day settlement return once, no repeat');
 
     for(const days of [14,19,20,29]){
         const x=runReturn({days});
