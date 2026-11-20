@@ -30,6 +30,11 @@ const {
 
 const { moboQAPushTargets, moboAssertQAPushTargets } =
     require('./mobo-qa-push-targets.cjs');
+const {
+    FIXED_SERIAL_TIME,
+    FIXED_ATTENDANCE_TIME,
+    moboFixedSlotDue
+} = require('./mobo-auto-fixed-time-policy.cjs');
 const QA_PUSH_TARGETS = moboQAPushTargets();
 moboAssertQAPushTargets(QA_PUSH_TARGETS);
 
@@ -100,7 +105,7 @@ function validPair(sub, schedule) {
         sub.timezone === 'Asia/Seoul' &&
         typeof sub.token === 'string' &&
         sub.token.length >= 20 &&
-        /^([01]\d|2[0-3]):[0-5]\d$/.test(sub.serialTime) &&
+        sub.serialTime === FIXED_SERIAL_TIME &&
         schedule.version === 2 &&
         schedule.timezone === 'Asia/Seoul' &&
         schedule.serialTime === sub.serialTime &&
@@ -175,16 +180,13 @@ function moboGetAttendanceCandidate(sub, now) {
         sub.timezone !== 'Asia/Seoul' ||
         typeof sub.token !== 'string' ||
         sub.token.length < 20 ||
-        typeof sub.attendanceTime !== 'string' ||
-        !/^([01]\d|2[0-3]):[0-5]\d$/.test(
-            sub.attendanceTime
-        )
+        sub.attendanceTime !== FIXED_ATTENDANCE_TIME
     ) return null;
 
     const date = moboKSTDate(now);
 
     // QA-046D-2 | 자정 날짜 및 사용자 지정 시간 공통 판정
-    if (!moboClockDue(now, sub.attendanceTime, WINDOW_MS)) {
+    if (!moboFixedSlotDue('attendance', now)) {
         return null;
     }
 
@@ -205,8 +207,9 @@ function moboGetAttendanceCandidate(sub, now) {
 
 // QA-046D-2 | 실제 날짜(재화·출석)와 저장된 발송 날짜 비교
 function moboScheduleEntryDue(date, clock, now) {
-    return date === moboKSTDate(now) &&
-        moboClockDue(now, clock, WINDOW_MS);
+    return clock === FIXED_SERIAL_TIME &&
+        date === moboKSTDate(now) &&
+        moboFixedSlotDue('serial', now);
 }
 
 async function main() {
@@ -389,10 +392,7 @@ async function main() {
                 sub.timezone !== 'Asia/Seoul' ||
                 typeof sub.token !== 'string' ||
                 sub.token.length < 20 ||
-                typeof sub.attendanceTime !== 'string' ||
-                !/^([01]\d|2[0-3]):[0-5]\d$/.test(
-                    sub.attendanceTime
-                )
+                sub.attendanceTime !== FIXED_ATTENDANCE_TIME
             ) {
                 continue;
             }
@@ -400,7 +400,7 @@ async function main() {
             attendanceStats.attendanceEnabled++;
 
             // QA-046D-2 | LIVE 후보와 동일한 시계 함수 사용
-            if (!moboClockDue(now, sub.attendanceTime, WINDOW_MS)) {
+            if (!moboFixedSlotDue('attendance', now)) {
                 attendanceStats.outsideTimeWindow++;
                 continue;
             }
@@ -641,6 +641,15 @@ async function main() {
             null
         );
 
+        // 이전 사용자 지정 출석 시간이 남은 구독은 발송 제외
+        assert.equal(
+            moboGetAttendanceCandidate(
+                {...fakeSubscription, attendanceTime: '20:00'},
+                testTime('20:05')
+            ),
+            null
+        );
+
         // 아직 설정 시간이 되지 않음
         assert.equal(
             moboGetAttendanceCandidate(
@@ -713,11 +722,15 @@ async function main() {
 
         assert.equal(
             moboScheduleEntryDue(dayA, '20:00', clockKST(dayA, '20:05')),
-            true
+            false
         );
         assert.equal(
             moboScheduleEntryDue(dayA, '22:00', clockKST(dayA, '22:05')),
             true
+        );
+        assert.equal(
+            moboScheduleEntryDue(dayA, '20:00', clockKST(dayA, '22:05')),
+            false
         );
         assert.equal(
             moboScheduleEntryDue(dayB, '22:00', clockKST(dayA, '22:05')),
@@ -741,7 +754,7 @@ async function main() {
         );
 
         console.log('PASS: 실제 발송일과 연재 요일 날짜 구분');
-        console.log('PASS: 기존 사용자 지정 연재 시간 유지');
+        console.log('PASS: 이전 사용자 지정 시각은 발송 후보에서 제외');
         console.log('PASS: 자정 이후 전날 알림 후보 차단');
         console.log('QA-046D-2 · 공통 시계 연결 PASS');
 
