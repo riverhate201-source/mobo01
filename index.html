@@ -1649,7 +1649,7 @@
                 <div style="padding:12px 0; border-bottom:1px solid rgba(128,128,128,.2);">
 
                     <label style="display:flex; gap:10px; cursor:pointer;">
-                        <input type="checkbox" id="mobo-noti-serial"
+                        <input type="checkbox" id="mobo-noti-serial" onchange="moboUpdateNotificationUI()"
                             style="width:18px; height:18px; accent-color:#686C9D;">
                         <strong>연재일 알림</strong>
                     </label>
@@ -1657,6 +1657,26 @@
                     <p style="font-size:12px; opacity:.65; margin:7px 0 10px;">
                         오늘 연재되는 작품을 알려드려요.
                     </p>
+
+
+                    <!-- 연재 알림 작품명 표시: 기본 OFF -->
+                    <label style="display:flex; align-items:flex-start; gap:10px; margin:12px 0; cursor:pointer;">
+                        <input type="checkbox" id="mobo-noti-serial-titles"
+                            style="width:18px; height:18px; flex-shrink:0; accent-color:#686C9D;">
+
+                        <span>
+                            <strong style="font-size:13px;">
+                                알림에 작품명 표시 (최대 3개)
+                            </strong>
+
+                            <small style="display:block; font-size:11px; opacity:.65; margin-top:5px; line-height:1.5;">
+                                선택하면 최대 14일치 알림용 작품명이
+                                Firebase에 저장돼요.
+                                기기 잠금 화면에도 표시될 수 있어요.
+                            </small>
+                        </span>
+                    </label>
+
 
                     <label for="mobo-noti-serial-time" style="font-size:12px;">
                         알림 시간
@@ -2091,6 +2111,7 @@
                 attendance: settings.attendance === true,
                 attendanceTime: settings.attendanceTime || '22:30',
                 serial: settings.serial === true,
+                serialTitles: settings.serialTitles === true,
                 expire: settings.expire === true,
                 update: settings.update === true,
 
@@ -2113,6 +2134,7 @@
         const MOBO_NOTI_DEFAULTS = {
             enabled: false,
             serial: true,
+            serialTitles: false,
             attendance: false,
             attendanceTime: '22:30',
             expire: true,
@@ -2320,6 +2342,12 @@
                 el.disabled = !enabled;
             });
 
+            const serialEnabled =
+                document.getElementById('mobo-noti-serial').checked;
+
+            document.getElementById('mobo-noti-serial-titles').disabled =
+                !enabled || !serialEnabled;
+
             // QA-046A | 미출석 OFF 시 시간 선택 비활성화
             const attendanceEnabled =
                 document.getElementById('mobo-noti-attendance').checked;
@@ -2341,6 +2369,9 @@
 
             document.getElementById('mobo-noti-serial').checked =
                 settings.serial === true;
+
+            document.getElementById('mobo-noti-serial-titles').checked =
+                settings.serialTitles === true;
 
             // QA-046A | 미출석 알림 설정 불러오기
             document.getElementById('mobo-noti-attendance').checked =
@@ -2392,10 +2423,17 @@
                 enabled:
                     document.getElementById('mobo-noti-enabled').checked,
 
+
                 serial:
                     document.getElementById('mobo-noti-serial').checked,
+
+                serialTitles:
+                    document.getElementById('mobo-noti-serial').checked &&
+                    document.getElementById('mobo-noti-serial-titles').checked,
+
                 attendance:
                     document.getElementById('mobo-noti-attendance').checked,
+
 
                 attendanceTime:
                     document.getElementById('mobo-noti-attendance-time').value
@@ -2540,6 +2578,7 @@
                             const key = work.id
                                 ? String(work.id)
                                 : `${group}-${index}`;
+
 
                             if (seen.has(key)) return;
                             seen.add(key);
@@ -2982,13 +3021,16 @@
                     throw new Error('연재 알림 시간이 올바르지 않아요.');
                 }
 
+
                 const payload = {
                     version: 2,
                     timezone: 'Asia/Seoul',
                     serialTime: settings.serialTime,
                     expireDays: Number(settings.expireDays),
-                    days: []
+                    days: [],
+                    serialTitlesByDate: {}
                 };
+
 
                 if (settings.enabled) {
                     for (let offset = 0; offset < 14; offset++) {
@@ -3011,6 +3053,7 @@
 
                         let serialCount = 0;
                         let expireCount = 0;
+                        const serialTitleNames = [];
 
                         // 오늘 이미 지난 알림 시간은 제외
                         const serialTimeNotPassed =
@@ -3067,10 +3110,35 @@
                                                 ? String(work.id)
                                                 : `${group}-${index}`;
 
+
                                             if (seen.has(key)) return;
                                             seen.add(key);
 
                                             serialCount++;
+
+                                            // 알림에 표시할 작품 이름 최대 3개 수집
+                                            if (
+                                                settings.serialTitles === true &&
+                                                serialTitleNames.length < 3
+                                            ) {
+                                                const platformLabels = {
+                                                    lezhin: '레진',
+                                                    bomtoon: '봄툰',
+                                                    ridi: '리디',
+                                                    mrblue: '미스터블루'
+                                                };
+
+                                                const title = Array.from(
+                                                    String(work.title || '제목 없음')
+                                                        .replace(/[\r\n\t]/g, ' ')
+                                                        .trim()
+                                                ).slice(0, 60).join('') || '제목 없음';
+
+                                                serialTitleNames.push(
+                                                    `${platformLabels[plt] || plt} · ${title}`
+                                                );
+                                            }
+
                                         }
                                     );
                                 };
@@ -3151,12 +3219,23 @@
                         }
 
                         // 알림 대상이 있는 날짜만 후보로 기록
+
                         if (serialCount > 0 || expireCount > 0) {
-                            // QA-044D-3B | 간소화된 일정 데이터
+                            // 기존 날짜·연재 수·소멸 수 형식 유지
                             payload.days.push(
                                 `${sendDate}~${serialCount}~${expireCount}`
                             );
+
+                            // 작품명 표시를 선택했을 때만 날짜별 제목 저장
+                            if (
+                                settings.serialTitles === true &&
+                                serialTitleNames.length > 0
+                            ) {
+                                payload.serialTitlesByDate[sendDate] =
+                                    serialTitleNames;
+                            }
                         }
+
                     }
                 }
 
@@ -3380,9 +3459,13 @@
                     saved.serialTime === payload.serialTime &&
                     saved.expireDays === payload.expireDays &&
                     Array.isArray(saved.days) &&
+
                     JSON.stringify(saved.days) ===
                     JSON.stringify(payload.days) &&
+                    JSON.stringify(saved.serialTitlesByDate || {}) ===
+                    JSON.stringify(payload.serialTitlesByDate || {}) &&
                     !!saved.updatedAt;
+
 
                 if (!matches) {
                     throw new Error(
@@ -3562,13 +3645,16 @@
                 if (snapshot.exists) {
                     const saved = snapshot.data();
 
+
                     const savedSignature = JSON.stringify({
                         version: saved.version,
                         timezone: saved.timezone,
                         serialTime: saved.serialTime,
                         expireDays: saved.expireDays,
-                        days: saved.days
+                        days: saved.days,
+                        serialTitlesByDate: saved.serialTitlesByDate || {}
                     });
+
 
                     if (savedSignature === signature) {
                         moboScheduleLastSynced = signature;
