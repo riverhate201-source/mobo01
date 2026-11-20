@@ -10,6 +10,8 @@ const {moboPlanFixedScheduledPreview} =
 const {moboAssertQANetlifyRuntimeIdentity} =
     require('./mobo-auto-netlify-runtime-identity.cjs');
 const {moboAssertScopedUID} = require('./mobo-auto-source-scope.cjs');
+const {moboSelectScopedQACredential} =
+    require('./mobo-auto-qa-sender-policy.cjs');
 
 async function moboDefaultQATestDispatch(kind) {
     // The existing dispatcher contains scoped Firestore and FCM logic.
@@ -29,15 +31,9 @@ function moboAssertFixedQATestSendAuthorized(env) {
     }
     // Exact UID guard: never scan every push subscription.
     moboAssertScopedUID(env.MOBO_AUTO_TEST_UID);
-    let credential;
-    try {
-        credential = JSON.parse(env.MOBO_FIREBASE_SERVICE_ACCOUNT);
-    } catch {
-        throw new Error('QA 발송용 Firebase 인증 정보가 없습니다');
-    }
-    if (!credential || credential.project_id !== 'mobo-qa-2026') {
-        throw new Error('QA Firebase 프로젝트만 허용합니다');
-    }
+    // Credentials for LIVE must be the dedicated QA sender account,
+    // never the existing Firestore read-only preview credential.
+    moboSelectScopedQACredential(env, 'LIVE');
     return true;
 }
 
@@ -94,8 +90,11 @@ async function runSelfTest() {
         MOBO_AUTO_MODE:'LIVE',
         MOBO_QA_SCHEDULE_PROFILE:'QA_SINGLE_DEVICE_LIVE',
         MOBO_AUTO_TEST_UID:'SyntheticGalaxyQa_12345678',
-        MOBO_FIREBASE_SERVICE_ACCOUNT:JSON.stringify({
-            project_id:'mobo-qa-2026'
+        MOBO_QA_SEND_SA_JSON:JSON.stringify({
+            project_id:'mobo-qa-2026',
+            type:'service_account',
+            client_email:'mobo-qa-sender@mobo-qa-2026.iam.gserviceaccount.com',
+            private_key:'-----BEGIN PRIVATE KEY-----\nQA_FAKE\n-----END PRIVATE KEY-----\n'
         })
     };
     const cases=[
@@ -135,8 +134,15 @@ async function runSelfTest() {
             {MOBO_QA_SCHEDULE_PROFILE:'READ_ONLY_FUTURE'},
             {MOBO_AUTO_TEST_UID:''},
             {SITE_ID:'another-netlify-site'},
-            {MOBO_FIREBASE_SERVICE_ACCOUNT:JSON.stringify({
-                project_id:'mobo-production'
+            {MOBO_QA_SEND_SA_JSON:JSON.stringify({
+                project_id:'mobo-production',
+                type:'service_account',
+                client_email:'mobo-qa-sender@mobo-qa-2026.iam.gserviceaccount.com',
+                private_key:'-----BEGIN PRIVATE KEY-----\nQA_FAKE\n-----END PRIVATE KEY-----\n'
+            })},
+            {MOBO_QA_SEND_SA_JSON:JSON.stringify({
+                project_id:'mobo-qa-2026',
+                client_email:'mobo-qa-readonly@mobo-qa-2026.iam.gserviceaccount.com'
             })}
         ]) {
             await assert.rejects(()=>moboHandleQAFixedScheduled({
