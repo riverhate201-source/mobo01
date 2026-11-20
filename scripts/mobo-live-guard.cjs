@@ -3,18 +3,18 @@
 // QA-046D-5 | LIVE 발송 직전 안전 조건
 // 단독 실행은 메모리 검사만 수행. Firebase / FCM 사용 없음.
 const assert = require('node:assert/strict');
-const { moboKSTDate, moboClockDue } =
-    require('./mobo-scheduler-clock.cjs');
-
-const WINDOW_MS = 20 * 60 * 1000;
+const {moboKSTDate} = require('./mobo-scheduler-clock.cjs');
+const {
+    moboFixedSubscriptionReady,
+    moboFixedSlotDue
+} = require('./mobo-auto-fixed-time-policy.cjs');
 
 function moboCanSendSchedule(item, sub, schedule, now) {
     if (
         !item || !sub || !schedule ||
         !Number.isFinite(now) ||
         !['serial', 'expire'].includes(item.kind) ||
-        sub.enabled !== true ||
-        sub[item.kind] !== true ||
+        !moboFixedSubscriptionReady(item.kind, sub, schedule) ||
         sub.timezone !== 'Asia/Seoul' ||
         typeof sub.token !== 'string' ||
         sub.token.length < 20 ||
@@ -28,7 +28,7 @@ function moboCanSendSchedule(item, sub, schedule, now) {
         item.date !== moboKSTDate(now)
     ) return false;
 
-    return moboClockDue(now, sub.serialTime, WINDOW_MS);
+    return moboFixedSlotDue(item.kind, now);
 }
 
 function moboAttendanceStillDue(initial, latest) {
@@ -112,7 +112,25 @@ function runSelfTest() {
         ),
         false
     );
-    console.log('PASS: 알림 OFF·설정 변경·일정 삭제·토큰 누락 차단');
+    assert.equal(
+        moboCanSendSchedule(
+            item,
+            {...sub, serialTime: '20:00'},
+            {...schedule, serialTime: '20:00'},
+            kst(date, '20:05')
+        ),
+        false
+    );
+    assert.equal(
+        moboCanSendSchedule(
+            item,
+            {...sub, serialTime: '20:00'},
+            {...schedule, serialTime: '20:00'},
+            kst(date, '22:05')
+        ),
+        false
+    );
+    console.log('PASS: 알림 OFF·과거 20:00·설정 변경·일정 삭제·토큰 누락 차단');
 
     const expireItem = { ...item, kind: 'expire', count: 2 };
     assert.equal(
