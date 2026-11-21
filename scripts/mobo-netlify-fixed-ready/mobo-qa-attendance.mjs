@@ -5,9 +5,9 @@ import fixedRuntime from '../../scripts/mobo-auto-fixed-qa-runtime.cjs';
 
 // QA-only: make Firebase Admin dependencies explicit for Netlify packaging.
 // Importing these modules does not initialize Firebase or send notifications.
-import firebaseAdminApp from 'firebase-admin/app';
-import firebaseAdminFirestore from 'firebase-admin/firestore';
-import firebaseAdminMessaging from 'firebase-admin/messaging';
+import * as firebaseAdminApp from 'firebase-admin/app';
+import * as firebaseAdminFirestore from 'firebase-admin/firestore';
+import * as firebaseAdminMessaging from 'firebase-admin/messaging';
 
 export default async function handler(request) {
     // Prevent a silently incomplete Netlify function bundle.
