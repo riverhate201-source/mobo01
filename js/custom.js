@@ -7510,6 +7510,50 @@ function refreshBalance() {
         // formatNum 함수를 써서 숫자에 예쁘게 쉼표(,)를 찍어줍니다!
         let formattedAmt = formatNum(expireData.amount);
 
+
+        // 소멸 시각이 설정된 재화만 시간 단위로 계산
+        const expireTime =
+            typeof expireData.time === 'string'
+                ? expireData.time
+                : '';
+
+        if (/^([01]\d|2[0-3]):[0-5]\d$/.test(expireTime)) {
+            // 한국 시간 기준 실제 소멸 시각
+            const deadline = Date.parse(
+                `${expireData.date}T${expireTime}:00+09:00`
+            );
+
+            if (Number.isFinite(deadline)) {
+                const remainingMs = deadline - Date.now();
+
+                // 정확한 소멸 시각이 지났다면 기존 방식처럼 제거
+                if (remainingMs <= 0) {
+                    localStorage.removeItem(plt + 'Expire');
+                    badgeEl.style.display = 'none';
+                    return;
+                }
+
+                // 48시간 미만일 때만 h / m 표시
+                if (remainingMs < 48 * 60 * 60 * 1000) {
+                    let remainingText;
+
+                    if (remainingMs < 60 * 60 * 1000) {
+                        remainingText =
+                            `${Math.ceil(remainingMs / 60000)}m`;
+                    } else {
+                        remainingText =
+                            `${Math.ceil(remainingMs / 3600000)}h`;
+                    }
+
+                    badgeEl.textContent =
+                        `${formattedAmt}${unit} : ${remainingText}`;
+
+                    badgeEl.style.display = 'inline-block';
+                    return;
+                }
+            }
+        }
+
         if (diffDays < 0) {
             localStorage.removeItem(plt + 'Expire');
             badgeEl.style.display = 'none';
@@ -9148,10 +9192,31 @@ function updateCoin(plt) {
     const prefix = plt.charAt(0); // l, b, r, m
     document.getElementById('coin-input-val').value = localStorage.getItem(prefix + 'Wallet') || 0;
 
-    // 소멸 예정 데이터 불러오기
-    const expireData = JSON.parse(localStorage.getItem(plt + 'Expire')) || { amount: '', date: '' };
-    document.getElementById('expire-coin-val').value = expireData.amount;
-    document.getElementById('expire-date-val').value = expireData.date;
+
+    // 플랫폼별 소멸 예정 데이터 불러오기
+    const expireData =
+        JSON.parse(localStorage.getItem(plt + 'Expire') || 'null');
+
+    document.getElementById('expire-coin-val').value =
+        expireData?.amount ?? '';
+
+    document.getElementById('expire-date-val').value =
+        expireData?.date ?? '';
+
+    // 다른 플랫폼에서 설정한 시간이 남지 않도록 초기화
+    const expireTimeInput =
+        document.getElementById('expire-time-val');
+
+    expireTimeInput.value = '';
+
+    // 현재 플랫폼에 저장된 시간만 불러오기
+    if (
+        typeof expireData?.time === 'string' &&
+        /^([01]\d|2[0-3]):[0-5]\d$/.test(expireData.time)
+    ) {
+        expireTimeInput.value = expireData.time;
+    }
+
 
     // 이전 입력값을 다른 플랫폼에 잘못 적용하지 않도록 초기화
     const balanceInput =
@@ -9192,6 +9257,9 @@ function saveCoinUpdate() {
     const expDate =
         document.getElementById('expire-date-val').value;
 
+    const expTime =
+        document.getElementById('expire-time-val').value;
+
     // 일반 지갑: 음수 허용, 정수만 저장
     if (
         balanceRaw !== '' &&
@@ -9220,9 +9288,13 @@ function saveCoinUpdate() {
     const expAmt = expireRaw;
 
     // 둘 중 하나만 입력한 경우 멈추고 경고창 띄우기!
-    if ((expAmt && !expDate) || (!expAmt && expDate)) {
-        alert("소멸 예정 수량과 날짜를 모두 입력하거나, 아예 모두 비워주세요!");
-        return; // 저장 안 하고 창도 안 닫고 여기서 스톱!
+    if (
+        (expAmt && !expDate) ||
+        (!expAmt && expDate) ||
+        (expTime && (!expAmt || !expDate))
+    ) {
+        alert('소멸 예정 수량과 날짜를 모두 입력해 주세요.\n시간만 단독으로 저장할 수는 없어요.');
+        return;
     }
     // 지갑 잔액 저장 (기존 방식 유지: lWallet, bWallet 등)
     const prefix = currentCoinPlt.charAt(0);
@@ -9232,7 +9304,8 @@ function saveCoinUpdate() {
     if (expAmt && expDate) {
         localStorage.setItem(currentCoinPlt + 'Expire', JSON.stringify({
             amount: expAmt,
-            date: expDate
+            date: expDate,
+            ...(expTime ? { time: expTime } : {})
         }));
     } else {
         // 입력값이 없으면 소멸 정보 삭제 (뱃지 안 뜨게 함)
@@ -9245,9 +9318,50 @@ function saveCoinUpdate() {
         localStorage.removeItem('lezhinBonusExpire');
     }
 
-    closeCoinModal(); // 창 닫기
-    if (typeof saveData === "function") saveData(); // 전체 데이터 저장 함수 실행
-    if (typeof refreshBalance === "function") refreshBalance(); // 화면 잔액 및 뱃지 즉시 갱신
+
+    // QA: 소멸 재화가 어느 단계에서 사라지는지 확인
+    const debugPlatform = currentCoinPlt;
+    const debugKey = debugPlatform + 'Expire';
+
+    const beforeRender = localStorage.getItem(debugKey);
+
+    closeCoinModal();
+
+    if (typeof saveData === 'function') saveData();
+
+    const afterSaveData = localStorage.getItem(debugKey);
+
+    if (typeof refreshBalance === 'function') refreshBalance();
+
+    const afterRefresh = localStorage.getItem(debugKey);
+
+    console.table([
+        {
+            단계: '소멸 정보 저장 직후',
+            플랫폼: debugPlatform,
+            저장값: beforeRender ?? '(없음)'
+        },
+        {
+            단계: 'saveData 실행 후',
+            플랫폼: debugPlatform,
+            저장값: afterSaveData ?? '(없음)'
+        },
+        {
+            단계: 'refreshBalance 실행 후',
+            플랫폼: debugPlatform,
+            저장값: afterRefresh ?? '(없음)'
+        }
+    ]);
+
+    const badge = document.getElementById(
+        debugPlatform + '-expire-badge'
+    );
+
+    console.log('소멸 뱃지:', {
+        display: badge?.style.display,
+        text: badge?.textContent
+    });
+
 }
 
 function checkStorage() { const used = encodeURIComponent(JSON.stringify(localStorage)).length; const limit = 5 * 1024 * 1024; const percent = Math.min(Math.round((used / limit) * 100), 100); const pEl = document.getElementById('storage-percent'); const fEl = document.getElementById('storage-bar-fill'); if (pEl) pEl.textContent = percent; if (fEl) fEl.style.width = percent + '%'; }
