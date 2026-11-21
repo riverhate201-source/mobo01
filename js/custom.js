@@ -7489,6 +7489,7 @@ function refreshBalance() {
 
 
     // 🚨 [refreshBalance 함수 맨 아래에 있던 뱃지 코드 교체] 🚨
+    let expiredDataRemoved = false;
     ['lezhin', 'bomtoon', 'ridi', 'mrblue'].forEach(plt => {
         const badgeEl = document.getElementById(plt + '-expire-badge');
         if (!badgeEl) return;
@@ -7528,7 +7529,10 @@ function refreshBalance() {
 
                 // 정확한 소멸 시각이 지났다면 기존 방식처럼 제거
                 if (remainingMs <= 0) {
-                    localStorage.removeItem(plt + 'Expire');
+                    if (!moboMainTabIsStale()) {
+                        localStorage.removeItem(plt + 'Expire');
+                        expiredDataRemoved = true;
+                    }
                     badgeEl.style.display = 'none';
                     return;
                 }
@@ -7555,7 +7559,10 @@ function refreshBalance() {
         }
 
         if (diffDays < 0) {
-            localStorage.removeItem(plt + 'Expire');
+            if (!moboMainTabIsStale()) {
+                localStorage.removeItem(plt + 'Expire');
+                expiredDataRemoved = true;
+            }
             badgeEl.style.display = 'none';
         } else if (diffDays === 0) {
             // 여기도 expireData.amount 대신 formattedAmt 로 교체!
@@ -7567,8 +7574,31 @@ function refreshBalance() {
             badgeEl.style.display = 'inline-block';
         }
     });
+
+    if (expiredDataRemoved) {
+        saveData(true);
+    }
 }
 
+// QA: 소멸 재화 뱃지 실시간 갱신
+let moboExpireTickerId = null;
+
+window.addEventListener('load', () => {
+    if (moboExpireTickerId !== null) return;
+
+    moboExpireTickerId = window.setInterval(() => {
+        if (document.hidden) return;
+
+        refreshBalance();
+    }, 15 * 1000);
+});
+
+// 앱으로 돌아오면 즉시 갱신
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        refreshBalance();
+    }
+});
 
 function openActionModal(plt, origDay, idx) { actionPlt = plt; actionOrigDay = origDay; actionIdx = idx; document.getElementById('action-title').textContent = state[plt][origDay][idx].title; document.getElementById('action-modal').style.display = 'flex'; }
 function closeActionModal() { document.getElementById('action-modal').style.display = 'none'; }
