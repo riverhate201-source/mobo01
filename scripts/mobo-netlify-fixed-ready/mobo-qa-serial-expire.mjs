@@ -3,7 +3,19 @@
 // on the separate mobo-push-qa published site only.
 import fixedRuntime from '../../scripts/mobo-auto-fixed-qa-runtime.cjs';
 
+// QA-only: make Firebase Admin dependencies explicit for Netlify packaging.
+// Importing these modules does not initialize Firebase or send notifications.
+import firebaseAdminApp from 'firebase-admin/app';
+import firebaseAdminFirestore from 'firebase-admin/firestore';
+import firebaseAdminMessaging from 'firebase-admin/messaging';
+
 export default async function handler(request) {
+    // Prevent a silently incomplete Netlify function bundle.
+    if (typeof firebaseAdminApp.getApps !== 'function' ||
+        typeof firebaseAdminFirestore.getFirestore !== 'function' ||
+        typeof firebaseAdminMessaging.getMessaging !== 'function') {
+        throw new Error('QA Firebase Admin SDK bundle is incomplete');
+    }
     const result = await fixedRuntime.moboHandleQAFixedScheduled({
         slot: 'SERIAL_EXPIRE',
         request
