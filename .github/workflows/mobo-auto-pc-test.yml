@@ -210,19 +210,26 @@ jobs:
           node --check scripts/mobo-auto-preview-runtime.cjs
           node scripts/mobo-auto-preview-runtime.cjs
 
-      - name: QA-046X verify undeployed Netlify entrypoints (offline)
+      - name: QA-046X verify QA Netlify entrypoint contracts (offline)
         run: |
           node --check scripts/mobo-netlify-fixed-ready/mobo-qa-serial-expire.mjs
           node --check scripts/mobo-netlify-fixed-ready/mobo-qa-attendance.mjs
           node --input-type=module -e "
             import assert from 'node:assert/strict';
-            const serial = await import('./scripts/mobo-netlify-fixed-ready/mobo-qa-serial-expire.mjs');
-            const attend = await import('./scripts/mobo-netlify-fixed-ready/mobo-qa-attendance.mjs');
-            assert.equal(serial.config.schedule, '0 13 * * *');
-            assert.equal(attend.config.schedule, '30 13 * * *');
-            assert.equal(typeof serial.default, 'function');
-            assert.equal(typeof attend.default, 'function');
-            console.log('QA-046X PASS: two entrypoints, not deployed');
+            import { readFileSync } from 'node:fs';
+            const check = (name, slot, cron) => {
+              const source = readFileSync('scripts/mobo-netlify-fixed-ready/' + name, 'utf8');
+              assert.ok(source.includes('export default async function handler(request)'));
+              assert.ok(source.includes('fixedRuntime.moboHandleQAFixedScheduled'));
+              assert.ok(source.includes('slot: ' + String.fromCharCode(39) + slot + String.fromCharCode(39)));
+              assert.ok(source.includes('schedule: ' + String.fromCharCode(39) + cron + String.fromCharCode(39)));
+              for (const dependency of ['firebase-admin/app', 'firebase-admin/firestore', 'firebase-admin/messaging']) {
+                assert.ok(source.includes(dependency), dependency + ' import missing');
+              }
+            };
+            check('mobo-qa-serial-expire.mjs', 'SERIAL_EXPIRE', '0 13 * * *');
+            check('mobo-qa-attendance.mjs', 'ATTENDANCE', '30 13 * * *');
+            console.log('QA-046X PASS: static entrypoint contracts; no Firebase import/FCM call');
           "
 
       - name: QA-046Y separate Firebase QA sender selection (memory only)
