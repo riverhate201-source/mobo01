@@ -945,7 +945,8 @@ async function main(kind = NOTIFICATION_KIND) {
                 },
                 webpush: {
                     headers: {
-                        TTL: '120'
+                        TTL: '600',
+                        Urgency: 'high'
                     },
                     notification: {
                         icon:
