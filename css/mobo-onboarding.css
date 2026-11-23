@@ -1,0 +1,28 @@
+/* MoBo interactive onboarding — QA preview only. No existing app selectors altered. */
+#mobo-tour-root { position:fixed; inset:0; z-index:2147481000; pointer-events:none; font-family:inherit; }
+#mobo-tour-root, #mobo-tour-root * { box-sizing:border-box; }
+.mobo-tour-mask { position:fixed; background:rgba(15,18,26,.69); pointer-events:auto; touch-action:none; }
+.mobo-tour-focus { position:fixed; border:3px solid #ee95b5; border-radius:12px; box-shadow:0 0 0 4px rgba(255,255,255,.88),0 0 24px 8px rgba(237,127,165,.45); pointer-events:none; }
+.mobo-tour-card { position:fixed; width:min(342px,calc(100vw - 28px)); padding:18px; background:#fff; color:#282931; border-radius:18px; box-shadow:0 16px 45px rgba(0,0,0,.25); pointer-events:auto; line-height:1.55; }
+.mobo-tour-step { display:inline-block; margin-bottom:7px; color:#bd5078; font-size:12px; font-weight:700; letter-spacing:.025em; }
+.mobo-tour-card h3 { margin:0 0 8px; font-size:17px; line-height:1.4; font-weight:750; color:#282931; }
+.mobo-tour-card p { margin:0; font-size:14px; color:#50515c; font-weight:400; word-break:keep-all; }
+.mobo-tour-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:16px; }
+.mobo-tour-link { border:0; padding:8px 2px; color:#747581; font-size:12px; background:transparent; cursor:pointer; }
+.mobo-tour-next { border:0; padding:9px 16px; min-width:86px; border-radius:9px; color:#fff; background:#30313b; font-size:13px; font-weight:700; cursor:pointer; }
+.mobo-tour-next:disabled { opacity:.4; cursor:not-allowed; }
+.mobo-tour-hint { margin-top:9px!important; font-size:12px!important; color:#bd5078!important; }
+.mobo-tour-coverall { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(17,19,26,.72); pointer-events:auto; }
+.mobo-tour-welcome { width:min(370px,100%); background:#fff; border-radius:24px; padding:28px 24px 23px; text-align:center; color:#2e3038; box-shadow:0 25px 60px rgba(0,0,0,.27); }
+.mobo-tour-welcome-mark { display:inline-flex; height:54px; width:54px; align-items:center; justify-content:center; margin-bottom:12px; border-radius:17px; background:#fff0f5; color:#c34e7b; font-size:21px; font-weight:800; }
+.mobo-tour-welcome h2 { margin:0 0 10px; font-size:21px; line-height:1.45; font-weight:750; }
+.mobo-tour-welcome p { margin:0 0 18px; color:#5d5f68; font-size:14px; line-height:1.65; font-weight:400; word-break:keep-all; }
+.mobo-tour-welcome .mobo-tour-next { width:100%; padding:13px; font-size:14px; }
+.mobo-tour-welcome .mobo-tour-link { display:block; margin:9px auto 0; }
+@media (max-width:420px) {
+ .mobo-tour-card { padding:14px 15px; border-radius:14px; }
+ .mobo-tour-card h3 { font-size:15px; }
+ .mobo-tour-card p { font-size:13px; }
+ .mobo-tour-actions { margin-top:11px; }
+}
+@media (prefers-reduced-motion:reduce) { .mobo-tour-card, .mobo-tour-focus { transition:none!important; animation:none!important; } }
