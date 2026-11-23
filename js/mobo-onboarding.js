@@ -145,10 +145,6 @@
     function showPhase(phase) {
         if (!active) return;
         current = phase;
-        if (phase === 'add') {
-            // The real add button may be below the fold.
-            document.getElementById('custom-modal')?.style.display === 'none';
-        }
         if (phase === 'save') startCount = workCount();
         buildStage();
         const c = COPY[phase];
