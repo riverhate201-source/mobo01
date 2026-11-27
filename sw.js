@@ -6,12 +6,62 @@
 
 // QA-045G-5 | FCM PUSH 수신 진단
 // 테스트 완료 후 제거할 임시 코드
-self.addEventListener('push', () => {
+
+function moboRecordPushArrival() {
+    return new Promise(resolve => {
+        const request = indexedDB.open(
+            'mobo-push-receive-qa', 1
+        );
+
+        request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains('arrivals')) {
+                db.createObjectStore('arrivals', {
+                    autoIncrement: true
+                });
+            }
+        };
+
+        request.onerror = () => resolve();
+
+        request.onsuccess = () => {
+            const db = request.result;
+
+            try {
+                const tx = db.transaction(
+                    'arrivals', 'readwrite'
+                );
+
+                tx.objectStore('arrivals').add({
+                    at: new Date().toISOString()
+                });
+
+                tx.oncomplete = () => {
+                    db.close();
+                    resolve();
+                };
+
+                tx.onerror = tx.onabort = () => {
+                    db.close();
+                    resolve();
+                };
+            } catch {
+                db.close();
+                resolve();
+            }
+        };
+    });
+}
+
+self.addEventListener('push', event => {
     console.log(
-        '🔔 [MoBo QA] 실제 PUSH 이벤트 도착!',
+        '🔔 [MoBo QA] PUSH 이벤트 도착!',
         new Date().toISOString()
     );
+
+    event.waitUntil(moboRecordPushArrival());
 });
+
 
 // QA-045H | 화면 활성 상태에서 생성한 알림 클릭 처리
 // Firebase 자동 생성 알림은 기존 Firebase SDK가 처리
@@ -87,7 +137,7 @@ firebase.initializeApp({
 const moboFirebaseMessaging = firebase.messaging();
 
 // 🌟 버전 숫자를 하나 올렸습니다! (적용을 위해)
-const CACHE_NAME = 'mobo-qa-cache-v35';
+const CACHE_NAME = 'mobo-qa-cache-v36';
 const DYNAMIC_CACHE = 'mobo-dynamic-v4'; // 🌟 외부 이미지/아이콘을 훔쳐(?) 담을 새로운 보조 창고!
 
 const urlsToCache = [
