@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MoBo · 푸시 수신 진단</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f6f7f8; color: #18202b; font-family: -apple-system, BlinkMacSystemFont, "Noto Sans KR", system-ui, sans-serif; }
+    main { max-width: 620px; padding: 30px 18px 52px; margin: auto; }
+    .eyebrow { font-size: 11px; letter-spacing: .16em; font-weight: 750; color: #5d718a; }
+    h1 { font-size: 25px; letter-spacing: -.04em; margin: 12px 0; }
+    p { font-size: 14px; line-height: 1.75; color: #586372; }
+    .panel { background: #fff; border: 1px solid #e1e6eb; border-radius: 18px; padding: 20px; margin-top: 17px; box-shadow: 0 5px 20px #1a2b4510; }
+    h2 { font-size: 16px; margin: 0 0 8px; }
+    button { width: 100%; padding: 13px 14px; border: 0; border-radius: 11px; background: #243a58; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: wait; }
+    button.secondary { background: #edf1f5; color: #243a58; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; border-radius: 10px; padding: 13px; background: #f4f6f8; color: #18202b; line-height: 1.75; font: 12px/1.75 ui-monospace, SFMono-Regular, Consolas, monospace; margin: 13px 0 0; }
+    .note { font-size: 12px; margin-top: 14px; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js"></script>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">MOBO / PUSH QA</div>
+    <h1>갤럭시 푸시 수신 진단</h1>
+    <p>기존 모보 작품·코인·출석 데이터는 수정하지 않습니다. 실제 FCM 토큰 원문도 표시하거나 복사하지 않고, 앞 12자리의 SHA-256 식별값으로만 비교합니다.</p>
+
+    <section class="panel">
+      <h2>① 현재 갤럭시와 서버 정보 비교</h2>
+      <p>지금 사용하는 기기의 FCM 토큰, 서비스 워커, 서버 구독 정보를 확인합니다. GitHub의 11월 27일 기록과도 비교합니다.</p>
+      <button id="check" onclick="runDiagnosis()">진단 시작</button>
+      <pre id="result" aria-live="polite">진단 버튼을 눌러주세요.</pre>
+    </section>
+
+    <section class="panel">
+      <h2>② 휴대폰 자체 알림 표시 테스트</h2>
+      <p>이 테스트는 Firebase 또는 GitHub를 거치지 않습니다. 갤럭시가 서비스 워커에서 만든 알림을 실제로 보여주는지만 확인합니다.</p>
+      <button class="secondary" id="local" onclick="showLocalNotification()">기기 알림 표시 테스트</button>
+      <pre id="local-result" aria-live="polite">아직 실행하지 않았습니다.</pre>
+    </section>
+    <p class="note">진단 결과의 12자리 해시와 알림 표시 여부만 공유해도 됩니다. FCM 토큰 원문이나 Firebase 비밀 키는 공유하지 마세요. 테스트를 마치면 이 임시 파일은 배포본에서 제거할 수 있습니다.</p>
+  </main>
+
+  <script>
+    'use strict';
+    const EXPECTED_ORIGIN = 'https://staging--mobo-demo.netlify.app';
+    const EXPECTED_UID_HASH = '31c084723d7e';
+    const EXPECTED_TOKEN_HASH = '275979f2afd2';
+    const VAPID_KEY = 'BPX54MCjOtE6g0hEEn-jtd7oCuaHhVLdXNwlnin8P1RcP0gn74c8nVerMf7f3a4RjeqbNPahhwhwkNU-5Q6LlXM';
+
+    const FIREBASE_CONFIG = {
+      apiKey: 'AIzaSyCi-EyujgiOKyj_m4pN2OdXoMJ-UoW5JCY',
+      authDomain: 'mobo-qa-2026.firebaseapp.com',
+      projectId: 'mobo-qa-2026',
+      storageBucket: 'mobo-qa-2026.firebasestorage.app',
+      messagingSenderId: '694099450490',
+      appId: '1:694099450490:web:7e9bc16ff3f2c7a622b9c3'
+    };
+
+    firebase.initializeApp(FIREBASE_CONFIG);
+
+    async function fingerprint(raw) {
+      const bytes = new TextEncoder().encode(String(raw));
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      return Array.from(new Uint8Array(digest))
+        .map(byte => byte.toString(16).padStart(2, '0'))
+        .join('').slice(0, 12);
+    }
+
+    function getCurrentUser() {
+      return new Promise((resolve, reject) => {
+        let unsubscribe;
+        unsubscribe = firebase.auth().onAuthStateChanged(
+          user => {
+            resolve(user);
+            queueMicrotask(() => unsubscribe?.());
+          },
+          reject
+        );
+      });
+    }
+
+    async function runDiagnosis() {
+      const button = document.getElementById('check');
+      const output = document.getElementById('result');
+      const lines = [];
+      button.disabled = true;
+      output.textContent = '진단 중입니다…';
+      const render = () => output.textContent = lines.join('\n');
+
+      try {
+        lines.push('검사 시각: ' + new Date().toLocaleString('ko-KR'));
+        lines.push('접속 사이트: ' + location.origin);
+        if (location.origin !== EXPECTED_ORIGIN) {
+          lines.push('⚠ 다른 사이트입니다. 반드시 staging 주소에서 검사하세요.');
+          render();
+          return;
+        }
+
+        if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+          lines.push('❌ 이 브라우저는 필요한 웹 푸시 API를 지원하지 않습니다.');
+          render();
+          return;
+        }
+
+        lines.push('알림 권한: ' + Notification.permission);
+        const registration = await navigator.serviceWorker.register('./sw.js');
+        await navigator.serviceWorker.ready;
+        lines.push('서비스 워커: ' + (registration.active ? '활성' : '활성 확인 불가'));
+        lines.push('워커 경로: ' + (registration.active?.scriptURL || '확인 불가'));
+
+        if (Notification.permission !== 'granted') {
+          lines.push('⚠ 알림 권한이 허용되지 않아 FCM 토큰 조회를 건너뜁니다.');
+          render();
+          return;
+        }
+
+        const messaging = firebase.messaging();
+        const token = await messaging.getToken({
+          vapidKey: VAPID_KEY,
+          serviceWorkerRegistration: registration
+        });
+        if (!token) {
+          lines.push('❌ 현재 기기의 FCM 토큰이 발급되지 않았습니다.');
+          render();
+          return;
+        }
+
+        const tokenHash = await fingerprint(token);
+        lines.push('현재 기기 토큰 해시: ' + tokenHash);
+        lines.push('GitHub 기록 토큰 해시: ' + EXPECTED_TOKEN_HASH);
+        lines.push('토큰 비교: ' + (tokenHash === EXPECTED_TOKEN_HASH ? '✅ 일치' : '❌ 불일치'));
+        const pushSubscription = await registration.pushManager.getSubscription();
+        lines.push('브라우저 푸시 구독: ' + (pushSubscription ? '✅ 존재' : '❌ 없음'));
+        render();
+
+        const user = await getCurrentUser();
+        if (!user) {
+          lines.push('현재 브라우저 UID: 없음 (다른 브라우저/설치 방식일 가능성)');
+          lines.push('서버 구독 조회: 생략');
+          render();
+          return;
+        }
+
+        const uidHash = await fingerprint(user.uid);
+        lines.push('현재 브라우저 UID 해시: ' + uidHash);
+        lines.push('GitHub 기록 UID 해시: ' + EXPECTED_UID_HASH);
+        lines.push('UID 비교: ' + (uidHash === EXPECTED_UID_HASH ? '✅ 일치' : '❌ 불일치'));
+        render();
+
+        try {
+          const snap = await firebase.firestore()
+            .collection('pushSubscriptions').doc(user.uid)
+            .get({ source: 'server' });
+          if (!snap.exists) {
+            lines.push('서버 구독: ❌ 현재 UID의 등록 문서 없음');
+          } else {
+            const saved = snap.data();
+            const serverHash = saved.token
+              ? await fingerprint(saved.token)
+              : '(토큰 없음)';
+            lines.push('서버 구독 enabled: ' + String(saved.enabled));
+            lines.push('서버 토큰 해시: ' + serverHash);
+            lines.push('현재 기기 ↔ 서버 토큰: ' +
+              (serverHash === tokenHash ? '✅ 일치' : '❌ 불일치'));
+          }
+        } catch (error) {
+          lines.push('서버 구독 조회 실패: ' + (error.code || error.name || 'unknown'));
+        }
+        render();
+      } catch (error) {
+        lines.push('진단 오류: ' + (error.code || error.name || error.message || 'unknown'));
+        render();
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function showLocalNotification() {
+      const button = document.getElementById('local');
+      const output = document.getElementById('local-result');
+      button.disabled = true;
+      output.textContent = '알림 표시 요청 중…';
+      try {
+        if (!('Notification' in window) || Notification.permission !== 'granted') {
+          output.textContent = '❌ 사이트 알림 권한이 허용되지 않았습니다.';
+          return;
+        }
+        const registration = await navigator.serviceWorker.register('./sw.js');
+        await navigator.serviceWorker.ready;
+        await registration.showNotification('모보 기기 표시 테스트', {
+          body: '서버 발송과 무관한 갤럭시 알림 표시 테스트입니다.',
+          icon: './icon.png',
+          badge: './notification-badge.png',
+          tag: 'mobo-push-qa-local-test'
+        });
+        output.textContent = '✅ 브라우저에 알림 표시를 요청했습니다.\n실제로 갤럭시 알림 창에 보였는지 확인해주세요.\n요청 성공은 실제 화면 표시를 보장하지 않습니다.';
+      } catch (error) {
+        output.textContent = '❌ 표시 요청 오류: ' +
+          (error.code || error.name || error.message || 'unknown');
+      } finally {
+        button.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
