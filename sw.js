@@ -7,7 +7,7 @@
 // QA-045G-5 | FCM PUSH 수신 진단
 // 테스트 완료 후 제거할 임시 코드
 
-function moboRecordPushArrival() {
+function moboRecordPushArrival(details = {}) {
     return new Promise(resolve => {
         const request = indexedDB.open(
             'mobo-push-receive-qa', 1
@@ -33,7 +33,8 @@ function moboRecordPushArrival() {
                 );
 
                 tx.objectStore('arrivals').add({
-                    at: new Date().toISOString()
+                    at: new Date().toISOString(),
+                    ...details
                 });
 
                 tx.oncomplete = () => {
@@ -53,14 +54,34 @@ function moboRecordPushArrival() {
     });
 }
 
-self.addEventListener('push', event => {
-    console.log(
-        '🔔 [MoBo QA] PUSH 이벤트 도착!',
-        new Date().toISOString()
-    );
 
-    event.waitUntil(moboRecordPushArrival());
+self.addEventListener('push', event => {
+    event.waitUntil((async () => {
+        let payload = null;
+
+        try {
+            payload = event.data?.json() || null;
+        } catch {
+            // 메시지 내용을 읽지 못해도 도착 기록은 남김
+        }
+
+        const clients = await self.clients.matchAll({
+            type: 'window',
+            includeUncontrolled: true
+        });
+
+        await moboRecordPushArrival({
+            stage: 'push',
+            clientCount: clients.length,
+            visibleClients: clients.filter(
+                client => client.visibilityState === 'visible'
+            ).length,
+            hasNotification: Boolean(payload?.notification),
+            hasData: Boolean(payload?.data)
+        });
+    })());
 });
+
 
 
 // QA-045H | 화면 활성 상태에서 생성한 알림 클릭 처리
@@ -136,8 +157,17 @@ firebase.initializeApp({
 // 백그라운드 푸시 수신 활성화
 const moboFirebaseMessaging = firebase.messaging();
 
+
+moboFirebaseMessaging.onBackgroundMessage(payload => {
+    return moboRecordPushArrival({
+        stage: 'fcm-background',
+        hasNotification: Boolean(payload.notification)
+    });
+});
+
+
 // 🌟 버전 숫자를 하나 올렸습니다! (적용을 위해)
-const CACHE_NAME = 'mobo-qa-cache-v37';
+const CACHE_NAME = 'mobo-qa-cache-v38';
 const DYNAMIC_CACHE = 'mobo-dynamic-v4'; // 🌟 외부 이미지/아이콘을 훔쳐(?) 담을 새로운 보조 창고!
 
 const urlsToCache = [
